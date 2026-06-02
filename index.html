@@ -2,8 +2,16 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>iOS 26 Liquid Calendar</title>
+    <!-- PWA Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="日历" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="https://via.placeholder.com/180" sizes="180x180" />
+    <link rel="apple-touch-icon" href="https://via.placeholder.com/167" sizes="167x167" />
+    <link rel="apple-touch-icon" href="https://via.placeholder.com/152" sizes="152x152" />
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,39 +19,149 @@
     <style>
       body {
         font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", sans-serif;
-        background-color: #F2F2F7; /* iOS System Grouped Background Color */
+        background-color: #F2F2F7;
         color: #000;
         overflow: auto;
+        overscroll-behavior-y: none;
       }
       
       /* UI Animations */
-      @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-      }
+      @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+      @keyframes slideInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+      @keyframes scaleIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+      @keyframes modalEnter { 0% { opacity: 0; transform: scale(0.95) translateY(10px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
       
-      @keyframes slideInUp {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
+      .hide-scrollbar::-webkit-scrollbar { display: none; }
+      .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+      /* PWA Safe Area Support */
+      :root {
+        --safe-top: env(safe-area-inset-top, 20px);
+        --safe-bottom: env(safe-area-inset-bottom, 20px);
       }
 
-      @keyframes scaleIn {
-        from { opacity: 0; transform: scale(0.95); }
-        to { opacity: 1; transform: scale(1); }
+      .pwa-mode {
+        padding-top: var(--safe-top);
       }
 
-      @keyframes modalEnter {
-        0% { opacity: 0; transform: scale(0.95) translateY(10px); }
-        100% { opacity: 1; transform: scale(1) translateY(0); }
-      }
-      
-      /* Scrollbar hiding */
-      .hide-scrollbar::-webkit-scrollbar {
-        display: none;
-      }
-      .hide-scrollbar {
-        -ms-overflow-style: none;
-        scrollbar-width: none;
+      /* Mobile Layout Adaptation (Applies to both Mobile Browser and PWA) */
+      @media (max-width: 768px) {
+        html, body {
+          height: 100%;
+          font-size: 16px; /* Base font size to prevent iOS zoom */
+          line-height: 1.6;
+        }
+
+        /* App Container */
+        .App {
+          padding: 0 !important;
+          align-items: flex-start !important;
+          min-height: 100vh;
+          min-height: 100dvh; /* Use dvh for mobile browsers */
+        }
+
+        /* Main Layout Container */
+        .main-layout {
+          flex-direction: column !important;
+          gap: 0 !important;
+          /* Base padding for mobile browser */
+          padding-bottom: 80px;
+        }
+
+        /* PWA Mode specific bottom padding */
+        .pwa-mode .main-layout {
+          padding-bottom: calc(80px + env(safe-area-inset-bottom));
+        }
+
+        /* Sidebar Container (Bottom Navigation) */
+        .sidebar-container {
+          position: fixed !important;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          width: 100% !important;
+          height: auto !important;
+          min-height: 64px;
+          flex-direction: row !important;
+          justify-content: space-around !important;
+          align-items: center !important;
+          gap: 0 !important;
+          padding: 8px 16px !important;
+          
+          /* Visual Style */
+          background: rgba(255, 255, 255, 0.95) !important;
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
+          border-top: 0.5px solid rgba(0,0,0,0.1) !important;
+          border-radius: 24px 24px 0 0 !important;
+          box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05) !important;
+          z-index: 1000;
+          margin: 0 !important;
+        }
+
+        /* PWA specific sidebar padding for Home Indicator */
+        .pwa-mode .sidebar-container {
+          padding-bottom: calc(8px + env(safe-area-inset-bottom)) !important;
+        }
+
+        /* Hide Text Labels */
+        .sidebar-container span {
+          display: none !important;
+        }
+
+        /* Adjust Icons */
+        .sidebar-container button > div {
+          transform: scale(0.9); /* Slightly smaller icons to fit */
+        }
+
+        /* Flex Ordering Configuration */
+        /* Target Order: Alarm(1), History(2), Add(3), Calendar(4), Settings(5) */
+        
+        /* Alarm (1st Child) -> Order 1 */
+        .sidebar-container > button:nth-child(1) { order: 1; }
+        
+        /* History (2nd Child) -> Order 2 */
+        .sidebar-container > button:nth-child(2) { order: 2; }
+        
+        /* Calendar (3rd Child in DOM) -> Move to Order 4 */
+        .sidebar-container > button:nth-child(3) { order: 4; }
+        
+        /* Add Button (4th Child in DOM) -> Move to Order 3 (Center) */
+        .sidebar-container > button:nth-child(4) { 
+          order: 3;
+          margin: 0 12px; /* Add some spacing around the center button */
+        }
+        
+        /* Settings Container (Last Child) -> Order 5 */
+        .sidebar-container > div:last-child {
+          order: 5;
+          flex-direction: row !important;
+          width: auto !important;
+          border: none !important;
+          padding: 0 !important;
+          margin: 0 !important;
+          margin-top: 0 !important;
+        }
+
+        /* Show User Profile button (First child) */
+        .sidebar-container > div:last-child > button:first-child {
+          display: flex !important;
+        }
+
+        /* Hide Settings button (Last child) in mobile/PWA mode */
+        .sidebar-container > div:last-child > button:last-child {
+          display: none !important;
+        }
+
+        /* Content Area Adjustments */
+        .main-layout > div:last-child {
+          width: 100% !important;
+        }
+        
+        /* Hide Top User Email Button in Mobile */
+        .App > button.absolute {
+          display: none !important;
+        }
       }
     </style>
   <script type="importmap">

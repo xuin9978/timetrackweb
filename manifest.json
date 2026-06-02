@@ -1,0 +1,28 @@
+{
+  "name": "iOS 26 Liquid Calendar",
+  "short_name": "日历",
+  "description": "iOS风格的日历应用，支持事件管理和多种视图模式",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F2F2F7",
+  "theme_color": "#F2F2F7",
+  "icons": [
+    {
+      "src": "https://via.placeholder.com/192",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://via.placeholder.com/512",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "https://via.placeholder.com/180",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "apple-touch-icon"
+    }
+  ]
+}

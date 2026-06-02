@@ -1,22 +1,50 @@
-// Test Supabase connection
 import { createClient } from '@supabase/supabase-js';
+import dotenv from 'dotenv';
+dotenv.config({ path: '.env.local' });
 
-const supabaseUrl = 'https://qlnwwewhbgjffjevevij.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFsbnd3ZXdoYmdqZmZqZXZldmlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM4OTc2NjQsImV4cCI6MjA5NDc0NzY2NH0.gbdc85N8Tj27I1n4WZvK4boiT6BlsCcd3TSkK1Xm4wI';
+const norm = v => typeof v === 'string' ? v.trim().replace(/^['"`]|['"`]$/g, '') : undefined;
+const supabaseUrl = norm(process.env.VITE_SUPABASE_URL) || 'https://qlnwwewhbgjffjevevij.supabase.co';
+const supabaseKey = norm(process.env.VITE_SUPABASE_ANON_KEY);
 
 console.log('Testing Supabase connection...');
 console.log('URL:', supabaseUrl);
-console.log('Key:', supabaseKey.substring(0, 20) + '...');
+console.log('Key:', (supabaseKey || '').substring(0, 20) + '...');
 
 try {
   const supabase = createClient(supabaseUrl, supabaseKey);
   
   // Test connection by fetching session
-  supabase.auth.getSession().then(({ data, error }) => {
+  supabase.auth.getSession().then(async ({ data, error }) => {
     if (error) {
       console.error('Auth test failed:', error.message);
     } else {
       console.log('Auth test successful:', data.session ? 'Has session' : 'No session');
+      const uid = data.session?.user?.id;
+      if (uid) {
+        const { data: evs, error: evErr } = await supabase
+          .from('events')
+          .select('id,title,start_time,end_time,category')
+          .eq('user_id', uid)
+          .order('start_time', { ascending: true })
+          .limit(5);
+        if (evErr) {
+          console.error('Events query failed:', evErr.message);
+        } else {
+          console.log('Events query successful:', Array.isArray(evs) ? `Found ${evs.length} rows` : 'No data');
+        }
+
+        const { data: tags, error: tagErr } = await supabase
+          .from('tags')
+          .select('id,label,color,icon,order')
+          .eq('user_id', uid)
+          .order('order', { ascending: true, nullsFirst: false })
+          .limit(5);
+        if (tagErr) {
+          console.error('Tags query failed:', tagErr.message);
+        } else {
+          console.log('Tags query successful:', Array.isArray(tags) ? `Found ${tags.length} rows` : 'No data');
+        }
+      }
     }
   });
 

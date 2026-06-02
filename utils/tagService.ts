@@ -23,17 +23,21 @@ export const fetchTags = async (userId: string, page: number = 1, perPage: numbe
       const { data, error } = await query;
 
       if (!error && data) {
-        return data.map((row: any) => ({
+        const tags = data.map((row: any) => ({
           id: row.id,
           label: row.label,
           color: row.color,
           icon: row.icon,
           order: row.order
         }));
+        try { localStorage.setItem(`tags_cache_${userId}`, JSON.stringify(tags)); } catch {}
+        return tags;
       }
 
       // If error is unrelated to schema (e.g. abort), throw it
       const msg = String(error?.message ?? '');
+      const isAbortLike = (signal?.aborted ?? false) || (error?.name === 'AbortError') || /AbortError|aborted/i.test(msg) || msg.includes('ERR_ABORTED');
+      if (isAbortLike) return [];
       if (msg.includes('order') || msg.includes('column')) {
         // Fallthrough to retry
         console.warn('Fetch with order failed, falling back to basic fetch:', msg);
@@ -68,7 +72,13 @@ export const fetchTags = async (userId: string, page: number = 1, perPage: numbe
       if (isAbortLike) return [];
       
       // Handle network errors gracefully
-      if (msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('connection') || msg.includes('ERR_CONNECTION_CLOSED')) {
+      if (
+        msg.includes('Failed to fetch') ||
+        msg.includes('NetworkError') ||
+        msg.includes('connection') ||
+        msg.includes('ERR_CONNECTION_CLOSED') ||
+        msg.includes('Network request failed')
+      ) {
         console.warn('Network error fetching tags (offline mode?):', msg);
         return [];
       }
@@ -80,6 +90,7 @@ export const fetchTags = async (userId: string, page: number = 1, perPage: numbe
     if (!data) return [];
 
     let tags = data.map((row: any) => ({ id: row.id, label: row.label, color: row.color, icon: row.icon }));
+    try { localStorage.setItem(`tags_cache_${userId}`, JSON.stringify(tags)); } catch {}
 
     // Apply local storage order if available
     try {
@@ -102,12 +113,29 @@ export const fetchTags = async (userId: string, page: number = 1, perPage: numbe
     const msg = String(error?.message ?? '');
     const isAbortLike = (signal?.aborted ?? false) || error?.name === 'AbortError' || /AbortError|aborted/i.test(msg) || msg.includes('ERR_ABORTED');
     
-    if (isAbortLike) return [];
+    if (isAbortLike) {
+      try {
+        const raw = localStorage.getItem(`tags_cache_${userId}`);
+        if (!raw) return [];
+        const arr = JSON.parse(raw);
+        return Array.isArray(arr) ? arr : [];
+      } catch { return []; }
+    }
 
     // Handle network errors gracefully
-    if (msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('connection') || msg.includes('ERR_CONNECTION_CLOSED')) {
-      console.warn('Network error in fetchTags (offline mode?):', msg);
-      return [];
+    if (
+      msg.includes('Failed to fetch') ||
+      msg.includes('NetworkError') ||
+      msg.includes('connection') ||
+      msg.includes('ERR_CONNECTION_CLOSED') ||
+      msg.includes('Network request failed')
+    ) {
+      try {
+        const raw = localStorage.getItem(`tags_cache_${userId}`);
+        if (!raw) return [];
+        const arr = JSON.parse(raw);
+        return Array.isArray(arr) ? arr : [];
+      } catch { return []; }
     }
     
     console.error('Exception in fetchTags:', error);

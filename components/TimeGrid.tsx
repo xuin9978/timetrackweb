@@ -217,7 +217,7 @@ const EventBlock = React.memo(({
 
 // --- Main Component ---
 
-const TimeGrid: React.FC<TimeGridProps> = ({ days, tags, onDateClick, onAddEvent, onEventClick, onUpdateEvent, onScrollNavigate }) => {
+const TimeGrid = React.memo<TimeGridProps>(({ days, tags, onDateClick, onAddEvent, onEventClick, onUpdateEvent, onScrollNavigate }) => {
   const headerRef = useRef<HTMLDivElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
   const isNavigatingRef = useRef(false);
@@ -620,21 +620,7 @@ const TimeGrid: React.FC<TimeGridProps> = ({ days, tags, onDateClick, onAddEvent
                     const layout = eventLayouts.get(event.id);
                     if (!layout) return null;
 
-                    // Gap logic handled inside EventBlock or simplified
-                    // We need to pass isAdjacentToNext if we want strict visual parity
-                    const nextEvent = day.events[index + 1];
-                    const isAdjacentToNext = nextEvent && event.endTime === nextEvent.startTime;
 
-                    // Note: I'm simplifying the gap logic slightly by handling it in the height calc in EventBlock 
-                    // or just accepting the default height. 
-                    // To be safe, let's just pass the calculated height modification logic if needed, 
-                    // but for now, let's rely on the EventBlock's internal logic or pass a modifier.
-                    // Actually, the previous logic modified 'height' variable before rendering.
-                    // Let's modify the height in EventBlock based on props? No, better to calculate here?
-                    // No, let's keep EventBlock clean. I'll pass a 'gap' prop if needed.
-                    // But wait, the original code had:
-                    // if (isAdjacentToNext && !isInteracting) height -= 0.35
-                    // I'll add this logic back into EventBlock by passing isAdjacentToNext.
 
                     return (
                       <React.Fragment key={event.id}>
@@ -679,6 +665,7 @@ const TimeGrid: React.FC<TimeGridProps> = ({ days, tags, onDateClick, onAddEvent
       </div>
     </div>
   );
-};
+}
+);
 
 export default TimeGrid;

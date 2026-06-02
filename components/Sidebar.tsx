@@ -7,10 +7,12 @@ interface SidebarProps {
   onSwitch: (module: 'calendar' | 'alarm' | 'history') => void;
   onOpenSettings: () => void;
   onOpenAuth: () => void;
+  onOpenAccount: () => void;
+  onAddEvent?: () => void;
   isLoggedIn?: boolean;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ activeModule, onSwitch, onOpenSettings, onOpenAuth, isLoggedIn }) => {
+const Sidebar: React.FC<SidebarProps> = ({ activeModule, onSwitch, onOpenSettings, onOpenAuth, onOpenAccount, onAddEvent, isLoggedIn }) => {
   const navItems = [
     { id: 'alarm', label: '闹钟', icon: Icons.Clock },
     { id: 'history', label: '历史', icon: Icons.History },
@@ -20,7 +22,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeModule, onSwitch, onOpenSetting
   return (
     <GlassCard
       intensity="medium"
-      className="flex-shrink-0 w-full md:w-24 md:h-[85vh] flex flex-row md:flex-col items-center justify-center md:justify-start gap-8 p-4 md:pt-12 z-20 bg-white"
+      className="sidebar-container flex-shrink-0 w-full md:w-24 md:h-[85vh] flex flex-row md:flex-col items-center justify-center md:justify-start gap-8 p-4 md:pt-12 z-20 bg-white"
     >
       {navItems.map((item) => {
         const isActive = activeModule === item.id;
@@ -49,22 +51,39 @@ const Sidebar: React.FC<SidebarProps> = ({ activeModule, onSwitch, onOpenSetting
         );
       })}
 
+      {/* Add Event Button - Visible in PWA/Mobile via CSS ordering, or Desktop as extra action */}
+      {onAddEvent && (
+        <button
+          onClick={onAddEvent}
+          className="group flex flex-col items-center gap-2 relative md:hidden"
+        >
+          <div className="w-12 h-12 flex items-center justify-center rounded-full bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-gray-600 transition-all duration-300 active:scale-95 hover:rotate-90">
+            <Icons.Plus size={24} strokeWidth={2.5} />
+          </div>
+          {/* Label hidden in PWA mode via global CSS, but visible otherwise? 
+              Actually user wants PWA labels hidden. 
+              Let's add a label for consistency but it will be hidden by the same rule.
+          */}
+          <span className="text-[10px] font-medium tracking-wide text-gray-400 group-hover:text-gray-600 transition-colors duration-300">
+            添加
+          </span>
+        </button>
+      )}
+
       <div className="md:mt-auto pt-4 md:pt-0 border-l md:border-l-0 md:border-t border-gray-100 pl-4 md:pl-0 md:w-full flex flex-col items-center justify-center gap-3">
-        {!isLoggedIn && (
-          <button
-            onClick={onOpenAuth}
-            className="group flex flex-col items-center gap-2"
-          >
-            <div className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-50 text-gray-400 hover:bg-gray-100 hover:text-black transition-all duration-300">
-              <Icons.User size={20} />
-            </div>
-          </button>
-        )}
+        <button
+          onClick={isLoggedIn ? onOpenAccount : onOpenAuth}
+          className="group flex flex-col items-center gap-2"
+        >
+          <div className="w-12 h-12 flex items-center justify-center rounded-full transition-all duration-300 bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-gray-600">
+            <Icons.User size={20} />
+          </div>
+        </button>
         <button
           onClick={onOpenSettings}
           className="group flex flex-col items-center gap-2"
         >
-          <div className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-50 text-gray-400 hover:bg-gray-100 hover:text-black transition-all duration-300">
+          <div className="w-12 h-12 flex items-center justify-center rounded-full bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-gray-600 transition-all duration-300">
             <Icons.Settings size={20} />
           </div>
         </button>

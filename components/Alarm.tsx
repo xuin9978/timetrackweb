@@ -130,7 +130,7 @@ const Alarm: React.FC<AlarmProps> = ({
             className={`w-24 h-24 rounded-full flex items-center justify-center transition-all active:scale-95 text-xl font-medium
                 ${isDisabled 
                     ? 'bg-gray-100 text-gray-300 cursor-not-allowed' 
-                    : 'bg-green-100 text-green-600 hover:bg-green-200'
+                    : 'bg-[#E0F2E9] text-[#2E7D32] md:bg-green-100 md:text-green-600 hover:opacity-90'
                 }
             `}
             >
@@ -152,7 +152,7 @@ const Alarm: React.FC<AlarmProps> = ({
              <div className="flex gap-6">
                 <button 
                     onClick={onStart}
-                    className="w-24 h-24 rounded-full bg-green-100 text-green-600 flex items-center justify-center transition-all hover:bg-green-200 active:scale-95 text-lg font-medium"
+                    className="w-24 h-24 rounded-full bg-[#E0F2E9] text-[#2E7D32] md:bg-green-100 md:text-green-600 flex items-center justify-center transition-all hover:opacity-90 active:scale-95 text-lg font-medium"
                 >
                     继续
                 </button>
@@ -169,55 +169,109 @@ const Alarm: React.FC<AlarmProps> = ({
 
   return (
     <>
-        <GlassCard intensity="medium" className="w-full h-full md:h-[85vh] max-w-2xl mx-auto flex flex-col relative overflow-hidden bg-white">
-        <div className="flex-1 flex flex-col items-center justify-center p-8 pb-20">
-            {/* Time Display */}
-            <div 
-                className="flex flex-col items-center justify-center relative mb-20 cursor-pointer" 
-                onClick={() => { if(mode === 'timer') setIsSetupModalOpen(true) }}
-            >
-                <h1 className="text-7xl md:text-9xl font-light text-black tabular-nums tracking-tight select-none">
-                {formatDisplayTime(displayTime)}
-                </h1>
-            </div>
-
-            {/* Main Control (Start/Stop) */}
-            <div className="flex flex-col items-center gap-8 z-10 mb-16 h-32 justify-center">
-                {renderMainButton()}
-            </div>
-
-            {/* Mode Switchers */}
-            <div className="flex items-center gap-4">
-                <button
-                    onClick={() => handleModeSwitch('stopwatch')}
-                    className={`
-                        px-6 py-2 rounded-full flex items-center gap-2 transition-all duration-200 border text-sm font-medium
-                        ${mode === 'stopwatch' 
-                            ? 'border-orange-200 text-orange-600 bg-orange-50' 
-                            : 'border-gray-200 text-gray-400 hover:bg-gray-50'
-                        }
-                    `}
+        <div className="w-full h-full md:hidden bg-white rounded-[32px] flex flex-col items-center justify-center shadow-sm">
+             {/* Mobile / PWA Layout */}
+            <div className="flex-1 flex flex-col items-center justify-center p-8 w-full">
+                 {/* Time Display */}
+                <div 
+                    className="flex flex-col items-center justify-center relative mb-16 cursor-pointer" 
+                    onClick={() => { if(mode === 'timer') setIsSetupModalOpen(true) }}
                 >
-                    <Icons.Stopwatch size={18} />
-                    <span>秒表</span>
-                </button>
+                    <h1 className="text-7xl font-normal text-black tabular-nums tracking-tight select-none">
+                    {formatDisplayTime(displayTime)}
+                    </h1>
+                </div>
 
-                <button
-                    onClick={() => handleModeSwitch('timer')}
-                    className={`
-                        px-6 py-2 rounded-full flex items-center gap-2 transition-all duration-200 border text-sm font-medium
-                        ${mode === 'timer' 
-                            ? 'border-cyan-200 text-cyan-600 bg-cyan-50' 
-                            : 'border-gray-200 text-gray-400 hover:bg-gray-50'
-                        }
-                    `}
-                >
-                    <Icons.Hourglass size={18} />
-                    <span>计时</span>
-                </button>
+                {/* Main Control (Start/Stop) */}
+                <div className="flex flex-col items-center gap-8 z-10 mb-20 h-32 justify-center">
+                    {renderMainButton()}
+                </div>
+
+                {/* Mode Switchers */}
+                <div className="flex items-center gap-4 mt-auto">
+                    <button
+                        onClick={() => handleModeSwitch('stopwatch')}
+                        className={`
+                            px-6 py-2 rounded-full flex items-center gap-2 transition-all duration-200 border text-sm font-medium
+                            ${mode === 'stopwatch' 
+                                ? 'border-orange-200 text-orange-600 bg-orange-50' 
+                                : 'border-gray-200 text-gray-400 hover:bg-gray-50'
+                            }
+                        `}
+                    >
+                        <Icons.Stopwatch size={18} />
+                        <span>秒表</span>
+                    </button>
+
+                    <button
+                        onClick={() => handleModeSwitch('timer')}
+                        className={`
+                            px-6 py-2 rounded-full flex items-center gap-2 transition-all duration-200 border text-sm font-medium
+                            ${mode === 'timer' 
+                                ? 'border-cyan-200 text-cyan-600 bg-cyan-50' 
+                                : 'border-gray-200 text-gray-400 hover:bg-gray-50'
+                            }
+                        `}
+                    >
+                        <Icons.Hourglass size={18} />
+                        <span>计时</span>
+                    </button>
+                </div>
             </div>
         </div>
-        </GlassCard>
+
+        {/* Desktop Layout (Original GlassCard) */}
+        <div className="hidden md:flex w-full h-full">
+            <GlassCard intensity="medium" className="w-full h-[85vh] max-w-2xl mx-auto flex flex-col relative overflow-hidden bg-white">
+            <div className="flex-1 flex flex-col items-center justify-center p-8 pb-20">
+                {/* Time Display */}
+                <div 
+                    className="flex flex-col items-center justify-center relative mb-20 cursor-pointer" 
+                    onClick={() => { if(mode === 'timer') setIsSetupModalOpen(true) }}
+                >
+                    <h1 className="text-9xl font-light text-black tabular-nums tracking-tight select-none">
+                    {formatDisplayTime(displayTime)}
+                    </h1>
+                </div>
+
+                {/* Main Control (Start/Stop) */}
+                <div className="flex flex-col items-center gap-8 z-10 mb-16 h-32 justify-center">
+                    {renderMainButton()}
+                </div>
+
+                {/* Mode Switchers */}
+                <div className="flex items-center gap-4">
+                    <button
+                        onClick={() => handleModeSwitch('stopwatch')}
+                        className={`
+                            px-6 py-2 rounded-full flex items-center gap-2 transition-all duration-200 border text-sm font-medium
+                            ${mode === 'stopwatch' 
+                                ? 'border-orange-200 text-orange-600 bg-orange-50' 
+                                : 'border-gray-200 text-gray-400 hover:bg-gray-50'
+                            }
+                        `}
+                    >
+                        <Icons.Stopwatch size={18} />
+                        <span>秒表</span>
+                    </button>
+
+                    <button
+                        onClick={() => handleModeSwitch('timer')}
+                        className={`
+                            px-6 py-2 rounded-full flex items-center gap-2 transition-all duration-200 border text-sm font-medium
+                            ${mode === 'timer' 
+                                ? 'border-cyan-200 text-cyan-600 bg-cyan-50' 
+                                : 'border-gray-200 text-gray-400 hover:bg-gray-50'
+                            }
+                        `}
+                    >
+                        <Icons.Hourglass size={18} />
+                        <span>计时</span>
+                    </button>
+                </div>
+            </div>
+            </GlassCard>
+        </div>
 
         <TimerSetupModal 
             isOpen={isSetupModalOpen}

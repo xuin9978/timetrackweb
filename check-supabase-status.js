@@ -1,8 +1,8 @@
 // Supabase Connection Status Checker
 // This script checks the Supabase connection status
 
-const SUPABASE_URL = 'https://qlnwwewhbgjffjevevij.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFsbnd3ZXdoYmdqZmZqZXZldmlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM4OTc2NjQsImV4cCI6MjA5NDc0NzY2NH0.gbdc85N8Tj27I1n4WZvK4boiT6BlsCcd3TSkK1Xm4wI';
+const SUPABASE_URL = 'https://gbmecshpfuksylwflawi.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdibWVjc2hwZnVrc3lsd2ZsYXdpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzNjM1OTEsImV4cCI6MjA5NTkzOTU5MX0.0PCXzmlSjGQvTtHssLN4HqcHng7aUZaNjxIJZjB7un8';
 
 async function checkSupabaseConnection() {
   console.log('🔍 Checking Supabase connection status...\n');

@@ -16,8 +16,6 @@ import {
   formatFullDate,
   formatDateTitle,
   formatDateRange,
-  getMinutesFromTime,
-  formatTime,
 } from '../utils/dateUtils';
 import { DayData, ViewMode, CalendarEvent, DragSelection, Tag } from '../types';
 
@@ -27,20 +25,35 @@ interface CalendarProps {
   visibleTags: string[];
   onToggleTagVisibility: (tagId: string) => void;
   onAddEvent: (event: Omit<CalendarEvent, 'id'>) => void;
+  onSmartAddEvent: () => void;
   onUpdateEvent: (event: CalendarEvent) => void;
   onDeleteEvent: (id: string) => void;
   onOpenModal: (startTime?: string, endTime?: string, date?: Date, event?: CalendarEvent) => void;
+  currentDate?: Date;
+  setCurrentDate?: (d: Date) => void;
+  selectedDate?: Date;
+  setSelectedDate?: (d: Date) => void;
+  viewMode?: ViewMode;
+  setViewMode?: (v: ViewMode) => void;
 }
 
-const Calendar: React.FC<CalendarProps> = ({ events, tags, visibleTags, onToggleTagVisibility, onAddEvent, onUpdateEvent, onDeleteEvent, onOpenModal }) => {
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Day);
+const Calendar: React.FC<CalendarProps> = ({ events, tags, visibleTags, onToggleTagVisibility, onAddEvent, onSmartAddEvent, onUpdateEvent, onDeleteEvent, onOpenModal, currentDate: cdProp, setCurrentDate: setCdProp, selectedDate: sdProp, setSelectedDate: setSdProp, viewMode: vmProp, setViewMode: setVmProp }) => {
+  const [currentDateState, setCurrentDateState] = useState(new Date());
+  const [selectedDateState, setSelectedDateState] = useState(new Date());
+  const [viewModeState, setViewModeState] = useState<ViewMode>(ViewMode.Day);
+  const currentDate = cdProp ?? currentDateState;
+  const setCurrentDate = setCdProp ?? setCurrentDateState;
+  const selectedDate = sdProp ?? selectedDateState;
+  const setSelectedDate = setSdProp ?? setSelectedDateState;
+  const viewMode = vmProp ?? viewModeState;
+  const setViewMode = setVmProp ?? setViewModeState;
   const [isPanelVisible, setIsPanelVisible] = useState(true);
 
   // Generate data based on current view
   const calendarData: DayData[] = useMemo(() => {
-    return generateCalendarData(currentDate, selectedDate, viewMode, events);
+    const data = generateCalendarData(currentDate, selectedDate, viewMode, events);
+
+    return data;
   }, [currentDate, selectedDate, viewMode, events]);
 
   const { panelEvents, panelTitle, panelContext } = useMemo(() => {
@@ -57,7 +70,7 @@ const Calendar: React.FC<CalendarProps> = ({ events, tags, visibleTags, onToggle
       const monthEvents = calendarData
         .filter(d => d.isCurrentMonth)
         .flatMap(d => d.events);
-      
+
       return {
         panelEvents: sortEvents(monthEvents),
         panelTitle: formatDateTitle(currentDate),
@@ -80,7 +93,7 @@ const Calendar: React.FC<CalendarProps> = ({ events, tags, visibleTags, onToggle
     // Default to Day view logic
     // In Day view, calendarData contains exactly the selected day's data
     const dayEvents = calendarData.length > 0 ? calendarData[0].events : [];
-    
+
     return {
       panelEvents: sortEvents(dayEvents),
       panelTitle: formatFullDate(selectedDate),
@@ -136,41 +149,6 @@ const Calendar: React.FC<CalendarProps> = ({ events, tags, visibleTags, onToggle
     onOpenModal(event.startTime, event.endTime, event.date, event);
   }, [onOpenModal]);
 
-  const handleAddEventPanel = useCallback(() => {
-    // Filter events for the selected date to determine the default start time
-    const daysEvents = events.filter(e => isSameDay(e.date, selectedDate));
-    // Sort events by start time
-    daysEvents.sort((a, b) => a.startTime.localeCompare(b.startTime));
-
-    let defaultStartTime = '09:00';
-    let defaultEndTime = '10:00';
-
-    if (daysEvents.length > 0) {
-      const lastEvent = daysEvents[daysEvents.length - 1];
-      defaultStartTime = lastEvent.endTime;
-    }
-
-    // Determine default end time: use current time if possible
-    const now = new Date();
-    const currentTimeStr = formatTime(now);
-    
-    const startMinutes = getMinutesFromTime(defaultStartTime);
-    const currentMinutes = getMinutesFromTime(currentTimeStr);
-
-    if (currentMinutes > startMinutes) {
-      // If current time is after start time, use current time
-      defaultEndTime = currentTimeStr;
-    } else {
-      // Fallback: start time + 15 minutes
-      const endMinutes = startMinutes + 15;
-      const hours = Math.floor(endMinutes / 60) % 24;
-      const mins = endMinutes % 60;
-      defaultEndTime = `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
-    }
-
-    onOpenModal(defaultStartTime, defaultEndTime, selectedDate);
-  }, [onOpenModal, selectedDate, events]);
-
   const weekDays = ['一', '二', '三', '四', '五', '六', '日'];
 
   const isMonthView = viewMode === ViewMode.Month;
@@ -179,7 +157,7 @@ const Calendar: React.FC<CalendarProps> = ({ events, tags, visibleTags, onToggle
     <div className="w-full h-[85vh] flex flex-col lg:flex-row gap-6 p-0 lg:p-4 z-10">
 
       <GlassCard
-        className="flex-1 p-6 flex flex-col justify-between animate-[fadeIn_0.5s_ease-out] bg-[#FAFAFA] min-w-full" // Added min-w-full for fixed width
+        className="flex-1 p-6 flex flex-col justify-between animate-[fadeIn_0.5s_ease-out] bg-[#FAFAFA] min-w-full"
         intensity="medium"
       >
         {/* Header */}
@@ -227,6 +205,7 @@ const Calendar: React.FC<CalendarProps> = ({ events, tags, visibleTags, onToggle
               >
                 <Icons.ChevronRight size={18} />
               </button>
+
               <div className="w-px h-5 bg-gray-200 mx-1"></div>
               <button
                 onClick={() => setIsPanelVisible(!isPanelVisible)}
@@ -240,7 +219,7 @@ const Calendar: React.FC<CalendarProps> = ({ events, tags, visibleTags, onToggle
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 relative overflow-hidden h-full">
+        <div className="flex-1 relative overflow-hidden min-h-0">
           {isMonthView ? (
             <div className="h-full flex flex-col">
               <div className="grid grid-cols-7 border-b border-gray-200 flex-shrink-0">
@@ -254,7 +233,7 @@ const Calendar: React.FC<CalendarProps> = ({ events, tags, visibleTags, onToggle
                 {calendarData.map((day, index) => (
                   <div
                     key={day.date.toISOString()}
-                    className="border-r border-b border-gray-200 animate-[fadeIn_0.5s_ease-out_forwards]"
+                    className="border-r border-b border-gray-200 animate-[fadeIn_0.5s_ease-out] [animation-fill-mode:forwards]"
                     style={{ animationDelay: `${index * 10}ms`, opacity: 0 }}
                   >
                     <DayCell day={day} onClick={handleDateClick} />
@@ -270,13 +249,15 @@ const Calendar: React.FC<CalendarProps> = ({ events, tags, visibleTags, onToggle
               onAddEvent={handleDragCreate}
               onEventClick={handleEventClick}
               onUpdateEvent={onUpdateEvent}
-              onScrollNavigate={viewMode === ViewMode.Week ? (direction) => {
-                if (direction === 'next') {
-                  handleNext();
-                } else {
-                  handlePrev();
+              onScrollNavigate={useCallback((direction: 'prev' | 'next') => {
+                if (viewMode === ViewMode.Week) {
+                  if (direction === 'next') {
+                    handleNext();
+                  } else {
+                    handlePrev();
+                  }
                 }
-              } : undefined}
+              }, [viewMode, handleNext, handlePrev])}
             />
           )}
         </div>
@@ -311,7 +292,7 @@ const Calendar: React.FC<CalendarProps> = ({ events, tags, visibleTags, onToggle
             tags={tags}
             visibleTags={visibleTags}
             onToggleTagVisibility={onToggleTagVisibility}
-            onAddEvent={handleAddEventPanel}
+            onAddEvent={onSmartAddEvent}
             onEventClick={handleEventClick}
           />
         </div>

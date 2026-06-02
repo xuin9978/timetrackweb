@@ -73,9 +73,16 @@ const EventPanel: React.FC<EventPanelProps> = ({ panelTitle, panelContext, event
         });
     };
 
-    const getTagInfo = (id: string) => {
-        return tags.find(t => t.id === id) || { id: 'unknown', label: '未分类', color: 'bg-gray-400', icon: '❓' };
-    };
+    const getTagInfo = useMemo(() => {
+        const cache = new Map<string, Tag>();
+        const defaultTag = { id: 'unknown', label: '未分类', color: 'bg-gray-400', icon: '❓' } as Tag;
+        return (id: string) => {
+            if (cache.has(id)) return cache.get(id)!;
+            const tag = tags.find(t => t.id === id) || defaultTag;
+            cache.set(id, tag);
+            return tag;
+        };
+    }, [tags]);
 
     const groupedEvents = useMemo(() => {
         if (viewType !== 'group') return null;
@@ -104,13 +111,7 @@ const EventPanel: React.FC<EventPanelProps> = ({ panelTitle, panelContext, event
         setTimeout(() => setIsButtonAnimating(''), 300);
     };
 
-    const noEventsMessage = useMemo(() => {
-        switch (panelContext) {
-            case 'month': return '本月无日程';
-            case 'week': return '本周无日程';
-            default: return '今日无日程';
-        }
-    }, [panelContext]);
+    const noEventsMessage = panelContext === 'month' ? '本月无日程' : panelContext === 'week' ? '本周无日程' : '今日无日程';
 
     const renderEventCard = (event: CalendarEvent, index: number, tag?: Tag) => {
         const tagInfo = tag || getTagInfo(event.category);
