@@ -83,11 +83,38 @@ Never paste real values into code, docs, logs, commits, or PR text. If a future 
 - Keep diffs small, reviewable, and consistent with the existing style.
 - Search the repo before assuming file paths, APIs, or conventions.
 - Do not move, rename, delete, or reorganize business files during documentation-only tasks.
+- Do not casually move root `check-*`, `debug-*`, or `test-*` files. Before moving any of them, search references in source, docs, HTML, package scripts, and external workflow notes.
 - Do not add telemetry, analytics, new network calls, or dependency upgrades unless requested.
 - Preserve current Supabase auth/session behavior and local cache/backup behavior unless the user explicitly asks for a change.
+- Changes involving Supabase, auth, calendar behavior, alarm/session logging, sync/cache behavior, or deployment must be handled as separate explicit tasks.
 - For behavior changes, add or update the closest available check. If no formal test exists, document the manual or ad hoc validation used.
 - Prefer npm because this repo has `package-lock.json`.
 - Avoid logging secrets. Existing diagnostic scripts should only report whether env vars are configured or masked.
+- Current build warnings about missing `/index.css`, mixed static/dynamic `dateUtils.ts` imports, and bundle size are known non-blocking issues. Do not automatically attribute them to future documentation-only changes.
+- Do not edit `dist/`, `node_modules/`, or `.vercel/`.
+
+## Root Script And Scratch File Index
+
+These root-level files are not currently wired into `package.json` scripts. Treat them as manually run diagnostics, historical checks, or project notes unless a future task confirms otherwise.
+
+| File | Category | Purpose | Risk |
+| --- | --- | --- | --- |
+| `check-data-integrity.js` | Development check script | Checks Supabase event/user data integrity using env-loaded Supabase credentials. | Medium: queries Supabase and depends on env setup. |
+| `check-supabase-status.js` | Development check script | Checks Supabase URL accessibility and auth endpoint status without printing secrets. | Medium: touches external Supabase endpoints. |
+| `test-supabase-connection.js` | Development check script | Tests Supabase client setup, session, and sample `events`/`tags` queries. | Medium: depends on env and live Supabase state. |
+| `debug-supabase.cjs` | One-off debug script | Debugs Supabase connection and manually reads `.env.local` when needed. | Medium-high: moving it can break `__dirname` env lookup. |
+| `test-auth.html` | Temporary/manual test file | Standalone browser page for Supabase auth testing. | Medium: may be opened manually and stores test values in localStorage. |
+| `test-calendar-logic.ts` | Temporary test file | Manual check for month-to-day calendar date selection behavior. | Low-medium: imports app types/helpers by relative path. |
+| `test-month-events-mapping.ts` | Temporary test file | Manual check for month view event mapping. | Low-medium: imports app types/helpers by relative path. |
+| `test-time-segment-logic.ts` | Development check script | Assertion-style checks for event duration presentation, cross-day splitting, and overlap layout. | Medium: useful coverage for calendar logic; moving requires import updates. |
+| `test-visible-range-coverage.ts` | Development check script | Logs visible date ranges for day/week/month views. | Medium: useful coverage for calendar range behavior. |
+| `tests/test-timezone-fix.js` | Temporary test file | Manual timezone/date comparison diagnostic. | Low: standalone historical check. |
+| `test-alarm-sync.js` | Temporary test file | Simulates alarm finish/session logging into event data. | Medium: relates to alarm/calendar boundary logic. |
+| `tests/test-alarm-sync.cjs` | Temporary test file | CommonJS variant of the alarm/session simulation. | Medium: may exist for runtime compatibility. |
+| `IconPreview.tsx` | Needs human confirmation | Appears to be an icon preview/experiment component; no source import was found in the current pass. | Medium: may be manually used. |
+| `today-events-display-issue-analysis.md` | One-off analysis note | Historical analysis of a today-events display issue. | Low: documentation only. |
+| `metadata.json` | Needs human confirmation | Project metadata, likely from an external/AI Studio flow; no source import was found in the current pass. | Medium: may be used by external tooling. |
+| `非AI版 PRD.md` | Product/reference document | PRD/reference material, not runtime code. | Low: keep discoverable. |
 
 ## Do Not Edit Casually
 
@@ -99,6 +126,7 @@ Never paste real values into code, docs, logs, commits, or PR text. If a future 
 - `vercel.json`, `.vercel/`, `.vercelignore`.
 - `dist/`, `node_modules/`, generated artifacts, and dependency lock changes unless intentionally rebuilding/installing.
 - Root diagnostic files such as `check-*`, `debug-*`, `test-*` unless the task is about those scripts.
+- Build warning cleanup unless the task is explicitly about build hygiene or performance.
 
 ## Validation Checklist
 

@@ -116,20 +116,50 @@ For guest or offline-like paths, `App.tsx` and service helpers may use in-memory
 
 These files look like manual checks, debug pages, or ad hoc tests. They are recorded here only; no files were moved.
 
-- `check-data-integrity.js`
-- `check-supabase-status.js`
-- `debug-supabase.cjs`
-- `test-alarm-sync.cjs`
-- `test-alarm-sync.js`
-- `test-auth.html`
-- `test-calendar-logic.ts`
-- `test-month-events-mapping.ts`
-- `test-supabase-connection.js`
-- `test-time-segment-logic.ts`
-- `test-timezone-fix.js`
-- `test-visible-range-coverage.ts`
+- `check-data-integrity.js`: development check script for Supabase data integrity. Risk: medium because it queries Supabase and depends on env variables.
+- `check-supabase-status.js`: development check script for Supabase URL/auth endpoint status. Risk: medium because it touches external endpoints.
+- `test-supabase-connection.js`: development check script for Supabase client/session/table access. Risk: medium because it depends on live Supabase state.
+- `debug-supabase.cjs`: one-off Supabase debug script with manual `.env.local` reading. Risk: medium-high because moving it can break `__dirname` based env lookup.
+- `test-auth.html`: temporary/manual Supabase auth test page. Risk: medium because it may be opened directly and uses browser localStorage.
+- `test-calendar-logic.ts`: temporary calendar selection logic test. Risk: low-medium because it imports app helpers with relative paths.
+- `test-month-events-mapping.ts`: temporary month event mapping test. Risk: low-medium because it imports app helpers with relative paths.
+- `test-time-segment-logic.ts`: development check script for event presentation, cross-day splitting, and overlap layout. Risk: medium because it covers calendar logic and imports app helpers.
+- `test-visible-range-coverage.ts`: development check script for visible date ranges. Risk: medium because it covers calendar range behavior.
+- `tests/test-timezone-fix.js`: temporary timezone/date diagnostic. Risk: low because it is standalone.
+- `test-alarm-sync.js`: temporary alarm-to-event sync simulation. Risk: medium because it touches alarm/calendar boundary assumptions.
+- `tests/test-alarm-sync.cjs`: CommonJS variant of the alarm/session simulation. Risk: medium because it may exist for runtime compatibility.
+- `IconPreview.tsx`: needs human confirmation; appears to be an icon preview/experiment component. Risk: medium because it may be manually used even though no source import was found.
+- `today-events-display-issue-analysis.md`: one-off issue analysis note. Risk: low because it is documentation only.
+- `metadata.json`: needs human confirmation; likely external/AI Studio project metadata. Risk: medium because external tooling may expect it at root.
+- `非AI版 PRD.md`: product/reference document. Risk: low, but keep discoverable for product context.
 
 Potential future cleanup idea: after confirmation, these could be organized under a `scripts/`, `dev-tools/`, or `tests/` directory and wired to npm scripts. Do not do that in this first-stage documentation pass.
+
+Before moving any of these files, search for references in `package.json`, source imports, `index.html`, `README.md`, `AGENTS.md`, this project map, deployment notes, and any external workflow documentation. If a file imports app code by relative path, update and validate those imports in the same task.
+
+## Directory Status And Boundaries
+
+| Directory | Current responsibility | Boundary notes |
+| --- | --- | --- |
+| `src/` | Vite type declarations. Currently only `vite-env.d.ts` was found. | Keep as-is for now. Moving app source into `src/` would require broad import and config changes. |
+| `components/` | React UI components, feature views, modals, icons, and shared UI wrappers. | Clear UI boundary. Do not mix Supabase schema/auth changes into component cleanup. |
+| `utils/` | Supabase services, date/time helpers, backup helpers, timezone helpers, and prompt helper code. | Service code and pure helpers share the same directory. Future splitting needs confirmation because many imports depend on current paths. |
+| `supabase/` | SQL schema/migration/RLS files for `events` and `tags`. | High-risk data/auth boundary. Do not edit or reorganize without a dedicated Supabase task. |
+| `public/` | Static public assets directory. Currently appears mostly empty in this checkout. | Safe to document, but avoid moving PWA assets without checking `index.html` and `manifest.json`. |
+| `chrome-extension/` | Extension-related placeholder/assets area; currently an `icons/` directory was observed. | Needs human confirmation before cleanup because extension packaging may rely on root-relative paths. |
+| `dist/` | Generated Vite build output. | Do not edit manually. Build may rewrite it, but it should not be treated as source. |
+| `node_modules/` | Installed npm dependencies. | Do not edit manually. Use package manager commands only when dependency work is explicitly requested. |
+| `.vercel/` | Vercel local project metadata. | Do not edit casually. Deployment-related changes should be a separate task. |
+
+## Known Non-Blocking Build Warnings
+
+These warnings were observed during `npm run build`. They are current known non-blocking issues and should not be automatically attributed to future documentation-only changes.
+
+- `/index.css` does not exist at build time, but `index.html` references `/index.css`; Vite leaves the link for runtime resolution.
+- `utils/dateUtils.ts` is dynamically imported by `components/SettingsModal.tsx` and also statically imported by many app modules, so the dynamic import does not split it into a separate chunk.
+- The main JavaScript bundle is larger than Vite's default 500 kB warning threshold after minification.
+
+Do not fix these warnings as part of routine documentation or file-index cleanup. Treat them as separate build hygiene or performance tasks.
 
 ## Generated, Dependency, And High-Risk Areas
 
