@@ -278,12 +278,60 @@ export const deleteEventsByCategory = async (userId: string, categoryId: string)
   }
 };
 
+export const clearEventCategory = async (userId: string, categoryId: string): Promise<string[]> => {
+  if (!supabase) throw new Error('未配置 Supabase');
+
+  try {
+    const { data, error } = await supabase
+      .from('events')
+      .update({ category: null })
+      .eq('user_id', userId)
+      .eq('category', categoryId)
+      .select('id');
+
+    if (error) {
+      if (error.message?.includes('JWT expired')) {
+        throw new Error('JWT expired');
+      }
+      throw new Error(error.message);
+    }
+    return Array.isArray(data) ? data.map((row: any) => row.id) : [];
+  } catch (error: any) {
+    console.error('清空事件分类失败:', error.message);
+    throw error;
+  }
+};
+
+export const restoreEventCategory = async (userId: string, eventIds: string[], categoryId: string): Promise<boolean> => {
+  if (!supabase) throw new Error('未配置 Supabase');
+  if (eventIds.length === 0) return true;
+
+  try {
+    const { error } = await supabase
+      .from('events')
+      .update({ category: categoryId || null })
+      .eq('user_id', userId)
+      .in('id', eventIds);
+
+    if (error) {
+      if (error.message?.includes('JWT expired')) {
+        throw new Error('JWT expired');
+      }
+      throw new Error(error.message);
+    }
+    return true;
+  } catch (error: any) {
+    console.error('恢复事件分类失败:', error.message);
+    throw error;
+  }
+};
+
 export const replaceAllEvents = async (userId: string, items: Omit<CalendarEvent, 'id'>[]): Promise<CalendarEvent[]> => {
   if (!supabase) throw new Error('未配置 Supabase');
   
   try {
     // 使用事务确保数据一致性
-    const { data: delRes, error: delError } = await supabase.from('events').delete().eq('user_id', userId);
+    const { error: delError } = await supabase.from('events').delete().eq('user_id', userId);
     if (delError) {
       if (delError.message?.includes('JWT expired')) {
         throw new Error('JWT expired');

@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import GlassCard from './GlassCard';
 import { Icons } from './Icons';
 import { Tag } from '../types';
+import { getTagColorHex } from '../utils/dateUtils';
 
 interface LogSessionModalProps {
   isOpen: boolean;
@@ -42,22 +43,6 @@ const LogSessionModal: React.FC<LogSessionModalProps> = ({ isOpen, onClose, onCo
     onClose();
   }
 
-  // A vibrant color map for this specific modal's tags
-  const tagColorMap: Record<string, string> = {
-    'bg-cyan-400': 'bg-blue-500 text-white',
-    'bg-emerald-400': 'bg-green-500 text-white',
-    'bg-orange-400': 'bg-orange-500 text-white',
-    'bg-purple-400': 'bg-purple-500 text-white',
-    'bg-rose-400': 'bg-pink-500 text-white',
-    'bg-pink-400': 'bg-pink-500 text-white',
-    'bg-indigo-400': 'bg-indigo-500 text-white',
-    'bg-teal-400': 'bg-teal-500 text-white',
-    'bg-yellow-400': 'bg-yellow-500 text-white',
-    'bg-lime-400': 'bg-lime-500 text-white',
-    'bg-red-400': 'bg-red-500 text-white',
-    'bg-blue-400': 'bg-blue-500 text-white',
-  };
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/20 backdrop-blur-sm animate-[fadeIn_0.3s]" onClick={handleCancel} />
@@ -92,9 +77,10 @@ const LogSessionModal: React.FC<LogSessionModalProps> = ({ isOpen, onClose, onCo
                         onClick={() => handleToggleTag(tag.id)}
                         className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
                             selectedTagIds.includes(tag.id)
-                            ? (tagColorMap[tag.color] || 'bg-blue-500 text-white')
+                            ? 'text-white'
                             : 'bg-gray-100/80 text-gray-700 hover:bg-gray-200/80'
                         }`}
+                        style={selectedTagIds.includes(tag.id) ? { backgroundColor: getTagColorHex(tag.color) } : undefined}
                     >
                         {tag.label}
                     </button>

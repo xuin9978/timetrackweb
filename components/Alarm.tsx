@@ -127,6 +127,8 @@ const Alarm: React.FC<AlarmProps> = ({
             <button 
             onClick={onStart}
             disabled={isDisabled}
+            title={isDisabled ? '请先设置计时器时长' : '启动'}
+            aria-label={isDisabled ? '请先设置计时器时长' : '启动'}
             className={`w-24 h-24 rounded-full flex items-center justify-center transition-all active:scale-95 text-xl font-medium
                 ${isDisabled 
                     ? 'bg-gray-100 text-gray-300 cursor-not-allowed' 
@@ -169,7 +171,7 @@ const Alarm: React.FC<AlarmProps> = ({
 
   return (
     <>
-        <div className="w-full h-full md:hidden bg-white rounded-[32px] flex flex-col items-center justify-center shadow-sm">
+        <div className="alarm-card alarm-card-mobile w-full h-full md:hidden bg-white rounded-[32px] flex flex-col items-center justify-center shadow-sm">
              {/* Mobile / PWA Layout */}
             <div className="flex-1 flex flex-col items-center justify-center p-8 w-full">
                  {/* Time Display */}
@@ -177,14 +179,22 @@ const Alarm: React.FC<AlarmProps> = ({
                     className="flex flex-col items-center justify-center relative mb-16 cursor-pointer" 
                     onClick={() => { if(mode === 'timer') setIsSetupModalOpen(true) }}
                 >
-                    <h1 className="text-7xl font-normal text-black tabular-nums tracking-tight select-none">
+                    <h1 className="alarm-time-display text-7xl font-normal text-black tabular-nums tracking-tight select-none">
                     {formatDisplayTime(displayTime)}
                     </h1>
                 </div>
 
                 {/* Main Control (Start/Stop) */}
-                <div className="flex flex-col items-center gap-8 z-10 mb-20 h-32 justify-center">
+                <div className="flex flex-col items-center gap-4 z-10 mb-20 h-32 justify-center">
                     {renderMainButton()}
+                    {mode === 'timer' && status === 'idle' && totalDuration === 0 && (
+                        <button
+                            onClick={() => setIsSetupModalOpen(true)}
+                            className="px-4 py-2 rounded-full bg-cyan-50 text-cyan-600 border border-cyan-100 text-sm font-medium hover:bg-cyan-100 transition-colors"
+                        >
+                            设置计时器时长
+                        </button>
+                    )}
                 </div>
 
                 {/* Mode Switchers */}
@@ -192,7 +202,7 @@ const Alarm: React.FC<AlarmProps> = ({
                     <button
                         onClick={() => handleModeSwitch('stopwatch')}
                         className={`
-                            px-6 py-2 rounded-full flex items-center gap-2 transition-all duration-200 border text-sm font-medium
+                            alarm-mode-button px-6 py-2 rounded-full flex items-center gap-2 transition-all duration-200 border text-sm font-medium
                             ${mode === 'stopwatch' 
                                 ? 'border-orange-200 text-orange-600 bg-orange-50' 
                                 : 'border-gray-200 text-gray-400 hover:bg-gray-50'
@@ -206,7 +216,7 @@ const Alarm: React.FC<AlarmProps> = ({
                     <button
                         onClick={() => handleModeSwitch('timer')}
                         className={`
-                            px-6 py-2 rounded-full flex items-center gap-2 transition-all duration-200 border text-sm font-medium
+                            alarm-mode-button px-6 py-2 rounded-full flex items-center gap-2 transition-all duration-200 border text-sm font-medium
                             ${mode === 'timer' 
                                 ? 'border-cyan-200 text-cyan-600 bg-cyan-50' 
                                 : 'border-gray-200 text-gray-400 hover:bg-gray-50'
@@ -214,7 +224,7 @@ const Alarm: React.FC<AlarmProps> = ({
                         `}
                     >
                         <Icons.Hourglass size={18} />
-                        <span>计时</span>
+                        <span>计时器</span>
                     </button>
                 </div>
             </div>
@@ -222,21 +232,29 @@ const Alarm: React.FC<AlarmProps> = ({
 
         {/* Desktop Layout (Original GlassCard) */}
         <div className="hidden md:flex w-full h-full">
-            <GlassCard intensity="medium" className="w-full h-[85vh] max-w-2xl mx-auto flex flex-col relative overflow-hidden bg-white">
+            <GlassCard intensity="medium" className="alarm-card alarm-card-desktop w-full h-[85vh] max-w-2xl mx-auto flex flex-col relative overflow-hidden bg-white">
             <div className="flex-1 flex flex-col items-center justify-center p-8 pb-20">
                 {/* Time Display */}
                 <div 
                     className="flex flex-col items-center justify-center relative mb-20 cursor-pointer" 
                     onClick={() => { if(mode === 'timer') setIsSetupModalOpen(true) }}
                 >
-                    <h1 className="text-9xl font-light text-black tabular-nums tracking-tight select-none">
+                    <h1 className="alarm-time-display text-9xl font-light text-black tabular-nums tracking-tight select-none">
                     {formatDisplayTime(displayTime)}
                     </h1>
                 </div>
 
                 {/* Main Control (Start/Stop) */}
-                <div className="flex flex-col items-center gap-8 z-10 mb-16 h-32 justify-center">
+                <div className="flex flex-col items-center gap-4 z-10 mb-16 h-32 justify-center">
                     {renderMainButton()}
+                    {mode === 'timer' && status === 'idle' && totalDuration === 0 && (
+                        <button
+                            onClick={() => setIsSetupModalOpen(true)}
+                            className="px-4 py-2 rounded-full bg-cyan-50 text-cyan-600 border border-cyan-100 text-sm font-medium hover:bg-cyan-100 transition-colors"
+                        >
+                            设置计时器时长
+                        </button>
+                    )}
                 </div>
 
                 {/* Mode Switchers */}
@@ -244,7 +262,7 @@ const Alarm: React.FC<AlarmProps> = ({
                     <button
                         onClick={() => handleModeSwitch('stopwatch')}
                         className={`
-                            px-6 py-2 rounded-full flex items-center gap-2 transition-all duration-200 border text-sm font-medium
+                            alarm-mode-button px-6 py-2 rounded-full flex items-center gap-2 transition-all duration-200 border text-sm font-medium
                             ${mode === 'stopwatch' 
                                 ? 'border-orange-200 text-orange-600 bg-orange-50' 
                                 : 'border-gray-200 text-gray-400 hover:bg-gray-50'
@@ -258,7 +276,7 @@ const Alarm: React.FC<AlarmProps> = ({
                     <button
                         onClick={() => handleModeSwitch('timer')}
                         className={`
-                            px-6 py-2 rounded-full flex items-center gap-2 transition-all duration-200 border text-sm font-medium
+                            alarm-mode-button px-6 py-2 rounded-full flex items-center gap-2 transition-all duration-200 border text-sm font-medium
                             ${mode === 'timer' 
                                 ? 'border-cyan-200 text-cyan-600 bg-cyan-50' 
                                 : 'border-gray-200 text-gray-400 hover:bg-gray-50'
@@ -266,7 +284,7 @@ const Alarm: React.FC<AlarmProps> = ({
                         `}
                     >
                         <Icons.Hourglass size={18} />
-                        <span>计时</span>
+                        <span>计时器</span>
                     </button>
                 </div>
             </div>

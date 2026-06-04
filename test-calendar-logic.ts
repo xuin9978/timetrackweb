@@ -1,15 +1,16 @@
 
 import { ViewMode } from './types';
-import { generateCalendarData, isSameDay } from './utils/dateUtils';
+import { isSameDay } from './utils/dateUtils';
 
 // Mock state and handler
 let currentDate = new Date('2023-11-01'); // November 2023
 let selectedDate = new Date('2023-11-01');
-let viewMode = ViewMode.Month;
+let viewMode: ViewMode = ViewMode.Month;
 
 const setCurrentDate = (date: Date) => { currentDate = date; };
 const setSelectedDate = (date: Date) => { selectedDate = date; };
 const setViewMode = (mode: ViewMode) => { viewMode = mode; };
+const getViewMode = (): ViewMode => viewMode;
 
 // The function to test
 const handleDateClick = (date: Date) => {
@@ -28,7 +29,7 @@ handleDateClick(targetDate1);
 if (
   isSameDay(selectedDate, targetDate1) &&
   isSameDay(currentDate, targetDate1) &&
-  viewMode === ViewMode.Day
+  getViewMode() === ViewMode.Day
 ) {
   console.log('PASS: Jumped to Day view with correct date.');
 } else {
@@ -47,7 +48,7 @@ handleDateClick(targetDate2);
 if (
   isSameDay(selectedDate, targetDate2) &&
   isSameDay(currentDate, targetDate2) &&
-  viewMode === ViewMode.Day
+  getViewMode() === ViewMode.Day
 ) {
   console.log('PASS: Jumped to Day view with prev month date.');
 } else {
@@ -67,7 +68,7 @@ handleDateClick(targetDate3);
 if (
   isSameDay(selectedDate, targetDate3) &&
   isSameDay(currentDate, targetDate3) &&
-  viewMode === ViewMode.Day
+  getViewMode() === ViewMode.Day
 ) {
   console.log('PASS: Jumped to Day view on Leap Day.');
 } else {

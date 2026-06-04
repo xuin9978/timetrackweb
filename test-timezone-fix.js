@@ -1,11 +1,6 @@
 // 时区修复测试脚本
 // 用于验证"今天"事件显示问题的修复效果
 
-import { createClient } from '@supabase/supabase-js';
-
-const SUPABASE_URL = 'https://qlnwwewhbgjffjevevij.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFsbnd3ZXdoYmdqZmZqZXZldmlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM4OTc2NjQsImV4cCI6MjA5NDc0NzY2NH0.gbdc85N8Tj27I1n4WZvK4boiT6BlsCcd3TSkK1Xm4wI';
-
 // 模拟事件数据
 const testEvents = [
   {

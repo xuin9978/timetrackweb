@@ -1,7 +1,7 @@
 // 时区处理工具函数
 // 专门用于解决"今天"事件显示问题的时区处理
 
-import { format, startOfDay, endOfDay } from 'date-fns';
+import { startOfDay, endOfDay } from 'date-fns';
 
 /**
  * 标准化日期处理，确保时区一致性

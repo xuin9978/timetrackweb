@@ -2,12 +2,22 @@
 // 用于确认当前所有时间段数据的完整性
 
 import { createClient } from '@supabase/supabase-js';
+import dotenv from 'dotenv';
 
-const SUPABASE_URL = 'https://qlnwwewhbgjffjevevij.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFsbnd3ZXdoYmdqZmZqZXZldmlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM4OTc2NjQsImV4cCI6MjA5NDc0NzY2NH0.gbdc85N8Tj27I1n4WZvK4boiT6BlsCcd3TSkK1Xm4wI';
+dotenv.config({ path: '.env.local' });
+dotenv.config({ path: '.env', override: false });
+
+const norm = v => typeof v === 'string' ? v.trim().replace(/^['"`]|['"`]$/g, '') : undefined;
+const SUPABASE_URL = norm(process.env.VITE_SUPABASE_URL);
+const SUPABASE_KEY = norm(process.env.VITE_SUPABASE_ANON_KEY);
 
 async function checkDataIntegrity() {
   console.log('=== 数据完整性检查开始 ===');
+
+  if (!SUPABASE_URL || !SUPABASE_KEY) {
+    console.error('缺少 VITE_SUPABASE_URL 或 VITE_SUPABASE_ANON_KEY');
+    return { success: false };
+  }
   
   try {
     // 创建Supabase客户端

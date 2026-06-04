@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import GlassCard from './GlassCard';
 import { Icons } from './Icons';
 import { CalendarEvent, ModalConfig, Tag } from '../types';
@@ -18,6 +18,32 @@ interface AddEventModalProps {
   hasMoreTags: boolean;
 }
 
+const getTagPrefix = (tag?: Tag) => {
+  const icon = tag?.icon?.trim();
+  return icon ? `${icon}：` : '';
+};
+
+const applyTagPrefix = (currentTitle: string, nextTag: Tag, tags: Tag[]) => {
+  const nextPrefix = getTagPrefix(nextTag);
+  if (!nextPrefix) return currentTitle;
+
+  const title = currentTitle.trimStart();
+  const knownPrefixes = Array.from(
+    new Set(
+      tags
+        .flatMap(tag => {
+          const icon = tag.icon?.trim();
+          return icon ? [`${icon}：`, `${icon}:`] : [];
+        })
+    )
+  ).sort((a, b) => b.length - a.length);
+
+  const matchedPrefix = knownPrefixes.find(prefix => title.startsWith(prefix));
+  const body = matchedPrefix ? title.slice(matchedPrefix.length).trimStart() : title;
+
+  return `${nextPrefix}${body}`;
+};
+
 const AddEventModal: React.FC<AddEventModalProps> = ({
   config,
   onClose,
@@ -34,6 +60,8 @@ const AddEventModal: React.FC<AddEventModalProps> = ({
   const [startTime, setStartTime] = useState('09:00');
   const [endTime, setEndTime] = useState('10:00');
   const [categoryId, setCategoryId] = useState<string>('');
+  const startTimeInputRef = useRef<HTMLInputElement>(null);
+  const endTimeInputRef = useRef<HTMLInputElement>(null);
 
   const { isOpen, mode, initialData } = config;
 
@@ -58,14 +86,18 @@ const AddEventModal: React.FC<AddEventModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const submittedStartTime = startTimeInputRef.current?.value || startTime;
+    const submittedEndTime = endTimeInputRef.current?.value || endTime;
+
     if (!categoryId) {
       alert("请选择一个标签。");
       return;
     }
-    const startMins = getMinutesFromTime(startTime);
-    const endMins = getMinutesFromTime(endTime);
-    let finalEndTime = endTime;
-    if (endMins <= startMins) {
+    const startMins = getMinutesFromTime(submittedStartTime);
+    const endMins = getMinutesFromTime(submittedEndTime);
+    let finalEndTime = submittedEndTime;
+    const duration = endMins <= startMins ? 0 : endMins - startMins;
+    if (duration < 15) {
       const newEndTotal = startMins + 15;
       const hours = Math.floor(newEndTotal / 60) % 24;
       const mins = newEndTotal % 60;
@@ -73,7 +105,7 @@ const AddEventModal: React.FC<AddEventModalProps> = ({
     }
     const eventData = {
       title: title.trim() || '新建日程',
-      startTime,
+      startTime: submittedStartTime,
       endTime: finalEndTime,
       category: categoryId,
       date: initialData.date
@@ -92,6 +124,11 @@ const AddEventModal: React.FC<AddEventModalProps> = ({
       onDelete(initialData.event.id);
       onClose();
     }
+  };
+
+  const handleSelectTag = (tag: Tag) => {
+    setCategoryId(tag.id);
+    setTitle(prev => applyTagPrefix(prev, tag, tags));
   };
 
   const selectedTag = tags.find(t => t.id === categoryId);
@@ -145,7 +182,7 @@ const AddEventModal: React.FC<AddEventModalProps> = ({
                 <button
                   key={tag.id}
                   type="button"
-                  onClick={() => setCategoryId(tag.id)}
+                  onClick={() => handleSelectTag(tag)}
                   onContextMenu={(e) => {
                     e.preventDefault();
                     onEditTag(tag);
@@ -185,22 +222,24 @@ const AddEventModal: React.FC<AddEventModalProps> = ({
             <div className="flex justify-between items-center gap-2">
               <div className="flex-1 bg-white rounded-lg p-3 text-black text-lg font-medium border border-gray-200 flex items-center justify-center gap-2 shadow-sm">
                 <input
+                  ref={startTimeInputRef}
+                  name="startTime"
                   type="time"
                   value={startTime}
                   onChange={e => setStartTime(e.target.value)}
                   className="bg-transparent focus:outline-none w-full text-center"
                 />
-                <Icons.Clock size={18} className="text-gray-400" />
               </div>
               <span className="text-gray-400 font-medium text-sm">至</span>
               <div className="flex-1 bg-white rounded-lg p-3 text-black text-lg font-medium border border-gray-200 flex items-center justify-center gap-2 shadow-sm">
                 <input
+                  ref={endTimeInputRef}
+                  name="endTime"
                   type="time"
                   value={endTime}
                   onChange={e => setEndTime(e.target.value)}
                   className="bg-transparent focus:outline-none w-full text-center"
                 />
-                <Icons.Clock size={18} className="text-gray-400" />
               </div>
             </div>
           </div>

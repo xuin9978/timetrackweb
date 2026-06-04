@@ -11,8 +11,6 @@ import {
   addMonths, subMonths,
   addWeeks, subWeeks,
   addDays, subDays,
-  isSameDay,
-  isSameMonth,
   formatFullDate,
   formatDateTitle,
   formatDateRange,
@@ -24,10 +22,8 @@ interface CalendarProps {
   tags: Tag[];
   visibleTags: string[];
   onToggleTagVisibility: (tagId: string) => void;
-  onAddEvent: (event: Omit<CalendarEvent, 'id'>) => void;
   onSmartAddEvent: () => void;
   onUpdateEvent: (event: CalendarEvent) => void;
-  onDeleteEvent: (id: string) => void;
   onOpenModal: (startTime?: string, endTime?: string, date?: Date, event?: CalendarEvent) => void;
   currentDate?: Date;
   setCurrentDate?: (d: Date) => void;
@@ -35,9 +31,12 @@ interface CalendarProps {
   setSelectedDate?: (d: Date) => void;
   viewMode?: ViewMode;
   setViewMode?: (v: ViewMode) => void;
+  hasHiddenAllTags?: boolean;
+  isSidebarCollapsed?: boolean;
+  onToggleSidebarCollapsed?: () => void;
 }
 
-const Calendar: React.FC<CalendarProps> = ({ events, tags, visibleTags, onToggleTagVisibility, onAddEvent, onSmartAddEvent, onUpdateEvent, onDeleteEvent, onOpenModal, currentDate: cdProp, setCurrentDate: setCdProp, selectedDate: sdProp, setSelectedDate: setSdProp, viewMode: vmProp, setViewMode: setVmProp }) => {
+const Calendar: React.FC<CalendarProps> = ({ events, tags, visibleTags, onToggleTagVisibility, onSmartAddEvent, onUpdateEvent, onOpenModal, currentDate: cdProp, setCurrentDate: setCdProp, selectedDate: sdProp, setSelectedDate: setSdProp, viewMode: vmProp, setViewMode: setVmProp, hasHiddenAllTags = false, isSidebarCollapsed = false, onToggleSidebarCollapsed }) => {
   const [currentDateState, setCurrentDateState] = useState(new Date());
   const [selectedDateState, setSelectedDateState] = useState(new Date());
   const [viewModeState, setViewModeState] = useState<ViewMode>(ViewMode.Day);
@@ -149,31 +148,55 @@ const Calendar: React.FC<CalendarProps> = ({ events, tags, visibleTags, onToggle
     onOpenModal(event.startTime, event.endTime, event.date, event);
   }, [onOpenModal]);
 
+  const handleScrollNavigate = useCallback((direction: 'prev' | 'next') => {
+    if (viewMode !== ViewMode.Week) return;
+
+    if (direction === 'next') {
+      handleNext();
+    } else {
+      handlePrev();
+    }
+  }, [viewMode, handleNext, handlePrev]);
+
   const weekDays = ['一', '二', '三', '四', '五', '六', '日'];
 
   const isMonthView = viewMode === ViewMode.Month;
+  const isWeekView = viewMode === ViewMode.Week;
 
   return (
-    <div className="w-full h-[85vh] flex flex-col lg:flex-row gap-6 p-0 lg:p-4 z-10">
+    <div className={`calendar-workspace w-full h-[85vh] flex flex-col lg:flex-row p-0 lg:p-4 z-10 transition-[gap] duration-300 ${isSidebarCollapsed ? 'gap-6 lg:gap-3' : 'gap-6 lg:gap-6'}`}>
 
       <GlassCard
-        className="flex-1 p-6 flex flex-col justify-between animate-[fadeIn_0.5s_ease-out] bg-[#FAFAFA] min-w-full"
+        className={`apple-calendar-card flex-1 p-6 flex flex-col justify-between animate-[fadeIn_0.5s_ease-out] bg-[#FAFAFA] min-w-0 ${isWeekView ? 'is-week-calendar' : ''}`}
         intensity="medium"
       >
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4 flex-shrink-0">
-          <div className="flex flex-col text-center md:text-left absolute top-6 left-1/2 -translate-x-1/2 md:static md:translate-x-0">
-            <h1 className="text-4xl md:text-5xl font-semibold tracking-tight text-black">
-              {formatMonthName(currentDate)}
-            </h1>
-            <span className="text-xl text-gray-400 font-normal tracking-widest">
+        <div className={`calendar-toolbar flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4 flex-shrink-0 ${isWeekView ? 'is-week-toolbar' : ''}`}>
+          <div className="calendar-title-block flex flex-col text-center md:text-left absolute top-6 left-1/2 -translate-x-1/2 md:static md:translate-x-0">
+            <div className="calendar-title-row flex items-center gap-3">
+              <h1 className="calendar-title text-4xl md:text-5xl font-semibold tracking-tight text-black">
+                {isWeekView ? `${formatYear(currentDate)} ${currentDate.getMonth() + 1}月` : formatMonthName(currentDate)}
+              </h1>
+              {isWeekView && (
+                <button
+                  onClick={() => {
+                    setCurrentDate(new Date());
+                    setSelectedDate(new Date());
+                  }}
+                  className="calendar-week-today-button px-3 h-8 rounded-full bg-gray-100 text-black hover:bg-gray-200 transition-all active:scale-95 text-xs font-medium"
+                >
+                  今天
+                </button>
+              )}
+            </div>
+            <span className={`calendar-subtitle text-xl text-gray-400 font-normal tracking-widest ${isWeekView ? 'week-hidden-subtitle' : ''}`}>
               {formatYear(currentDate)}
             </span>
           </div>
 
-          <div className="flex items-center gap-4 ml-auto">
+          <div className="calendar-toolbar-actions flex items-center gap-4 ml-auto">
             {/* Segmented Control */}
-            <div className="flex bg-gray-100 rounded-lg p-1 border border-gray-200">
+            <div className="calendar-segmented flex bg-gray-100 rounded-lg p-1 border border-gray-200">
               {[
                 { id: ViewMode.Day, label: '日' },
                 { id: ViewMode.Week, label: '周' },
@@ -182,7 +205,8 @@ const Calendar: React.FC<CalendarProps> = ({ events, tags, visibleTags, onToggle
                 <button
                   key={mode.id}
                   onClick={() => setViewMode(mode.id)}
-                  className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all duration-200 ${viewMode === mode.id
+                  aria-label={`切换到${mode.label}视图`}
+                  className={`calendar-segment px-4 py-1.5 rounded-md text-sm font-medium transition-all duration-200 ${viewMode === mode.id
                     ? 'bg-white text-black shadow-sm'
                     : 'text-gray-500 hover:text-gray-900'
                     }`}
@@ -192,25 +216,39 @@ const Calendar: React.FC<CalendarProps> = ({ events, tags, visibleTags, onToggle
               ))}
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="calendar-nav-cluster flex items-center gap-2">
               <button
                 onClick={handlePrev}
-                className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-black hover:bg-gray-200 transition-all active:scale-95"
+                title="上一页"
+                aria-label="上一页"
+                className="calendar-nav-button w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-black hover:bg-gray-200 transition-all active:scale-95"
               >
                 <Icons.ChevronLeft size={18} />
               </button>
               <button
                 onClick={handleNext}
-                className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-black hover:bg-gray-200 transition-all active:scale-95"
+                title="下一页"
+                aria-label="下一页"
+                className="calendar-nav-button w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-black hover:bg-gray-200 transition-all active:scale-95"
               >
                 <Icons.ChevronRight size={18} />
               </button>
 
-              <div className="w-px h-5 bg-gray-200 mx-1"></div>
+              <button
+                onClick={onToggleSidebarCollapsed}
+                title={isSidebarCollapsed ? "展开左侧栏" : "隐藏左侧栏"}
+                aria-label={isSidebarCollapsed ? "展开左侧栏" : "隐藏左侧栏"}
+                className={`calendar-nav-button calendar-sidebar-toggle w-8 h-8 flex items-center justify-center rounded-full ${isSidebarCollapsed ? 'bg-gray-200 text-black' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'} transition-colors`}
+              >
+                {isSidebarCollapsed ? <Icons.PanelRight size={18} /> : <Icons.PanelLeft size={18} />}
+              </button>
+
+              <div className="calendar-toolbar-divider w-px h-5 bg-gray-200 mx-1"></div>
               <button
                 onClick={() => setIsPanelVisible(!isPanelVisible)}
-                className={`w-8 h-8 flex items-center justify-center rounded-full ${isPanelVisible ? 'bg-gray-200 text-black' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'} transition-colors`}
+                className={`calendar-nav-button calendar-panel-toggle w-8 h-8 flex items-center justify-center rounded-full ${isPanelVisible ? 'bg-gray-200 text-black' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'} transition-colors`}
                 title={isPanelVisible ? "隐藏日程" : "显示日程"}
+                aria-label={isPanelVisible ? "隐藏日程" : "显示日程"}
               >
                 <Icons.PanelRight size={18} />
               </button>
@@ -219,24 +257,24 @@ const Calendar: React.FC<CalendarProps> = ({ events, tags, visibleTags, onToggle
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 relative overflow-hidden min-h-0">
+        <div className="calendar-content flex-1 relative overflow-hidden min-h-0">
           {isMonthView ? (
-            <div className="h-full flex flex-col">
-              <div className="grid grid-cols-7 border-b border-gray-200 flex-shrink-0">
+            <div className="month-view h-full flex flex-col">
+              <div className="month-week-header grid grid-cols-7 border-b border-gray-200 flex-shrink-0">
                 {weekDays.map(day => (
-                  <div key={day} className="text-center text-gray-400 text-xs py-2 uppercase tracking-widest font-semibold">
+                  <div key={day} className="month-weekday text-center text-gray-400 text-xs py-2 uppercase tracking-widest font-semibold">
                     {day}
                   </div>
                 ))}
               </div>
-              <div className="grid grid-cols-7 grid-rows-6 flex-1 border-l border-t border-gray-200">
+              <div className="month-grid grid grid-cols-7 grid-rows-6 flex-1 border-l border-t border-gray-200">
                 {calendarData.map((day, index) => (
                   <div
                     key={day.date.toISOString()}
-                    className="border-r border-b border-gray-200 animate-[fadeIn_0.5s_ease-out] [animation-fill-mode:forwards]"
+                    className="month-grid-cell border-r border-b border-gray-200 animate-[fadeIn_0.5s_ease-out] [animation-fill-mode:forwards]"
                     style={{ animationDelay: `${index * 10}ms`, opacity: 0 }}
                   >
-                    <DayCell day={day} onClick={handleDateClick} />
+                    <DayCell day={day} onClick={handleDateClick} tags={tags} onEventClick={handleEventClick} />
                   </div>
                 ))}
               </div>
@@ -249,27 +287,20 @@ const Calendar: React.FC<CalendarProps> = ({ events, tags, visibleTags, onToggle
               onAddEvent={handleDragCreate}
               onEventClick={handleEventClick}
               onUpdateEvent={onUpdateEvent}
-              onScrollNavigate={useCallback((direction: 'prev' | 'next') => {
-                if (viewMode === ViewMode.Week) {
-                  if (direction === 'next') {
-                    handleNext();
-                  } else {
-                    handlePrev();
-                  }
-                }
-              }, [viewMode, handleNext, handlePrev])}
+              onScrollNavigate={handleScrollNavigate}
+              viewMode={viewMode === ViewMode.Week ? ViewMode.Week : ViewMode.Day}
             />
           )}
         </div>
 
         {/* Bottom Action Bar */}
-        <div className="flex items-center gap-4">
+        <div className={`calendar-footer flex items-center gap-4 ${isWeekView ? 'is-hidden-for-week' : ''}`}>
           <button
             onClick={() => {
               setCurrentDate(new Date());
               setSelectedDate(new Date());
             }}
-            className="flex items-center gap-2 hover:text-black transition-colors"
+            className="calendar-today-button flex items-center gap-2 hover:text-black transition-colors"
           >
             <Icons.Calendar size={16} />
             <span>回到今天</span>
@@ -278,25 +309,23 @@ const Calendar: React.FC<CalendarProps> = ({ events, tags, visibleTags, onToggle
       </GlassCard>
 
       {/* Right Side: Event Detail Panel - Independent Card Side-by-Side */}
-      <div
-        className={`flex-shrink-0 h-full transition-all duration-400 ease-[cubic-bezier(0.25,0.1,0.25,1.0)] transform ${isPanelVisible
-          ? 'w-80 ml-6 opacity-100 translate-x-0'
-          : 'w-0 ml-0 opacity-0 translate-x-8 overflow-hidden'
-          }`}
-      >
-        <div className="w-80 h-full">
-          <EventPanel
-            panelTitle={panelTitle}
-            panelContext={panelContext}
-            events={panelEvents}
-            tags={tags}
-            visibleTags={visibleTags}
-            onToggleTagVisibility={onToggleTagVisibility}
-            onAddEvent={onSmartAddEvent}
-            onEventClick={handleEventClick}
-          />
+      {isPanelVisible && (
+        <div className="flex-shrink-0 h-full w-80 ml-6 animate-[fadeIn_0.2s_ease-out]">
+          <div className="w-80 h-full">
+            <EventPanel
+              panelTitle={panelTitle}
+              panelContext={panelContext}
+              events={panelEvents}
+              tags={tags}
+              visibleTags={visibleTags}
+              onToggleTagVisibility={onToggleTagVisibility}
+              onAddEvent={onSmartAddEvent}
+              onEventClick={handleEventClick}
+              hasHiddenAllTags={hasHiddenAllTags}
+            />
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

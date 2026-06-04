@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supabase 认证测试</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; margin-bottom: 20px; }
+        h2 { color: #666; margin-bottom: 16px; font-size: 18px; }
+        .status { 
+            padding: 12px; 
+            border-radius: 8px; 
+            margin: 8px 0;
+            font-family: monospace;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 8px 8px 8px 0;
+            font-size: 14px;
+        }
+        button:hover { background: #0056b3; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+        .result {
+            margin-top: 16px;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Supabase 认证诊断工具</h1>
+
+    <div class="card">
+        <h2>0. Supabase 临时配置</h2>
+        <input type="url" id="supabaseUrl" placeholder="输入 Supabase URL">
+        <input type="password" id="supabaseAnonKey" placeholder="输入 Supabase anon key">
+        <button onclick="saveSupabaseConfig()">保存临时配置</button>
+        <div id="configResult"></div>
+    </div>
+    
+    <div class="card">
+        <h2>1. 环境配置检查</h2>
+        <div id="envStatus"></div>
+    </div>
+
+    <div class="card">
+        <h2>2. Supabase 连接测试</h2>
+        <button onclick="testConnection()">测试连接</button>
+        <div id="connectionResult"></div>
+    </div>
+
+    <div class="card">
+        <h2>3. 登录测试</h2>
+        <input type="email" id="email" placeholder="输入邮箱" value="">
+        <input type="password" id="password" placeholder="输入密码" value="">
+        <button onclick="testLogin()">测试登录</button>
+        <div id="loginResult"></div>
+    </div>
+
+    <div class="card">
+        <h2>4. 会话状态检查</h2>
+        <button onclick="checkSession()">检查会话</button>
+        <button onclick="clearSession()">清除会话</button>
+        <div id="sessionResult"></div>
+    </div>
+
+    <div class="card">
+        <h2>5. 常见问题诊断</h2>
+        <div id="diagnosis"></div>
+    </div>
+
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+        const getStoredConfig = () => ({
+            url: localStorage.getItem('test_supabase_url') || '',
+            anonKey: localStorage.getItem('test_supabase_anon_key') || ''
+        });
+
+        let supabase = null;
+
+        const createSupabaseClient = () => {
+            const { url, anonKey } = getStoredConfig();
+            if (!url || !anonKey) return null;
+            return createClient(url, anonKey, {
+            auth: {
+                autoRefreshToken: true,
+                persistSession: true,
+                detectSessionInUrl: false
+            }
+            });
+        };
+
+        const refreshEnvStatus = () => {
+            const { url, anonKey } = getStoredConfig();
+            document.getElementById('supabaseUrl').value = url;
+            document.getElementById('supabaseAnonKey').value = anonKey;
+            document.getElementById('envStatus').innerHTML = `
+                <div class="status ${url ? 'success' : 'error'}">SUPABASE_URL: ${url ? '已配置' : '未配置'}</div>
+                <div class="status ${anonKey ? 'success' : 'error'}">SUPABASE_ANON_KEY: ${anonKey ? '已配置' : '未配置'}</div>
+                <div class="status info">当前页面: ${window.location.href}</div>
+                <div class="status info">本地存储键: ${Object.keys(localStorage).filter(k => k.includes('sb-')).join(', ') || '无'}</div>
+            `;
+        };
+
+        window.saveSupabaseConfig = () => {
+            const url = document.getElementById('supabaseUrl').value.trim();
+            const anonKey = document.getElementById('supabaseAnonKey').value.trim();
+
+            if (!url || !anonKey) {
+                document.getElementById('configResult').innerHTML = '<div class="status error">请输入 URL 和 anon key</div>';
+                return;
+            }
+
+            localStorage.setItem('test_supabase_url', url);
+            localStorage.setItem('test_supabase_anon_key', anonKey);
+            supabase = createSupabaseClient();
+            refreshEnvStatus();
+            document.getElementById('configResult').innerHTML = '<div class="status success">临时配置已保存到当前浏览器</div>';
+        };
+
+        const requireSupabase = () => {
+            if (!supabase) supabase = createSupabaseClient();
+            return supabase;
+        };
+
+        refreshEnvStatus();
+
+        // 测试连接
+        window.testConnection = async () => {
+            const resultDiv = document.getElementById('connectionResult');
+            resultDiv.innerHTML = '<div class="status info">⏳ 正在测试连接...</div>';
+            const client = requireSupabase();
+
+            if (!client) {
+                resultDiv.innerHTML = '<div class="status error">请先填写并保存 Supabase 临时配置</div>';
+                return;
+            }
+
+            try {
+                const start = Date.now();
+                const { data, error } = await client.from('events').select('count').limit(1);
+                const duration = Date.now() - start;
+
+                if (error) {
+                    resultDiv.innerHTML = `
+                        <div class="status error">❌ 连接失败</div>
+                        <div class="result">${JSON.stringify(error, null, 2)}</div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="status success">✅ 连接成功 (${duration}ms)</div>
+                        <div class="result">${JSON.stringify(data, null, 2)}</div>
+                    `;
+                }
+            } catch (err) {
+                resultDiv.innerHTML = `
+                    <div class="status error">❌ 连接异常</div>
+                    <div class="result">${err.message}</div>
+                `;
+            }
+        };
+
+        // 测试登录
+        window.testLogin = async () => {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const resultDiv = document.getElementById('loginResult');
+            const client = requireSupabase();
+
+            if (!client) {
+                resultDiv.innerHTML = '<div class="status error">请先填写并保存 Supabase 临时配置</div>';
+                return;
+            }
+
+            if (!email || !password) {
+                resultDiv.innerHTML = '<div class="status error">❌ 请输入邮箱和密码</div>';
+                return;
+            }
+
+            resultDiv.innerHTML = '<div class="status info">⏳ 正在登录...</div>';
+
+            try {
+                const start = Date.now();
+                const { data, error } = await client.auth.signInWithPassword({ 
+                    email, 
+                    password 
+                });
+                const duration = Date.now() - start;
+
+                if (error) {
+                    resultDiv.innerHTML = `
+                        <div class="status error">❌ 登录失败</div>
+                        <div class="result">
+错误信息: ${error.message}
+错误状态: ${error.status}
+
+可能原因:
+1. 邮箱或密码错误
+2. Supabase 回调 URL 未配置 localhost:3005
+3. 邮箱未验证
+4. 网络连接问题
+
+解决方案:
+- 检查 Supabase Dashboard > Authentication > URL Configuration
+- 确保 Site URL 包含: http://localhost:3005
+- 确保 Redirect URLs 包含: http://localhost:3005/**
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="status success">✅ 登录成功 (${duration}ms)</div>
+                        <div class="result">
+用户 ID: ${data.user?.id}
+邮箱: ${data.user?.email}
+会话: ${data.session ? '已创建' : '未创建'}
+Access Token: 已隐藏
+                        </div>
+                    `;
+                }
+            } catch (err) {
+                resultDiv.innerHTML = `
+                    <div class="status error">❌ 登录异常</div>
+                    <div class="result">
+错误: ${err.message}
+
+这可能是网络问题或 CORS 配置问题。
+                    </div>
+                `;
+            }
+        };
+
+        // 检查会话
+        window.checkSession = async () => {
+            const resultDiv = document.getElementById('sessionResult');
+            resultDiv.innerHTML = '<div class="status info">⏳ 正在检查会话...</div>';
+            const client = requireSupabase();
+
+            if (!client) {
+                resultDiv.innerHTML = '<div class="status error">请先填写并保存 Supabase 临时配置</div>';
+                return;
+            }
+
+            try {
+                const { data: { session }, error } = await client.auth.getSession();
+
+                if (error) {
+                    resultDiv.innerHTML = `
+                        <div class="status error">❌ 会话检查失败</div>
+                        <div class="result">${JSON.stringify(error, null, 2)}</div>
+                    `;
+                } else if (session) {
+                    resultDiv.innerHTML = `
+                        <div class="status success">✅ 会话存在</div>
+                        <div class="result">
+用户: ${session.user?.email}
+过期时间: ${new Date(session.expires_at * 1000).toLocaleString()}
+Access Token: 已隐藏
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="status info">ℹ️ 无活跃会话</div>
+                        <div class="result">用户未登录</div>
+                    `;
+                }
+            } catch (err) {
+                resultDiv.innerHTML = `
+                    <div class="status error">❌ 会话检查异常</div>
+                    <div class="result">${err.message}</div>
+                `;
+            }
+        };
+
+        // 清除会话
+        window.clearSession = async () => {
+            const resultDiv = document.getElementById('sessionResult');
+            const client = requireSupabase();
+            
+            try {
+                if (client) await client.auth.signOut();
+                localStorage.clear();
+                supabase = null;
+                refreshEnvStatus();
+                resultDiv.innerHTML = '<div class="status success">✅ 会话已清除</div>';
+            } catch (err) {
+                resultDiv.innerHTML = `
+                    <div class="status error">❌ 清除失败</div>
+                    <div class="result">${err.message}</div>
+                `;
+            }
+        };
+
+        // 显示诊断信息
+        document.getElementById('diagnosis').innerHTML = `
+            <div class="status info">
+                <strong>常见问题排查：</strong><br><br>
+                <strong>1. 回调 URL 配置问题（最常见）</strong><br>
+                • 登录 Supabase Dashboard<br>
+                • 进入 Authentication → URL Configuration<br>
+                • Site URL 添加: <code>http://localhost:3005</code><br>
+                • Redirect URLs 添加: <code>http://localhost:3005/**</code><br><br>
+                
+                <strong>2. 邮箱验证问题</strong><br>
+                • 检查邮箱是否已验证<br>
+                • 查看 Supabase Dashboard → Authentication → Users<br><br>
+                
+                <strong>3. 本地存储问题</strong><br>
+                • 清除浏览器缓存和 LocalStorage<br>
+                • 使用无痕模式测试<br><br>
+                
+                <strong>4. 网络问题</strong><br>
+                • 检查网络连接<br>
+                • 尝试使用 VPN<br>
+                • 检查防火墙设置
+            </div>
+        `;
+    </script>
+</body>
+</html>

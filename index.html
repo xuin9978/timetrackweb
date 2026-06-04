@@ -23,6 +23,11 @@
         color: #000;
         overflow: auto;
         overscroll-behavior-y: none;
+        transition: background-color 520ms cubic-bezier(0.22, 1, 0.36, 1), color 520ms cubic-bezier(0.22, 1, 0.36, 1);
+      }
+
+      body[data-color-mode="dark"] {
+        background-color: #05070A;
       }
       
       /* UI Animations */
@@ -30,6 +35,11 @@
       @keyframes slideInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
       @keyframes scaleIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
       @keyframes modalEnter { 0% { opacity: 0; transform: scale(0.95) translateY(10px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
+      @keyframes themeBreath {
+        0% { opacity: 0; transform: scale(0.96); }
+        42% { opacity: 0.22; transform: scale(1.02); }
+        100% { opacity: 0; transform: scale(1.08); }
+      }
       
       .hide-scrollbar::-webkit-scrollbar { display: none; }
       .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -38,10 +48,1508 @@
       :root {
         --safe-top: env(safe-area-inset-top, 20px);
         --safe-bottom: env(safe-area-inset-bottom, 20px);
+        --app-bg: #F2F2F7;
+        --app-surface: rgba(255, 255, 255, 0.94);
+        --app-surface-muted: rgba(249, 250, 251, 0.96);
+        --app-border: rgba(229, 231, 235, 0.9);
+        --app-text: #111827;
+        --app-text-muted: #6B7280;
+        --app-shadow: 0 18px 48px rgba(15, 23, 42, 0.10);
+        --toast-bg: rgba(255, 255, 255, 0.96);
+      }
+
+      body[data-color-mode="dark"] {
+        --app-bg: #090D14;
+        --app-surface: rgba(19, 24, 34, 0.88);
+        --app-surface-muted: rgba(37, 45, 61, 0.82);
+        --app-border: rgba(148, 163, 184, 0.18);
+        --app-text: #F8FAFC;
+        --app-text-muted: #94A3B8;
+        --app-shadow: 0 24px 60px rgba(0, 0, 0, 0.38);
+        --toast-bg: rgba(18, 22, 30, 0.96);
       }
 
       .pwa-mode {
         padding-top: var(--safe-top);
+      }
+
+      .App {
+        isolation: isolate;
+        background-color: var(--app-bg) !important;
+        transition:
+          background-color 560ms cubic-bezier(0.22, 1, 0.36, 1),
+          color 420ms ease,
+          filter 560ms cubic-bezier(0.22, 1, 0.36, 1);
+      }
+
+      .App::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        opacity: 0;
+        background:
+          radial-gradient(circle at 22% 10%, rgba(56, 90, 160, 0.20), transparent 34%),
+          radial-gradient(circle at 88% 82%, rgba(46, 120, 110, 0.14), transparent 30%),
+          #090D14;
+        transition: opacity 620ms cubic-bezier(0.22, 1, 0.36, 1);
+      }
+
+      .App::after {
+        content: "";
+        position: fixed;
+        inset: -12%;
+        z-index: 0;
+        pointer-events: none;
+        opacity: 0;
+        background:
+          radial-gradient(circle at 16% 28%, rgba(255, 255, 255, 0.40), transparent 26%),
+          radial-gradient(circle at 78% 72%, rgba(120, 150, 255, 0.22), transparent 32%);
+        filter: blur(28px);
+        transform: scale(0.98);
+      }
+
+      .App.dark-mode::before {
+        opacity: 1;
+      }
+
+      .App .main-layout {
+        position: relative;
+        z-index: 1;
+        transform-origin: center;
+        transition:
+          transform 620ms cubic-bezier(0.22, 1, 0.36, 1),
+          opacity 360ms ease;
+      }
+
+      .App.theme-switching::after {
+        animation: themeBreath 620ms cubic-bezier(0.22, 1, 0.36, 1);
+      }
+
+      .App.theme-switching .main-layout {
+        transform: scale(0.992);
+      }
+
+      .App,
+      .App .sidebar-container,
+      .App .bg-white,
+      .App .bg-\[\#FAFAFA\],
+      .App .bg-gray-50,
+      .App .bg-gray-100,
+      .App .time-grid,
+      .App .time-grid-header,
+      .App .time-grid-body,
+      .App .time-grid-axis,
+      .App .time-grid-day-column {
+        transition:
+          background-color 520ms cubic-bezier(0.22, 1, 0.36, 1),
+          background 520ms cubic-bezier(0.22, 1, 0.36, 1),
+          border-color 520ms cubic-bezier(0.22, 1, 0.36, 1),
+          box-shadow 520ms cubic-bezier(0.22, 1, 0.36, 1),
+          color 360ms ease;
+      }
+
+      .time-grid-body {
+        touch-action: none;
+      }
+
+      .time-grid-axis {
+        box-shadow: none !important;
+        filter: none !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+      }
+
+      .time-grid-snap-layer {
+        display: none;
+      }
+
+      .sync-status-bar,
+      .toast-card,
+      .settings-result {
+        background: var(--toast-bg);
+        border-color: var(--app-border);
+        color: var(--app-text);
+      }
+
+      .sync-status-dot,
+      .toast-dot {
+        background: #10B981;
+      }
+
+      .sync-status-warn .sync-status-dot,
+      .toast-info .toast-dot,
+      .settings-result-info {
+        background: rgba(239, 246, 255, 0.96);
+        border-color: rgba(59, 130, 246, 0.22);
+      }
+
+      .sync-status-warn .sync-status-dot,
+      .toast-info .toast-dot {
+        background: #3B82F6;
+      }
+
+      .sync-status-error .sync-status-dot,
+      .toast-error .toast-dot {
+        background: #EF4444;
+      }
+
+      .settings-result-success {
+        background: rgba(236, 253, 245, 0.94);
+        border-color: rgba(16, 185, 129, 0.22);
+      }
+
+      .settings-result-error {
+        background: rgba(254, 242, 242, 0.94);
+        border-color: rgba(239, 68, 68, 0.22);
+      }
+
+      .App.dark-mode .toast-card,
+      .App.dark-mode .sync-status-bar,
+      .App.dark-mode .settings-result {
+        background: var(--toast-bg);
+        border-color: var(--app-border);
+      }
+
+      .App .text-black,
+      .App .text-gray-900,
+      .App .text-gray-800,
+      .App .text-gray-700,
+      .App .text-gray-600,
+      .App .text-gray-500,
+      .App .text-gray-400,
+      .App .text-gray-300 {
+        transition: color 360ms ease;
+      }
+
+      .sidebar-theme-toggle > div {
+        position: relative;
+        overflow: hidden;
+        transition:
+          transform 560ms cubic-bezier(0.16, 1, 0.3, 1),
+          background-color 520ms cubic-bezier(0.22, 1, 0.36, 1),
+          color 380ms ease,
+          box-shadow 520ms cubic-bezier(0.22, 1, 0.36, 1);
+      }
+
+      .sidebar-theme-toggle > div::after {
+        content: "";
+        position: absolute;
+        inset: -35%;
+        opacity: 0;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.72), transparent 58%);
+        transform: scale(0.45);
+        transition:
+          opacity 520ms ease,
+          transform 620ms cubic-bezier(0.22, 1, 0.36, 1);
+      }
+
+      .sidebar-theme-toggle svg {
+        position: relative;
+        z-index: 1;
+        transition:
+          transform 620ms cubic-bezier(0.16, 1, 0.3, 1),
+          opacity 300ms ease;
+      }
+
+      .sidebar-theme-toggle:hover > div {
+        transform: translateY(-1px) scale(1.04);
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.10);
+      }
+
+      .sidebar-theme-toggle:active > div {
+        transform: scale(0.94);
+      }
+
+      .App.dark-mode .sidebar-theme-toggle > div {
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+      }
+
+      .App.dark-mode .sidebar-theme-toggle > div::after {
+        opacity: 0.16;
+        transform: scale(1);
+      }
+
+      .App.dark-mode .sidebar-theme-toggle svg {
+        transform: rotate(180deg) scale(1.04);
+      }
+
+      .App.theme-switching .sidebar-theme-toggle > div {
+        transform: scale(0.92);
+      }
+
+      .App.theme-switching .sidebar-theme-toggle > div::after {
+        opacity: 0.34;
+        transform: scale(1.18);
+      }
+
+      .App.theme-switching .sidebar-theme-toggle svg {
+        opacity: 0.72;
+        transform: rotate(90deg) scale(0.9);
+      }
+
+      .App.dark-mode {
+        background: #090D14 !important;
+        color: #F8FAFC;
+      }
+
+      .App.dark-mode .sidebar-container,
+      .App.dark-mode .bg-white,
+      .App.dark-mode .bg-\[\#FAFAFA\],
+      .App.dark-mode .bg-gray-50 {
+        background: rgba(19, 24, 34, 0.86) !important;
+        backdrop-filter: blur(22px) saturate(130%);
+        -webkit-backdrop-filter: blur(22px) saturate(130%);
+      }
+
+      .App.dark-mode .bg-gray-100 {
+        background: rgba(37, 45, 61, 0.82) !important;
+      }
+
+      .App.dark-mode .border-gray-100,
+      .App.dark-mode .border-gray-200,
+      .App.dark-mode .border-gray-300 {
+        border-color: rgba(148, 163, 184, 0.18) !important;
+      }
+
+      .App.dark-mode .shadow-sm,
+      .App.dark-mode .shadow-md,
+      .App.dark-mode .shadow-lg,
+      .App.dark-mode .shadow-xl,
+      .App.dark-mode .shadow-2xl {
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.38) !important;
+      }
+
+      .App.dark-mode .text-black,
+      .App.dark-mode .text-gray-900,
+      .App.dark-mode .text-gray-800,
+      .App.dark-mode .text-gray-700 {
+        color: #F8FAFC !important;
+      }
+
+      .App.dark-mode .text-gray-600,
+      .App.dark-mode .text-gray-500,
+      .App.dark-mode .text-gray-400,
+      .App.dark-mode .text-gray-300 {
+        color: #94A3B8 !important;
+      }
+
+      .App.dark-mode .bg-black {
+        background: #F8FAFC !important;
+        color: #05070A !important;
+      }
+
+      .App.dark-mode .time-grid {
+        background:
+          linear-gradient(180deg, rgba(17, 24, 39, 0.72), rgba(12, 18, 28, 0.86)),
+          rgba(14, 20, 30, 0.92);
+        border-radius: 18px;
+        border: 1px solid rgba(148, 163, 184, 0.14);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      }
+
+      .App.dark-mode .time-grid-header {
+        background: rgba(9, 13, 20, 0.58);
+        border-bottom-color: rgba(148, 163, 184, 0.14) !important;
+      }
+
+      .App.dark-mode .time-grid-body {
+        background:
+          linear-gradient(90deg, rgba(255, 255, 255, 0.018) 0, transparent 28%),
+          rgba(12, 18, 28, 0.42);
+      }
+
+      .App.dark-mode .time-grid-axis {
+        background: rgba(9, 13, 20, 0.78) !important;
+        border-right-color: rgba(148, 163, 184, 0.16) !important;
+      }
+
+      .App.dark-mode .time-grid-axis span {
+        color: rgba(203, 213, 225, 0.74) !important;
+      }
+
+      .App.dark-mode .time-grid-axis-tick {
+        border-top-color: rgba(148, 163, 184, 0.18) !important;
+      }
+
+      .App.dark-mode .time-grid-hour-line {
+        border-top-color: rgba(148, 163, 184, 0.10) !important;
+      }
+
+      .App.dark-mode .time-grid-day-column {
+        background: rgba(15, 23, 42, 0.18);
+        border-right-color: rgba(148, 163, 184, 0.11) !important;
+      }
+
+      .App.dark-mode .time-grid-day-column.is-selected {
+        background:
+          linear-gradient(180deg, rgba(59, 130, 246, 0.12), rgba(59, 130, 246, 0.035)),
+          rgba(15, 23, 42, 0.18) !important;
+      }
+
+      .App.dark-mode .time-grid .hover\:bg-gray-50:hover {
+        background: rgba(59, 130, 246, 0.08) !important;
+      }
+
+      /* Unified compact Apple Calendar layout */
+      body:not([data-color-mode="dark"]) {
+        --app-bg: #f0f1f4;
+        --app-surface: #fbfbfc;
+        --app-surface-muted: #f4f5f7;
+        --app-surface-raised: #ffffff;
+        --app-border: rgba(60, 60, 67, 0.14);
+        --app-border-soft: rgba(60, 60, 67, 0.095);
+        --app-text: rgba(18, 18, 20, 0.92);
+        --app-text-muted: rgba(60, 60, 67, 0.58);
+        --app-text-faint: rgba(60, 60, 67, 0.42);
+        --app-red: #ff3b30;
+        --app-blue: #007aff;
+        --app-shadow: none;
+        --toast-bg: rgba(255, 255, 255, 0.96);
+      }
+
+      body[data-color-mode="dark"] {
+        --app-bg: #1d1f1d;
+        --app-surface: #202220;
+        --app-surface-muted: #262826;
+        --app-surface-raised: #2c2e2c;
+        --app-border: rgba(255, 255, 255, 0.095);
+        --app-border-soft: rgba(255, 255, 255, 0.055);
+        --app-text: rgba(245, 245, 247, 0.92);
+        --app-text-muted: rgba(235, 235, 245, 0.56);
+        --app-text-faint: rgba(235, 235, 245, 0.36);
+        --app-red: #ff453a;
+        --app-blue: #0a84ff;
+        --app-shadow: none;
+        --toast-bg: rgba(44, 46, 44, 0.96);
+      }
+
+      body[data-color-mode="dark"],
+      body:not([data-color-mode="dark"]) {
+        background-color: var(--app-bg);
+      }
+
+      .App {
+        background: var(--app-bg) !important;
+        color: var(--app-text);
+      }
+
+      .App::before,
+      .App::after {
+        opacity: 0 !important;
+        animation: none !important;
+      }
+
+      .App.theme-switching .main-layout {
+        transform: none;
+      }
+
+      .App .main-layout {
+        gap: 8px !important;
+      }
+
+      .App.sidebar-is-collapsed .main-layout {
+        gap: 0 !important;
+        max-width: none !important;
+      }
+
+      .App .calendar-workspace {
+        gap: 0 !important;
+        padding: 0 !important;
+      }
+
+      .App .apple-calendar-card,
+      .App .event-panel,
+      .App .sidebar-container {
+        background: var(--app-surface) !important;
+        border-color: var(--app-border) !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+      }
+
+      .App .apple-calendar-card {
+        padding: 12px 0 0 !important;
+        border-left-width: 1px;
+        border-right-width: 1px;
+      }
+
+      .App .calendar-toolbar {
+        min-height: 48px;
+        margin: 0 !important;
+        padding: 0 12px 8px !important;
+        border-bottom: 1px solid var(--app-border);
+      }
+
+      .App .apple-calendar-card.is-week-calendar {
+        background: var(--app-surface) !important;
+      }
+
+      .App .calendar-toolbar.is-week-toolbar {
+        min-height: 74px;
+        position: relative;
+        display: grid !important;
+        grid-template-columns: minmax(220px, 1fr) auto minmax(130px, 1fr);
+        align-items: start !important;
+        column-gap: 16px;
+        padding: 0 16px 10px !important;
+        background: var(--app-surface) !important;
+        border-bottom: 0 !important;
+      }
+
+      .App .calendar-toolbar.is-week-toolbar .calendar-title-block {
+        grid-column: 1;
+        justify-self: start;
+        min-width: 210px;
+      }
+
+      .App .calendar-toolbar.is-week-toolbar .calendar-title-row {
+        justify-content: flex-start;
+      }
+
+      .App .calendar-toolbar.is-week-toolbar .calendar-toolbar-actions {
+        grid-column: 2 / 4;
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        gap: 14px !important;
+        width: 100%;
+        min-width: 0;
+      }
+
+      .App .calendar-toolbar.is-week-toolbar .calendar-segmented {
+        flex: 0 0 auto;
+      }
+
+      .App .calendar-toolbar.is-week-toolbar .calendar-nav-cluster {
+        flex: 0 0 auto;
+        justify-self: end;
+      }
+
+      .App .calendar-title-block {
+        position: static !important;
+        transform: none !important;
+        text-align: left !important;
+      }
+
+      .App .calendar-title {
+        color: var(--app-text) !important;
+        font-size: 24px !important;
+        line-height: 1.05 !important;
+        font-weight: 700 !important;
+        letter-spacing: -0.01em;
+      }
+
+      .App .calendar-subtitle {
+        color: var(--app-text-muted) !important;
+        font-size: 12px !important;
+        letter-spacing: 0.02em !important;
+        margin-top: 2px;
+      }
+
+      .App .calendar-subtitle.week-hidden-subtitle {
+        display: none !important;
+      }
+
+      .App .calendar-toolbar-actions {
+        gap: 10px !important;
+      }
+
+      .App .calendar-segmented {
+        background: color-mix(in srgb, var(--app-surface-raised) 42%, transparent) !important;
+        border-color: var(--app-border) !important;
+        border-radius: 9px !important;
+        padding: 2px !important;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045);
+      }
+
+      .App .calendar-segment {
+        min-width: 34px;
+        padding: 4px 12px !important;
+        border-radius: 7px !important;
+        color: var(--app-text-muted) !important;
+        font-size: 12px !important;
+        line-height: 1.1;
+        box-shadow: none !important;
+      }
+
+      .App .calendar-segment.bg-white {
+        background: color-mix(in srgb, var(--app-text) 11%, transparent) !important;
+        color: var(--app-text) !important;
+      }
+
+      .App .calendar-segment:hover {
+        background: color-mix(in srgb, var(--app-text) 7%, transparent) !important;
+        color: var(--app-text) !important;
+      }
+
+      .App .calendar-nav-button,
+      .App .calendar-panel-toggle,
+      .App .event-panel-add {
+        background: color-mix(in srgb, var(--app-text) 7%, transparent) !important;
+        color: var(--app-text-muted) !important;
+        box-shadow: none !important;
+      }
+
+      .App .calendar-nav-button:hover,
+      .App .event-panel-add:hover {
+        background: color-mix(in srgb, var(--app-text) 12%, transparent) !important;
+        color: var(--app-text) !important;
+      }
+
+      .App .calendar-toolbar-divider {
+        background: var(--app-border) !important;
+      }
+
+      .App .calendar-content,
+      .App .time-grid,
+      .App .time-grid-header,
+      .App .time-grid-body,
+      .App .month-view {
+        background: var(--app-surface) !important;
+      }
+
+      .App .calendar-footer {
+        height: 34px;
+        padding: 0 12px;
+        border-top: 1px solid var(--app-border-soft);
+        color: var(--app-text-muted);
+        font-size: 12px;
+      }
+
+      .App .calendar-today-button {
+        color: var(--app-text-muted) !important;
+      }
+
+      .App .calendar-footer.is-hidden-for-week {
+        display: none !important;
+      }
+
+      .App .calendar-week-today-button {
+        background: color-mix(in srgb, var(--app-text) 7%, transparent) !important;
+        color: var(--app-text-muted) !important;
+        box-shadow: none !important;
+      }
+
+      .App .calendar-week-today-button:hover {
+        background: color-mix(in srgb, var(--app-text) 12%, transparent) !important;
+        color: var(--app-text) !important;
+      }
+
+      .App .calendar-today-button:hover {
+        color: var(--app-text) !important;
+      }
+
+      .App .time-grid {
+        border: 0 !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+      }
+
+      .App .time-grid-header {
+        border-bottom-color: var(--app-border) !important;
+        padding-bottom: 0 !important;
+      }
+
+      .App .time-grid.is-week-view .time-grid-header {
+        min-height: 92px;
+        padding-left: 0 !important;
+        padding-right: 10px;
+        background: var(--app-surface) !important;
+        border-top: 1px solid var(--app-border) !important;
+        border-bottom-color: var(--app-border) !important;
+        box-shadow: inset 0 -1px 0 var(--app-border-soft);
+      }
+
+      .App .time-grid-week-axis-header {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        gap: 8px;
+        width: 58px !important;
+        padding: 0 9px 10px 0;
+        border-right: 1px solid var(--app-border-soft);
+        color: var(--app-text-faint);
+        text-align: right;
+      }
+
+      .App .time-grid-week-number,
+      .App .time-grid-all-day-label {
+        font-size: 10px;
+        line-height: 1.1;
+        font-weight: 500;
+      }
+
+      .App .time-grid-day-header {
+        border-radius: 0 !important;
+        padding: 6px 4px 7px !important;
+      }
+
+      .App .time-grid.is-week-view .time-grid-day-header {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        min-height: 92px;
+        padding: 0 4px 11px !important;
+        border-right: 1px solid var(--app-border-soft);
+        color: var(--app-text-muted);
+      }
+
+      .App .time-grid-week-date-line {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        min-height: 24px;
+        font-size: 15px;
+        line-height: 1.1;
+        font-weight: 500;
+        color: var(--app-text-muted);
+      }
+
+      .App .time-grid-week-date-line.is-today {
+        color: var(--app-red);
+      }
+
+      .App .time-grid-week-date-number {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 20px;
+        height: 20px;
+        border-radius: 999px;
+      }
+
+      .App .time-grid-week-date-number.is-today {
+        background: var(--app-red);
+        color: #fff;
+      }
+
+      .App .time-grid-week-day-name,
+      .App .time-grid-week-lunar-placeholder {
+        color: var(--app-text-muted);
+      }
+
+      .App .time-grid-week-lunar-placeholder {
+        min-height: 16px;
+        font-size: 11px;
+        line-height: 1.1;
+        color: var(--app-text-faint);
+      }
+
+      .App .time-grid-day-header:hover {
+        background: color-mix(in srgb, var(--app-text) 4%, transparent) !important;
+      }
+
+      .App .time-grid-day-name {
+        color: var(--app-text-muted) !important;
+        font-size: 11px !important;
+        font-weight: 600 !important;
+        letter-spacing: 0 !important;
+        text-transform: none !important;
+      }
+
+      .App .time-grid-day-name.is-today {
+        color: var(--app-red) !important;
+      }
+
+      .App .time-grid-day-number {
+        color: var(--app-text) !important;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 22px;
+        height: 22px;
+        border-radius: 999px;
+        font-size: 15px !important;
+        font-weight: 600 !important;
+        transform: none !important;
+      }
+
+      .App .time-grid-day-number.is-today {
+        background: var(--app-red) !important;
+        color: #ffffff !important;
+      }
+
+      .App .time-grid-day-number.is-selected:not(.is-today) {
+        background: color-mix(in srgb, var(--app-text) 12%, transparent) !important;
+        color: var(--app-text) !important;
+      }
+
+      .App .time-grid-axis {
+        background: var(--app-surface) !important;
+        border-right-color: var(--app-border-soft) !important;
+      }
+
+      .App .time-grid.is-week-view .time-grid-body,
+      .App .time-grid.is-week-view .time-grid-axis {
+        background: var(--app-surface) !important;
+      }
+
+      .App .time-grid.is-week-view .time-grid-day-column,
+      .App .time-grid.is-week-view .time-grid-day-column.is-selected {
+        background: transparent !important;
+      }
+
+      .App .time-grid.is-week-view .time-grid-axis {
+        width: 58px !important;
+        border-right-color: var(--app-border-soft) !important;
+      }
+
+      .App .time-grid.is-week-view .time-grid-axis span {
+        right: 9px !important;
+        color: var(--app-text-faint) !important;
+        font-size: 10px !important;
+        font-weight: 400 !important;
+      }
+
+      .App .time-grid.is-week-view .time-grid-axis-tick {
+        border-top-color: transparent !important;
+      }
+
+      .App .time-grid.is-week-view .time-grid-hour-line {
+        border-top-color: var(--app-border-soft) !important;
+      }
+
+      .App .time-grid.is-week-view .time-grid-day-column {
+        border-right-color: var(--app-border-soft) !important;
+      }
+
+      .App .time-grid-week-scrollbar {
+        scrollbar-color: color-mix(in srgb, var(--app-text-muted) 55%, transparent) transparent;
+        scrollbar-width: thin;
+        scrollbar-gutter: stable;
+      }
+
+      .App .time-grid-week-scrollbar::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+      }
+
+      .App .time-grid-week-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      .App .time-grid-week-scrollbar::-webkit-scrollbar-thumb {
+        background: color-mix(in srgb, var(--app-text-muted) 55%, transparent);
+        border: 3px solid transparent;
+        border-radius: 999px;
+        background-clip: padding-box;
+      }
+
+      .App .time-grid-axis span {
+        color: var(--app-text-faint) !important;
+        font-size: 10px !important;
+        font-weight: 500 !important;
+      }
+
+      .App .time-grid-axis-tick,
+      .App .time-grid-hour-line {
+        border-top-color: var(--app-border-soft) !important;
+      }
+
+      .App .time-grid-day-column {
+        background: transparent !important;
+        border-right-color: var(--app-border-soft) !important;
+      }
+
+      .App .time-grid-day-column.is-selected {
+        background: color-mix(in srgb, var(--app-text) 3%, transparent) !important;
+      }
+
+      .App .time-grid-now-label {
+        background: var(--app-red) !important;
+        box-shadow: none !important;
+        border-radius: 4px !important;
+      }
+
+      .App .time-grid-now-line {
+        height: 1px !important;
+        background: color-mix(in srgb, var(--app-red) 82%, transparent) !important;
+      }
+
+      .App .time-grid.is-week-view .time-grid-week-now-line-base {
+        height: 1px !important;
+        background: color-mix(in srgb, var(--app-red) 26%, transparent) !important;
+      }
+
+      .App .time-grid.is-week-view .time-grid-week-now-line-active {
+        height: 2px !important;
+        transform: translateY(-0.5px);
+        background: color-mix(in srgb, var(--app-red) 88%, transparent) !important;
+      }
+
+      .App .time-grid.is-week-view .time-grid-week-now-dot {
+        box-shadow: 0 0 0 1px var(--app-panel) !important;
+      }
+
+      .App .apple-event-block {
+        border-left-width: 3px !important;
+        border-radius: 3px !important;
+        box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--event-border) 18%, transparent) !important;
+      }
+
+      .App.dark-mode .apple-event-block {
+        background-color: color-mix(in srgb, var(--event-border) 42%, #151615) !important;
+        border-color: color-mix(in srgb, var(--event-border) 90%, #ffffff 8%) !important;
+      }
+
+      .App:not(.dark-mode) .apple-event-block {
+        background-color: color-mix(in srgb, var(--event-border) 14%, #ffffff) !important;
+        border-color: color-mix(in srgb, var(--event-border) 88%, #000000 5%) !important;
+      }
+
+      .App .apple-event-block:hover {
+        filter: brightness(1.06) saturate(1.05);
+      }
+
+      .App.dark-mode .apple-event-block span {
+        color: rgba(255, 255, 255, 0.91) !important;
+        text-shadow: 0 1px 1px rgba(0, 0, 0, 0.22);
+      }
+
+      .App.dark-mode .apple-event-block .apple-event-time {
+        color: rgba(255, 255, 255, 0.64) !important;
+      }
+
+      .App .apple-event-separator {
+        background: var(--app-border-soft) !important;
+      }
+
+      .App .month-week-header,
+      .App .month-grid,
+      .App .month-grid-cell {
+        border-color: var(--app-border-soft) !important;
+      }
+
+      .App .month-grid-cell {
+        background: transparent !important;
+      }
+
+      .App .month-weekday {
+        color: var(--app-text-muted) !important;
+        padding: 5px 8px !important;
+        text-align: right !important;
+        font-size: 11px !important;
+        letter-spacing: 0 !important;
+        font-weight: 600 !important;
+      }
+
+      .App .day-cell {
+        align-items: stretch !important;
+        padding: 4px 5px 3px !important;
+      }
+
+      .App .day-cell:hover {
+        background: color-mix(in srgb, var(--app-text) 4%, transparent) !important;
+      }
+
+      .App .day-cell.is-outside-month {
+        opacity: 0.28 !important;
+      }
+
+      .App .day-number {
+        align-self: flex-end;
+        color: var(--app-text) !important;
+        width: 22px !important;
+        height: 22px !important;
+        font-size: 12px !important;
+        font-weight: 600 !important;
+      }
+
+      .App .day-cell.is-today .day-number {
+        color: #ffffff !important;
+      }
+
+      .App .day-today-indicator,
+      .App .day-selection-indicator {
+        top: 4px !important;
+        right: 5px !important;
+        left: auto !important;
+        width: 22px !important;
+        height: 22px !important;
+      }
+
+      .App .day-selection-indicator {
+        background: color-mix(in srgb, var(--app-text) 12%, transparent) !important;
+      }
+
+      .App .month-event-summary {
+        background-color: color-mix(in srgb, var(--event-border) 20%, transparent) !important;
+        color: var(--event-border) !important;
+        border-radius: 3px !important;
+        min-height: 15px;
+        padding: 2px 3px !important;
+        line-height: 1.05 !important;
+      }
+
+      .App.dark-mode .month-event-summary {
+        background-color: color-mix(in srgb, var(--event-border) 38%, transparent) !important;
+        color: rgba(255, 255, 255, 0.86) !important;
+      }
+
+      .App .month-event-summary span:first-child {
+        background-color: var(--event-border) !important;
+      }
+
+      .App .event-panel {
+        background: var(--app-surface-muted) !important;
+        border-left: 1px solid var(--app-border) !important;
+        padding: 14px !important;
+      }
+
+      .App .event-panel h2 {
+        color: var(--app-text) !important;
+        font-size: 17px !important;
+      }
+
+      .App .event-panel p,
+      .App .event-panel .text-gray-400,
+      .App .event-panel .text-gray-500 {
+        color: var(--app-text-muted) !important;
+      }
+
+      .App .event-panel-chip,
+      .App .event-panel-add,
+      .App .event-panel-popover {
+        background: color-mix(in srgb, var(--app-text) 5%, transparent) !important;
+        border-color: var(--app-border) !important;
+        color: var(--app-text-muted) !important;
+        box-shadow: none !important;
+      }
+
+      .App .event-panel-chip.bg-gray-100,
+      .App .event-panel-chip:hover,
+      .App .event-panel-add:hover {
+        background: color-mix(in srgb, var(--app-text) 10%, transparent) !important;
+        color: var(--app-text) !important;
+      }
+
+      .App .event-panel-filter-row:hover {
+        background: color-mix(in srgb, var(--app-text) 6%, transparent) !important;
+      }
+
+      .App .event-panel-filter-row span {
+        color: var(--app-text) !important;
+      }
+
+      .App .event-panel-card,
+      .App .event-panel-stat-row,
+      .App .event-panel-insight,
+      .App .event-panel-empty-icon {
+        background: color-mix(in srgb, var(--app-text) 4%, transparent) !important;
+        border-color: transparent !important;
+        box-shadow: none !important;
+      }
+
+      .App .event-panel-card:hover {
+        background: color-mix(in srgb, var(--app-text) 7%, transparent) !important;
+        border-color: var(--app-border) !important;
+      }
+
+      .App .event-panel-card h3,
+      .App .event-panel-insight .font-semibold,
+      .App .event-panel-stat-row .font-mono {
+        color: var(--app-text) !important;
+      }
+
+      .App .event-panel-insights {
+        border-top-color: var(--app-border) !important;
+      }
+
+      .App .event-panel-group-header .bg-gray-100,
+      .App .event-panel .bg-gray-100 {
+        background: color-mix(in srgb, var(--app-text) 6%, transparent) !important;
+      }
+
+      .App .sidebar-container {
+        background: color-mix(in srgb, var(--app-surface) 88%, var(--app-bg)) !important;
+        border-right: 1px solid var(--app-border) !important;
+        border-radius: 24px !important;
+        padding-top: 10px !important;
+      }
+
+      @media (min-width: 769px) {
+        .App .sidebar-container.sidebar-container-collapsed {
+          width: 0 !important;
+          min-width: 0 !important;
+          max-width: 0 !important;
+          padding: 0 !important;
+          border: 0 !important;
+          opacity: 0 !important;
+          pointer-events: none !important;
+        }
+      }
+
+      .App .sidebar-container button > div {
+        background: transparent !important;
+        color: var(--app-text-faint) !important;
+        border: 1px solid transparent;
+        box-shadow: none !important;
+      }
+
+      .App .sidebar-container button:hover > div {
+        background: color-mix(in srgb, var(--app-text) 7%, transparent) !important;
+        color: var(--app-text-muted) !important;
+      }
+
+      .App .sidebar-container button .bg-black {
+        background: color-mix(in srgb, var(--app-text) 13%, transparent) !important;
+        color: var(--app-text) !important;
+        border-color: var(--app-border);
+      }
+
+      .App .sidebar-container span {
+        color: var(--app-text-faint) !important;
+      }
+
+      .App .sidebar-theme-toggle > div {
+        box-shadow: none !important;
+      }
+
+      .App .sidebar-theme-toggle > div::after {
+        opacity: 0 !important;
+      }
+
+      .App .sidebar-theme-toggle svg {
+        transform: none !important;
+      }
+
+      .App .sidebar-actions {
+        border-color: var(--app-border) !important;
+      }
+
+      /* Restore light-mode clarity while keeping the shared compact layout. */
+      body:not([data-color-mode="dark"]) {
+        --app-bg: #F2F2F7;
+        --app-surface: #FAFAFA;
+        --app-surface-muted: #ffffff;
+        --app-surface-raised: #ffffff;
+        --app-border: rgba(229, 231, 235, 0.9);
+        --app-border-soft: rgba(209, 213, 219, 0.75);
+        --app-text: #111827;
+        --app-text-muted: #6B7280;
+        --app-text-faint: #9CA3AF;
+        --app-red: #ef4444;
+        --app-blue: #007AFF;
+      }
+
+      .App:not(.dark-mode) .apple-calendar-card {
+        background: #FAFAFA !important;
+      }
+
+      .App:not(.dark-mode) .event-panel,
+      .App:not(.dark-mode) .sidebar-container {
+        background: #ffffff !important;
+      }
+
+      .App:not(.dark-mode) .calendar-segmented {
+        background: rgba(255, 255, 255, 0.72) !important;
+        border-color: rgba(229, 231, 235, 0.95) !important;
+      }
+
+      .App:not(.dark-mode) .calendar-segment {
+        color: #6b7280 !important;
+      }
+
+      .App:not(.dark-mode) .calendar-segment.bg-white {
+        background: rgba(255, 255, 255, 0.96) !important;
+        color: #111827 !important;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08) !important;
+      }
+
+      .App:not(.dark-mode) .calendar-nav-button,
+      .App:not(.dark-mode) .calendar-panel-toggle,
+      .App:not(.dark-mode) .event-panel-add {
+        background: rgba(255, 255, 255, 0.72) !important;
+        color: #111827 !important;
+        border-color: rgba(229, 231, 235, 0.92) !important;
+      }
+
+      .App:not(.dark-mode) .calendar-nav-button:hover,
+      .App:not(.dark-mode) .event-panel-add:hover {
+        background: rgba(243, 244, 246, 0.94) !important;
+        color: #111827 !important;
+      }
+
+      .App:not(.dark-mode) .time-grid,
+      .App:not(.dark-mode) .time-grid-header,
+      .App:not(.dark-mode) .time-grid-body,
+      .App:not(.dark-mode) .time-grid-axis,
+      .App:not(.dark-mode) .time-grid-day-column,
+      .App:not(.dark-mode) .calendar-content,
+      .App:not(.dark-mode) .month-view {
+        background: #FAFAFA !important;
+      }
+
+      .App:not(.dark-mode) .time-grid-hour-line,
+      .App:not(.dark-mode) .time-grid-axis-tick,
+      .App:not(.dark-mode) .time-grid-day-column,
+      .App:not(.dark-mode) .month-week-header,
+      .App:not(.dark-mode) .month-grid,
+      .App:not(.dark-mode) .month-grid-cell {
+        border-color: rgba(191, 205, 222, 0.98) !important;
+      }
+
+      .App:not(.dark-mode) .time-grid-axis span {
+        color: #526275 !important;
+        font-size: 10.5px !important;
+      }
+
+      .App:not(.dark-mode) .time-grid-day-name {
+        color: #334155 !important;
+      }
+
+      .App:not(.dark-mode) .time-grid-day-number {
+        color: #111827 !important;
+      }
+
+      .App:not(.dark-mode) .time-grid-day-number.is-today {
+        color: #ffffff !important;
+      }
+
+      .App:not(.dark-mode) .time-grid-day-number.is-selected:not(.is-today) {
+        background: rgba(17, 24, 39, 0.09) !important;
+        color: #111827 !important;
+      }
+
+      .App:not(.dark-mode) .time-grid-day-column.is-selected {
+        background: rgba(255, 255, 255, 0.015) !important;
+      }
+
+      .App:not(.dark-mode) .time-grid-day-column.is-selected:hover {
+        background: rgba(255, 255, 255, 0.03) !important;
+      }
+
+      .App:not(.dark-mode) .time-grid-now-line {
+        background: rgba(239, 68, 68, 0.92) !important;
+      }
+
+      .App:not(.dark-mode) .apple-event-block {
+        background-color: color-mix(in srgb, var(--event-border) 14%, transparent) !important;
+        border-color: var(--event-border) !important;
+        box-shadow: none !important;
+      }
+
+      .App:not(.dark-mode) .apple-event-block span {
+        text-shadow: none !important;
+      }
+
+      .App:not(.dark-mode) .event-panel-card,
+      .App:not(.dark-mode) .event-panel-stat-row,
+      .App:not(.dark-mode) .event-panel-insight,
+      .App:not(.dark-mode) .event-panel-empty-icon {
+        background: rgba(249, 250, 251, 0.84) !important;
+      }
+
+      .App:not(.dark-mode) .event-panel-chip,
+      .App:not(.dark-mode) .event-panel-add,
+      .App:not(.dark-mode) .event-panel-popover {
+        background: rgba(255, 255, 255, 0.78) !important;
+        border-color: rgba(243, 244, 246, 0.96) !important;
+        color: #6b7280 !important;
+      }
+
+      .App:not(.dark-mode) .event-panel-chip.bg-gray-100,
+      .App:not(.dark-mode) .event-panel-chip:hover,
+      .App:not(.dark-mode) .event-panel-add:hover,
+      .App:not(.dark-mode) .event-panel-filter-row:hover {
+        background: rgba(249, 250, 251, 0.94) !important;
+        color: #111827 !important;
+      }
+
+      .App:not(.dark-mode) .sidebar-container button > div {
+        background: rgba(255, 255, 255, 0.72) !important;
+        color: #9ca3af !important;
+        border-color: rgba(229, 231, 235, 0.92) !important;
+      }
+
+      .App:not(.dark-mode) .sidebar-container button:hover > div {
+        background: rgba(243, 244, 246, 0.92) !important;
+        color: #4b5563 !important;
+      }
+
+      .App:not(.dark-mode) .sidebar-container button .bg-black {
+        background: #000000 !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.14) !important;
+      }
+
+      .App:not(.dark-mode) .sidebar-container span {
+        color: #9ca3af !important;
+      }
+
+      .App:not(.dark-mode) .sidebar-container button:hover span,
+      .App:not(.dark-mode) .sidebar-container .text-black {
+        color: #111827 !important;
+      }
+
+      /* Apple-style dark-mode palette, separated from light-mode transparency. */
+      .App.dark-mode {
+        background: #1d1f1d !important;
+        color: rgba(245, 245, 247, 0.92);
+      }
+
+      .App.dark-mode .apple-calendar-card,
+      .App.dark-mode .calendar-content,
+      .App.dark-mode .time-grid,
+      .App.dark-mode .time-grid-header,
+      .App.dark-mode .time-grid-body,
+      .App.dark-mode .month-view {
+        background: #202220 !important;
+      }
+
+      .App.dark-mode .event-panel {
+        background: #262826 !important;
+      }
+
+      .App.dark-mode .sidebar-container {
+        background: #181a18 !important;
+      }
+
+      .App.dark-mode .time-grid-day-column,
+      .App.dark-mode .time-grid-axis,
+      .App.dark-mode .month-grid-cell {
+        background: transparent !important;
+      }
+
+      .App.dark-mode .time-grid-hour-line,
+      .App.dark-mode .time-grid-axis-tick,
+      .App.dark-mode .time-grid-day-column,
+      .App.dark-mode .month-week-header,
+      .App.dark-mode .month-grid,
+      .App.dark-mode .month-grid-cell,
+      .App.dark-mode .calendar-toolbar,
+      .App.dark-mode .event-panel,
+      .App.dark-mode .sidebar-container {
+        border-color: rgba(255, 255, 255, 0.07) !important;
+      }
+
+      .App.dark-mode .calendar-segmented {
+        background: rgba(13, 14, 13, 0.55) !important;
+        border-color: rgba(255, 255, 255, 0.07) !important;
+      }
+
+      .App.dark-mode .calendar-segment {
+        color: rgba(235, 235, 245, 0.56) !important;
+      }
+
+      .App.dark-mode .calendar-segment.bg-white {
+        background: rgba(255, 255, 255, 0.13) !important;
+        color: rgba(255, 255, 255, 0.9) !important;
+      }
+
+      .App.dark-mode .calendar-nav-button,
+      .App.dark-mode .calendar-panel-toggle,
+      .App.dark-mode .event-panel-add {
+        background: rgba(255, 255, 255, 0.07) !important;
+        color: rgba(255, 255, 255, 0.72) !important;
+      }
+
+      .App.dark-mode .calendar-nav-button:hover,
+      .App.dark-mode .event-panel-add:hover {
+        background: rgba(255, 255, 255, 0.12) !important;
+        color: rgba(255, 255, 255, 0.92) !important;
+      }
+
+      .App.dark-mode .apple-event-block {
+        background-color: color-mix(in srgb, var(--event-border) 42%, #151615) !important;
+        border-color: color-mix(in srgb, var(--event-border) 90%, #ffffff 8%) !important;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.035) !important;
+      }
+
+      .App.dark-mode .apple-event-block span {
+        color: rgba(255, 255, 255, 0.91) !important;
+        text-shadow: 0 1px 1px rgba(0, 0, 0, 0.22);
+      }
+
+      .App.dark-mode .apple-event-block .apple-event-time {
+        color: rgba(255, 255, 255, 0.64) !important;
+      }
+
+      .App.dark-mode .event-panel-card,
+      .App.dark-mode .event-panel-stat-row,
+      .App.dark-mode .event-panel-insight,
+      .App.dark-mode .event-panel-empty-icon {
+        background: rgba(255, 255, 255, 0.045) !important;
+      }
+
+      .App.dark-mode .event-panel-chip,
+      .App.dark-mode .event-panel-add,
+      .App.dark-mode .event-panel-popover {
+        background: rgba(255, 255, 255, 0.055) !important;
+        border-color: rgba(255, 255, 255, 0.095) !important;
+        color: rgba(235, 235, 245, 0.56) !important;
+      }
+
+      /* Keep dark day-view grid neutral and free of blue/bright selected-column overlays. */
+      .App.dark-mode .time-grid.is-day-view,
+      .App.dark-mode .time-grid.is-day-view .time-grid-header,
+      .App.dark-mode .time-grid.is-day-view .time-grid-body {
+        background: #202220 !important;
+        background-image: none !important;
+      }
+
+      .App.dark-mode .time-grid.is-day-view .time-grid-body > .flex,
+      .App.dark-mode .time-grid.is-day-view .time-grid-body > .flex > .flex {
+        background: #202220 !important;
+        background-image: none !important;
+      }
+
+      .App.dark-mode .time-grid.is-day-view .time-grid-axis {
+        background: #1b1d1b !important;
+        border-right-color: rgba(255, 255, 255, 0.07) !important;
+      }
+
+      .App.dark-mode .time-grid.is-day-view .time-grid-day-column,
+      .App.dark-mode .time-grid.is-day-view .time-grid-day-column.is-selected,
+      .App.dark-mode .time-grid.is-day-view .time-grid-day-column.is-selected:hover {
+        background: transparent !important;
+        background-image: none !important;
+        border-right-color: rgba(255, 255, 255, 0.055) !important;
+      }
+
+      .App.dark-mode .time-grid.is-day-view .time-grid-day-column.is-selected::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: transparent !important;
+      }
+
+      .App.dark-mode .time-grid.is-day-view .time-grid-hour-line,
+      .App.dark-mode .time-grid.is-day-view .time-grid-axis-tick {
+        border-top-color: rgba(255, 255, 255, 0.07) !important;
+      }
+
+      .App.dark-mode .history-card,
+      .App.dark-mode .history-content,
+      .App.dark-mode .alarm-card {
+        background: #202220 !important;
+        background-image: none !important;
+        border-color: rgba(255, 255, 255, 0.07) !important;
+        box-shadow: none !important;
+      }
+
+      .App.dark-mode .history-toolbar {
+        background: #202220 !important;
+        border-bottom-color: rgba(255, 255, 255, 0.07) !important;
+      }
+
+      .App.dark-mode .history-date-button,
+      .App.dark-mode .history-tool-button,
+      .App.dark-mode .alarm-mode-button,
+      .App.dark-mode .history-filter-popover {
+        background: rgba(255, 255, 255, 0.055) !important;
+        border-color: rgba(255, 255, 255, 0.095) !important;
+        color: rgba(245, 245, 247, 0.9) !important;
+        box-shadow: none !important;
+      }
+
+      .App.dark-mode .history-date-button:hover,
+      .App.dark-mode .history-tool-button:hover,
+      .App.dark-mode .alarm-mode-button:hover,
+      .App.dark-mode .history-filter-row:hover {
+        background: rgba(255, 255, 255, 0.09) !important;
+        color: rgba(255, 255, 255, 0.94) !important;
+      }
+
+      .App.dark-mode .history-date-button svg,
+      .App.dark-mode .history-tool-button svg,
+      .App.dark-mode .alarm-mode-button svg {
+        color: rgba(235, 235, 245, 0.56) !important;
+      }
+
+      .App.dark-mode .history-event-card,
+      .App.dark-mode .history-empty-icon,
+      .App.dark-mode .history-card .bg-gray-100,
+      .App.dark-mode .history-card .bg-gray-50 {
+        background: rgba(255, 255, 255, 0.045) !important;
+        border-color: rgba(255, 255, 255, 0.075) !important;
+        box-shadow: none !important;
+      }
+
+      .App.dark-mode .history-event-card:hover {
+        background: rgba(255, 255, 255, 0.07) !important;
+        border-color: rgba(255, 255, 255, 0.12) !important;
+      }
+
+      .App.dark-mode .history-card .bg-white,
+      .App.dark-mode .history-filter-popover .bg-white {
+        background: #202220 !important;
+      }
+
+      .App.dark-mode .history-card .text-black,
+      .App.dark-mode .history-card .text-gray-900,
+      .App.dark-mode .history-card .text-gray-800,
+      .App.dark-mode .history-filter-popover .text-gray-800,
+      .App.dark-mode .alarm-time-display {
+        color: rgba(245, 245, 247, 0.94) !important;
+      }
+
+      .App.dark-mode .history-card .text-gray-600,
+      .App.dark-mode .history-card .text-gray-500,
+      .App.dark-mode .history-card .text-gray-400,
+      .App.dark-mode .history-card .text-gray-300,
+      .App.dark-mode .history-empty,
+      .App.dark-mode .history-filter-popover .text-gray-400 {
+        color: rgba(235, 235, 245, 0.56) !important;
+      }
+
+      .App.dark-mode .history-card .h-px {
+        background: rgba(255, 255, 255, 0.07) !important;
+      }
+
+      .App.dark-mode .history-card input[type="checkbox"] {
+        background-color: rgba(255, 255, 255, 0.055);
+        border-color: rgba(255, 255, 255, 0.16);
+      }
+
+      .App.dark-mode .alarm-card button.bg-gray-100,
+      .App.dark-mode .alarm-card button.hover\:bg-gray-200:hover {
+        background: rgba(255, 255, 255, 0.07) !important;
+        color: rgba(235, 235, 245, 0.72) !important;
+      }
+
+      .App.dark-mode .alarm-card button.bg-cyan-50,
+      .App.dark-mode .alarm-card button.hover\:bg-cyan-100:hover {
+        background: rgba(255, 255, 255, 0.065) !important;
+        border-color: rgba(255, 255, 255, 0.095) !important;
+        color: rgba(235, 235, 245, 0.72) !important;
+      }
+
+      .App.dark-mode .alarm-card button.bg-orange-50 {
+        background: rgba(255, 149, 0, 0.14) !important;
+        border-color: rgba(255, 149, 0, 0.22) !important;
+        color: #ff9f0a !important;
+      }
+
+      .App.dark-mode .alarm-card button.bg-green-100,
+      .App.dark-mode .alarm-card button.bg-\[\#E0F2E9\] {
+        background: rgba(48, 209, 88, 0.18) !important;
+        color: #30d158 !important;
+      }
+
+      .App.dark-mode .alarm-card button.bg-red-100 {
+        background: rgba(255, 69, 58, 0.16) !important;
+        color: #ff453a !important;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        body,
+        .App,
+        .App::before,
+        .App::after,
+        .App *,
+        .sidebar-theme-toggle > div,
+        .sidebar-theme-toggle > div::after,
+        .sidebar-theme-toggle svg {
+          transition-duration: 0.01ms !important;
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+        }
       }
 
       /* Mobile Layout Adaptation (Applies to both Mobile Browser and PWA) */
@@ -99,6 +1607,12 @@
           margin: 0 !important;
         }
 
+        .App.dark-mode .sidebar-container {
+          background: rgba(18, 22, 30, 0.96) !important;
+          border-top-color: rgba(148, 163, 184, 0.18) !important;
+          box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.32) !important;
+        }
+
         /* PWA specific sidebar padding for Home Indicator */
         .pwa-mode .sidebar-container {
           padding-bottom: calc(8px + env(safe-area-inset-bottom)) !important;
@@ -142,6 +1656,16 @@
           margin: 0 !important;
           margin-top: 0 !important;
         }
+
+        .sidebar-nav-alarm { order: 1 !important; }
+        .sidebar-nav-history { order: 2 !important; }
+        .sidebar-add-button {
+          order: 3 !important;
+          margin: 0 12px;
+        }
+        .sidebar-nav-calendar { order: 4 !important; }
+        .sidebar-theme-toggle { order: 5 !important; }
+        .sidebar-actions { order: 6 !important; }
 
         /* Show User Profile button (First child) */
         .sidebar-container > div:last-child > button:first-child {

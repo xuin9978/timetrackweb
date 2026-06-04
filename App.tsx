@@ -12,11 +12,23 @@ import AuthModal from './components/AuthModal';
 import { supabase } from './utils/supabaseClient';
 import AccountModal from './components/AccountModal';
 import { getVisibleDateRange, splitEventAcrossDays, isSameDay, formatTime, getMinutesFromTime, INITIAL_EVENTS, INITIAL_TAGS } from './utils/dateUtils';
-import { fetchEvents, createEvents, updateEvent as updateEventDB, deleteEvent as deleteEventDB, replaceAllEvents } from './utils/eventService';
+import { fetchEvents, createEvents, updateEvent as updateEventDB, deleteEvent as deleteEventDB, replaceAllEvents, clearEventCategory, restoreEventCategory } from './utils/eventService';
 import { backupEventsToLocalStorage, restoreEventsFromLocalStorage, cleanOldBackups } from './utils/dataBackupService';
 import { fetchTags as fetchTagsDB, createTag as createTagDB, updateTag as updateTagDB, deleteTag as deleteTagDB, updateTagOrder } from './utils/tagService';
 
 import { CalendarEvent, Tag, ModalConfig, AlarmState, AlarmMode, LogSessionModalConfig, ViewMode } from './types';
+
+type ToastTone = 'success' | 'error' | 'info';
+type SyncStatus = 'synced' | 'offline-cache' | 'sync-error' | 'session-expired';
+
+interface ToastState {
+  id: number;
+  tone: ToastTone;
+  message: string;
+  detail?: string;
+  actionLabel?: string;
+  onAction?: () => void;
+}
 
 const retry = async <T,>(fn: () => Promise<T>, retries = 3, delay = 300): Promise<T> => {
   let attempt = 0;
@@ -36,6 +48,18 @@ const retry = async <T,>(fn: () => Promise<T>, retries = 3, delay = 300): Promis
 
 const App: React.FC = () => {
   const [activeModule, setActiveModule] = useState<'calendar' | 'alarm' | 'history'>('calendar');
+  const [colorMode, setColorMode] = useState<'light' | 'dark'>(() => {
+    try {
+      return localStorage.getItem('calendar-color-mode') === 'dark' ? 'dark' : 'light';
+    } catch {
+      return 'light';
+    }
+  });
+  const [isThemeSwitching, setIsThemeSwitching] = useState(false);
+  const themeSwitchTimerRef = React.useRef<number | null>(null);
+  const [toast, setToast] = useState<ToastState | null>(null);
+  const toastTimerRef = React.useRef<number | null>(null);
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>('synced');
 
 
 
@@ -44,6 +68,7 @@ const App: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Day);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   // Shared State
   const [events, setEvents] = useState<CalendarEvent[]>([]);
@@ -65,6 +90,59 @@ const App: React.FC = () => {
       setVisibleTags(INITIAL_TAGS.map(t => t.id));
     }
   }, [currentUser]);
+
+  React.useEffect(() => {
+    try {
+      localStorage.setItem('calendar-color-mode', colorMode);
+    } catch {
+      // Ignore storage errors so theme switching never blocks the app.
+    }
+    document.body.dataset.colorMode = colorMode;
+  }, [colorMode]);
+
+  React.useEffect(() => {
+    return () => {
+      if (themeSwitchTimerRef.current !== null) {
+        window.clearTimeout(themeSwitchTimerRef.current);
+      }
+      if (toastTimerRef.current !== null) {
+        window.clearTimeout(toastTimerRef.current);
+      }
+    };
+  }, []);
+
+  const showToast = useCallback((nextToast: Omit<ToastState, 'id'>, duration = 5000) => {
+    if (toastTimerRef.current !== null) {
+      window.clearTimeout(toastTimerRef.current);
+    }
+
+    setToast({ ...nextToast, id: Date.now() });
+    toastTimerRef.current = window.setTimeout(() => {
+      setToast(null);
+      toastTimerRef.current = null;
+    }, duration);
+  }, []);
+
+  const dismissToast = useCallback(() => {
+    if (toastTimerRef.current !== null) {
+      window.clearTimeout(toastTimerRef.current);
+      toastTimerRef.current = null;
+    }
+    setToast(null);
+  }, []);
+
+  const handleToggleColorMode = useCallback(() => {
+    if (themeSwitchTimerRef.current !== null) {
+      window.clearTimeout(themeSwitchTimerRef.current);
+    }
+
+    setIsThemeSwitching(true);
+    setColorMode(mode => mode === 'dark' ? 'light' : 'dark');
+    themeSwitchTimerRef.current = window.setTimeout(() => {
+      setIsThemeSwitching(false);
+      themeSwitchTimerRef.current = null;
+    }, 620);
+  }, []);
 
   // Set default view mode to Day when in PWA mode
   React.useEffect(() => {
@@ -89,7 +167,6 @@ const App: React.FC = () => {
   const [isAccountOpen, setIsAccountOpen] = useState(false);
   const [isOnline, setIsOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
   const [reloadNonce, setReloadNonce] = useState(0);
-  const loadIdRef = React.useRef(0);
 
   // Alarm State
   const [alarmState, setAlarmState] = useState<AlarmState>({
@@ -147,8 +224,6 @@ const App: React.FC = () => {
   const refreshEvents = useCallback(async () => {
     if (!currentUser) return;
     const { startDate, endDate } = getVisibleDateRange(currentDate, viewMode, selectedDate);
-    const startISO = startDate.toISOString();
-    const endISO = endDate.toISOString();
     const refreshed = await fetchEvents(currentUser.id, startDate, endDate, undefined, { loadAll: false });
     setEvents(refreshed);
 
@@ -162,7 +237,18 @@ const App: React.FC = () => {
 
   }, [currentUser, currentDate, viewMode, selectedDate]);
 
-  const handleAddEvent = useCallback(async (newEventData: Omit<CalendarEvent, 'id'>) => {
+  const handleAddEvent = useCallback(async (newEventData: Omit<CalendarEvent, 'id'>): Promise<boolean> => {
+    if (!supabase) {
+      showToast({ tone: 'error', message: '未配置 Supabase，当前无法保存日程。' });
+      return false;
+    }
+
+    if (!currentUser) {
+      setIsAuthOpen(true);
+      showToast({ tone: 'info', message: '请先登录', detail: '登录后创建的时间段才会保存。' });
+      return false;
+    }
+
     const eventSegments = splitEventAcrossDays(newEventData);
 
     const newCategory = newEventData.category;
@@ -174,25 +260,51 @@ const App: React.FC = () => {
     const optimisticEvents = eventSegments.map(seg => ({ ...seg, id: `temp-${crypto.randomUUID()}` }));
     setEvents(prev => [...prev, ...optimisticEvents]);
 
-    if (!currentUser || !supabase) {
-      return;
-    }
-
     try {
       // Background save to database
       const created = await createEvents(currentUser.id, eventSegments);
       if (!created || created.length === 0) {
         // Revert optimistic update on failure
         setEvents(prev => prev.filter(e => !optimisticEvents.some(oe => oe.id === e.id)));
-        alert('保存失败，请稍后重试');
-        return;
+        setSyncStatus('sync-error');
+        showToast({ tone: 'error', message: '保存失败，已回滚。', detail: '请稍后重试。' });
+        return false;
       }
+
+      const createdWithMetadata = created.map((createdEvent, index) => ({
+        ...createdEvent,
+        seriesId: eventSegments[index]?.seriesId,
+        segmentIndex: eventSegments[index]?.segmentIndex,
+        segmentCount: eventSegments[index]?.segmentCount,
+        continuesFromPreviousDay: eventSegments[index]?.continuesFromPreviousDay,
+        continuesToNextDay: eventSegments[index]?.continuesToNextDay,
+      }));
 
       // Replace temporary IDs with real IDs from database
       setEvents(prev => {
         const filtered = prev.filter(e => !optimisticEvents.some(oe => oe.id === e.id));
-        return [...filtered, ...created];
+        return [...filtered, ...createdWithMetadata];
       });
+      setSyncStatus('synced');
+      showToast({
+        tone: 'success',
+        message: `已创建 ${createdWithMetadata.length} 个日程`,
+        actionLabel: '撤销',
+        onAction: () => {
+          dismissToast();
+          const targetSeriesIds = new Set(createdWithMetadata.map(event => event.seriesId).filter(Boolean));
+          const targetIds = new Set(createdWithMetadata.map(event => event.id));
+          setEvents(prev => prev.filter(e => !(targetIds.has(e.id) || (e.seriesId && targetSeriesIds.has(e.seriesId)))));
+          createdWithMetadata.forEach(createdEvent => {
+            deleteEventDB(currentUser.id, createdEvent.id).catch(error => {
+              console.error('撤销创建失败:', error);
+              setSyncStatus('sync-error');
+              showToast({ tone: 'error', message: '撤销失败', detail: '云端删除没有完成，请稍后重试。' });
+            });
+          });
+        }
+      });
+      return true;
     } catch (e: any) {
       // 处理JWT过期错误
       if (e.message === 'JWT expired' || e.message?.includes('JWT expired')) {
@@ -201,31 +313,44 @@ const App: React.FC = () => {
           await supabase.auth.refreshSession();
           
           // 刷新成功后重新保存事件
-          const created = await createEvents(currentUser.id, eventSegments);
-          if (created && created.length > 0) {
-            // 替换临时ID为真实ID
-            setEvents(prev => {
-              const filtered = prev.filter(e => !optimisticEvents.some(oe => oe.id === e.id));
-              return [...filtered, ...created];
-            });
-            return;
+            const created = await createEvents(currentUser.id, eventSegments);
+            if (created && created.length > 0) {
+              const createdWithMetadata = created.map((createdEvent, index) => ({
+                ...createdEvent,
+                seriesId: eventSegments[index]?.seriesId,
+                segmentIndex: eventSegments[index]?.segmentIndex,
+                segmentCount: eventSegments[index]?.segmentCount,
+                continuesFromPreviousDay: eventSegments[index]?.continuesFromPreviousDay,
+                continuesToNextDay: eventSegments[index]?.continuesToNextDay,
+              }));
+              // 替换临时ID为真实ID
+              setEvents(prev => {
+                const filtered = prev.filter(e => !optimisticEvents.some(oe => oe.id === e.id));
+                return [...filtered, ...createdWithMetadata];
+              });
+            setSyncStatus('synced');
+            showToast({ tone: 'success', message: `已创建 ${created.length} 个日程` });
+            return true;
           }
         } catch (refreshError) {
           // 刷新失败，提示用户重新登录
           setEvents(prev => prev.filter(e => !optimisticEvents.some(oe => oe.id === e.id)));
-          alert('会话已过期，请重新登录');
+          setSyncStatus('session-expired');
+          showToast({ tone: 'error', message: '会话已过期，请重新登录', detail: '本次创建已回滚。' });
           console.error('JWT刷新失败:', refreshError);
-          return;
+          return false;
         }
       }
       
       // 其他错误处理
       setEvents(prev => prev.filter(e => !optimisticEvents.some(oe => oe.id === e.id)));
       const msg = e.message || '保存失败，请检查网络或账号配置';
-      alert(msg);
+      setSyncStatus('sync-error');
+      showToast({ tone: 'error', message: '保存失败，已回滚。', detail: msg });
       console.error(e);
+      return false;
     }
-  }, [currentUser, splitEventAcrossDays]);
+  }, [currentUser, dismissToast, showToast]);
 
   const handleSmartAddEvent = useCallback(() => {
     // Filter events for the selected date to determine the default start time
@@ -295,10 +420,14 @@ const App: React.FC = () => {
   }, [logSessionModalConfig, tags, handleAddEvent]);
 
   const handleUpdateEvent = useCallback(async (updatedEvent: CalendarEvent) => {
-    if (!currentUser || !supabase) return;
+    if (!currentUser || !supabase) {
+      showToast({ tone: 'info', message: '请先登录', detail: '登录后才能同步修改。' });
+      return;
+    }
 
     // Optimistic update: immediately update UI
     const previousEvents = events;
+    const previousEvent = events.find(e => e.id === updatedEvent.id);
     setEvents(prev => prev.map(e => e.id === updatedEvent.id ? updatedEvent : e));
 
     try {
@@ -306,23 +435,51 @@ const App: React.FC = () => {
       if (!saved) {
         // Revert on failure
         setEvents(previousEvents);
-        alert('更新失败，请稍后重试');
+        setSyncStatus('sync-error');
+        showToast({ tone: 'error', message: '更新失败，已回滚。', detail: '请稍后重试。' });
         return;
+      }
+      setSyncStatus('synced');
+      if (previousEvent) {
+        showToast({
+          tone: 'success',
+          message: '日程已更新',
+          actionLabel: '撤销',
+          onAction: () => {
+            dismissToast();
+            setEvents(prev => prev.map(e => e.id === previousEvent.id ? previousEvent : e));
+            updateEventDB(currentUser.id, previousEvent).catch(error => {
+              console.error('撤销更新失败:', error);
+              setSyncStatus('sync-error');
+              showToast({ tone: 'error', message: '撤销失败', detail: '云端恢复没有完成，请稍后重试。' });
+            });
+          }
+        });
       }
     } catch (e) {
       // Revert on error
       setEvents(previousEvents);
       const msg = e instanceof Error ? e.message : '更新失败，请检查网络或账号配置';
-      alert(msg);
+      if (msg.includes('JWT expired')) {
+        setSyncStatus('session-expired');
+        showToast({ tone: 'error', message: '会话已过期，请重新登录', detail: '本次更新已回滚。' });
+      } else {
+        setSyncStatus('sync-error');
+        showToast({ tone: 'error', message: '更新失败，已回滚。', detail: msg });
+      }
       console.error(e);
     }
-  }, [currentUser, events]);
+  }, [currentUser, dismissToast, events, showToast]);
 
   const handleDeleteEvent = useCallback(async (id: string) => {
-    if (!currentUser || !supabase) return;
+    if (!currentUser || !supabase) {
+      showToast({ tone: 'info', message: '请先登录', detail: '登录后才能同步删除。' });
+      return;
+    }
 
     // Optimistic update: immediately remove from UI
     const previousEvents = events;
+    const deletedEvent = events.find(e => e.id === id);
     setEvents(prev => prev.filter(e => e.id !== id));
 
     try {
@@ -330,27 +487,56 @@ const App: React.FC = () => {
       if (!ok) {
         // Revert on failure
         setEvents(previousEvents);
-        alert('删除失败，请稍后重试');
+        setSyncStatus('sync-error');
+        showToast({ tone: 'error', message: '删除失败，已回滚。', detail: '请稍后重试。' });
         return;
+      }
+      setSyncStatus('synced');
+      if (deletedEvent) {
+        showToast({
+          tone: 'success',
+          message: '日程已删除',
+          actionLabel: '撤销',
+          onAction: async () => {
+            dismissToast();
+            setEvents(prev => [...prev, deletedEvent]);
+            try {
+              const recreated = await createEvents(currentUser.id, [{
+                title: deletedEvent.title,
+                startTime: deletedEvent.startTime,
+                endTime: deletedEvent.endTime,
+                category: deletedEvent.category,
+                date: deletedEvent.date
+              }]);
+              if (recreated.length > 0) {
+                setEvents(prev => prev.map(e => e.id === deletedEvent.id ? recreated[0] : e));
+              }
+            } catch (error) {
+              console.error('撤销删除失败:', error);
+              setSyncStatus('sync-error');
+              showToast({ tone: 'error', message: '撤销失败', detail: '云端恢复没有完成，请稍后重试。' });
+            }
+          }
+        });
       }
     } catch (e) {
       // Revert on error
       setEvents(previousEvents);
       const msg = e instanceof Error ? e.message : '删除失败，请检查网络或账号配置';
-      alert(msg);
+      if (msg.includes('JWT expired')) {
+        setSyncStatus('session-expired');
+        showToast({ tone: 'error', message: '会话已过期，请重新登录', detail: '本次删除已回滚。' });
+      } else {
+        setSyncStatus('sync-error');
+        showToast({ tone: 'error', message: '删除失败，已回滚。', detail: msg });
+      }
       console.error(e);
     }
-  }, [currentUser, events]);
+  }, [currentUser, dismissToast, events, showToast]);
 
   // Tag Management
   const handleAddTag = useCallback(async (label: string, color: string, icon: string) => {
-    const slug = label
-      .trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '')
-      .slice(0, 24) || `tag-${Math.random().toString(36).slice(2, 8)}`;
-    const newTag: Tag = { id: slug, label, color, icon };
+    const newTag: Tag = { id: crypto.randomUUID(), label, color, icon };
 
     // Optimistic update
     const previousTags = tags;
@@ -412,31 +598,49 @@ const App: React.FC = () => {
   }, [currentUser, tags]);
 
   const handleDeleteTag = useCallback(async (id: string) => {
-    // Optimistic update
     const previousTags = tags;
-    setTags(prev => prev.filter(t => t.id !== id));
-    setVisibleTags(prev => prev.filter(tagId => tagId !== id)); // Optimistically remove from visible tags
-    // Optionally, re-categorize events that used this tag
-    setEvents(prev => prev.map(e => e.category === id ? { ...e, category: tags[0]?.id || '' } : e));
+    const previousEvents = events;
+    const previousVisibleTags = visibleTags;
+    const targetTag = tags.find(t => t.id === id);
+    const affectedEvents = events.filter(e => e.category === id);
 
+    if (affectedEvents.length > 0) {
+      const confirmed = window.confirm(`确定要删除标签「${targetTag?.label || '该标签'}」吗？该标签下 ${affectedEvents.length} 条记录会归为未分类。`);
+      if (!confirmed) return;
+    }
+
+    setTags(prev => prev.filter(t => t.id !== id));
+    setVisibleTags(prev => prev.filter(tagId => tagId !== id));
+    setEvents(prev => prev.map(e => e.category === id ? { ...e, category: '' } : e));
 
     if (!currentUser || !supabase) {
-      setTags(previousTags); // Revert if not logged in
-      setVisibleTags(prev => [...prev, id]); // Revert visible tags
+      setTags(previousTags);
+      setEvents(previousEvents);
+      setVisibleTags(previousVisibleTags);
       alert('请登录后删除标签');
       return;
     }
 
+    let clearedEventIds: string[] = [];
     try {
+      clearedEventIds = await clearEventCategory(currentUser.id, id);
       await deleteTagDB(currentUser.id, id);
     } catch (e) {
       setTags(previousTags);
-      setVisibleTags(prev => [...prev, id]); // Revert visible tags
+      setEvents(previousEvents);
+      setVisibleTags(previousVisibleTags);
+      if (clearedEventIds.length > 0) {
+        try {
+          await restoreEventCategory(currentUser.id, clearedEventIds, id);
+        } catch (restoreError) {
+          console.error('恢复标签关联失败:', restoreError);
+        }
+      }
       const msg = e instanceof Error ? e.message : '标签删除失败，请检查网络或账号配置';
       alert(msg);
       console.error(e);
     }
-  }, [currentUser, supabase, tags]);
+  }, [currentUser, supabase, tags, events, visibleTags]);
 
   const handleToggleTagVisibility = useCallback((tagId: string) => {
     setVisibleTags(prev =>
@@ -448,11 +652,12 @@ const App: React.FC = () => {
     setTags(newTags);
   }, []);
 
-  const handleSaveTagOrder = useCallback(async () => {
+  const handleSaveTagOrder = useCallback(async (tagsToSave?: Tag[]) => {
+    const orderedTags = tagsToSave ?? tags;
     try {
       if (!currentUser) {
         try {
-          localStorage.setItem('tag_order_guest', JSON.stringify(tags.map(t => t.id)));
+          localStorage.setItem('tag_order_guest', JSON.stringify(orderedTags.map(t => t.id)));
           alert('已保存在本地，登录后可云端同步');
           return;
         } catch (e) {
@@ -461,7 +666,7 @@ const App: React.FC = () => {
           return;
         }
       }
-      await updateTagOrder(currentUser.id, tags);
+      await updateTagOrder(currentUser.id, orderedTags);
     } catch (e) {
       console.error('Failed to update tag order:', e);
       alert('排序保存失败，请检查网络');
@@ -470,9 +675,10 @@ const App: React.FC = () => {
   }, [currentUser, tags]);
 
   const filteredEvents = useMemo(() => {
-    if (visibleTags.length === 0) return events;
+    if (visibleTags.length === 0) return [];
     return events.filter(event => visibleTags.includes(event.category));
   }, [events, visibleTags]);
+  const hasHiddenAllTags = tags.length > 0 && visibleTags.length === 0;
 
   // Alarm Handlers
   const handleAlarmStart = () => {
@@ -540,15 +746,23 @@ const App: React.FC = () => {
   }, [currentUser, events]);
 
   React.useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
+    const handleOnline = () => {
+      setIsOnline(true);
+      setSyncStatus('synced');
+      showToast({ tone: 'success', message: '网络已恢复', detail: '可以继续同步日程。' }, 3000);
+    };
+    const handleOffline = () => {
+      setIsOnline(false);
+      setSyncStatus('offline-cache');
+      showToast({ tone: 'info', message: '当前离线', detail: '会优先使用本地缓存。' }, 3000);
+    };
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, []);
+  }, [showToast]);
 
   React.useEffect(() => {
     if (!supabase) return;
@@ -581,6 +795,8 @@ const App: React.FC = () => {
           setEvents(fetchedEvents);
           const cats = Array.from(new Set(fetchedEvents.map(e => e.category)));
           setVisibleTags(prev => Array.from(new Set([...prev, ...cats])));
+          setIsOnline(true);
+          setSyncStatus('synced');
           
           // 数据加载成功后，自动备份到本地存储
           backupEventsToLocalStorage(currentUser.id, fetchedEvents);
@@ -611,7 +827,12 @@ const App: React.FC = () => {
               setEvents(restoredData.events);
               const cats = Array.from(new Set(restoredData.events.map(e => e.category)));
               setVisibleTags(prev => Array.from(new Set([...prev, ...cats])));
+              setSyncStatus('offline-cache');
+              showToast({ tone: 'info', message: '当前离线，已载入本地缓存。', detail: `${restoredData.events.length} 个日程可继续查看。` });
               console.log('从本地备份恢复了', restoredData.events.length, '个事件');
+            } else {
+              setSyncStatus('sync-error');
+              showToast({ tone: 'error', message: '同步失败', detail: '当前离线且没有可用本地缓存。' });
             }
           }
         }
@@ -623,7 +844,7 @@ const App: React.FC = () => {
     return () => {
       mounted = false;
     };
-  }, [currentUser, reloadNonce, currentDate, viewMode, selectedDate]);
+  }, [currentUser, reloadNonce, currentDate, viewMode, selectedDate, showToast]);
 
   const loadMoreTags = useCallback(async () => {
     if (!currentUser || !hasMoreTags) return;
@@ -688,7 +909,9 @@ const App: React.FC = () => {
       const newTagIds = restoredTags.map(t => t.id);
       return Array.from(new Set([...prev, ...newTagIds]));
     });
-  }, [currentUser]);
+    setSyncStatus('synced');
+    showToast({ tone: 'success', message: '数据恢复完成', detail: `恢复 ${restoredEvents.length} 个日程、${restoredTags.length} 个标签。` });
+  }, [currentUser, showToast]);
 
   const handleImportEvents = useCallback(async (importedEvents: Partial<CalendarEvent>[]) => {
     // 1. Convert Partial<CalendarEvent> to full CalendarEvent
@@ -733,7 +956,10 @@ const App: React.FC = () => {
 
     const uniqueSegments = segmented.filter(ne => !events.some(ev => isDup(ne, ev)));
 
-    if (uniqueSegments.length === 0) { return; }
+    if (uniqueSegments.length === 0) {
+      showToast({ tone: 'info', message: '没有新日程可导入', detail: '文件中的日程可能已经存在。' });
+      return;
+    }
 
     const newCategories = Array.from(new Set(uniqueSegments.map(e => e.category)));
     setVisibleTags(prev => Array.from(new Set([...prev, ...newCategories])));
@@ -741,6 +967,8 @@ const App: React.FC = () => {
     if (!currentUser || !supabase) {
       const localCreated = uniqueSegments.map(e => ({ ...e, id: crypto.randomUUID() }));
       setEvents(prev => [...prev, ...localCreated]);
+      setSyncStatus('offline-cache');
+      showToast({ tone: 'info', message: '网络不可用，已保存到本地。', detail: `导入 ${localCreated.length} 个日程。` });
       return;
     }
     // 定义items变量，确保在catch块中也能访问
@@ -749,12 +977,15 @@ const App: React.FC = () => {
     try {
       const saved = await createEvents(currentUser.id, items);
       if (!saved || saved.length === 0) {
-        alert('导入失败，请稍后重试');
+        setSyncStatus('sync-error');
+        showToast({ tone: 'error', message: '导入失败，已保存到本地。', detail: '云端同步稍后可重试。' });
         const localCreated = uniqueSegments.map(ev => ({ ...ev, id: crypto.randomUUID() }));
         setEvents(prev => [...prev, ...localCreated]);
         return;
       }
       await refreshEvents();
+      setSyncStatus('synced');
+      showToast({ tone: 'success', message: '导入完成', detail: `已导入 ${saved.length} 个日程。` });
     } catch (e: any) {
       console.error('Save failed:', e);
       let msg = e instanceof Error ? e.message : '保存失败，请检查网络或账号配置';
@@ -769,33 +1000,48 @@ const App: React.FC = () => {
           const saved = await createEvents(currentUser.id, items);
           if (saved && saved.length > 0) {
             await refreshEvents();
+            setSyncStatus('synced');
+            showToast({ tone: 'success', message: '导入完成', detail: `已导入 ${saved.length} 个日程。` });
             return;
           }
         } catch (refreshError) {
           console.error('JWT刷新失败:', refreshError);
           msg = '会话已过期，请重新登录';
+          setSyncStatus('session-expired');
         }
       } else if (msg.includes('Failed to fetch')) {
         // Improve user experience for network errors
         msg = '网络连接异常，事件已保存到本地';
+        setSyncStatus('offline-cache');
+      } else {
+        setSyncStatus('sync-error');
       }
 
-      alert(msg);
+      showToast({ tone: msg.includes('本地') ? 'info' : 'error', message: msg });
 
       const localCreated = uniqueSegments.map(ev => ({ ...ev, id: crypto.randomUUID() }));
       setEvents(prev => [...prev, ...localCreated]);
     }
-  }, [currentUser, events, tags, refreshEvents]);
+  }, [currentUser, events, tags, refreshEvents, showToast]);
+
+  const syncStatusCopy = {
+    synced: { label: '同步正常', detail: isOnline ? '云端数据已连接' : '等待网络恢复', tone: 'ok' },
+    'offline-cache': { label: '离线缓存可用', detail: '正在使用本地备份数据', tone: 'warn' },
+    'sync-error': { label: '同步失败', detail: '部分变更可能需要重试', tone: 'error' },
+    'session-expired': { label: '会话过期', detail: '请重新登录后继续同步', tone: 'error' },
+  }[syncStatus];
 
   return (
-    <div className="App relative min-h-screen w-full flex items-stretch md:items-center justify-center bg-[#F2F2F7] overflow-x-auto p-4 md:p-6">
+    <div className={`App ${colorMode === 'dark' ? 'dark-mode' : ''} ${isThemeSwitching ? 'theme-switching' : ''} ${isSidebarCollapsed ? 'sidebar-is-collapsed' : ''} relative min-h-screen w-full flex items-stretch md:items-center justify-center bg-[#F2F2F7] overflow-x-auto p-4 md:p-6`}>
 
       {/* Main Layout */}
-      <div className="main-layout relative z-10 w-full max-w-7xl flex flex-col md:flex-row md:gap-6 h-full md:h-auto">
-        {!isOnline && (
-          <div className="absolute -top-8 left-0 right-0 flex justify-center">
-            <div className="px-3 py-1 rounded-full bg-white border border-gray-200 shadow-sm text-xs text-gray-600 flex items-center gap-2">
-              <span>当前离线</span>
+      <div className={`main-layout relative z-10 w-full flex flex-col md:flex-row h-full md:h-auto transition-[gap,max-width] duration-300 ${isSidebarCollapsed ? 'max-w-none md:gap-0' : 'max-w-7xl md:gap-6'}`}>
+        {syncStatus !== 'synced' && (
+          <div className="absolute -top-10 left-0 right-0 flex justify-center z-30">
+            <div className={`sync-status-bar sync-status-${syncStatusCopy.tone} px-3 py-1.5 rounded-full bg-white border border-gray-200 shadow-sm text-xs text-gray-600 flex items-center gap-2`}>
+              <span className="sync-status-dot h-2 w-2 rounded-full" />
+              <span className="font-semibold text-gray-800">{syncStatusCopy.label}</span>
+              <span className="text-gray-500">{syncStatusCopy.detail}</span>
               <button onClick={() => setReloadNonce(n => n + 1)} className="px-2 py-0.5 rounded bg-gray-100 text-gray-700">重试</button>
             </div>
           </div>
@@ -810,6 +1056,9 @@ const App: React.FC = () => {
           onOpenAccount={() => setIsAccountOpen(true)}
           onAddEvent={handleSmartAddEvent}
           isLoggedIn={!!currentUser}
+          colorMode={colorMode}
+          onToggleColorMode={handleToggleColorMode}
+          isCollapsed={isSidebarCollapsed}
         />
 
         {/* Module Content */}
@@ -820,19 +1069,20 @@ const App: React.FC = () => {
                 events={filteredEvents}
                 tags={tags}
                 visibleTags={visibleTags}
+                hasHiddenAllTags={hasHiddenAllTags}
                 onToggleTagVisibility={handleToggleTagVisibility}
-                onAddEvent={handleAddEvent}
                 onSmartAddEvent={handleSmartAddEvent}
                 onUpdateEvent={handleUpdateEvent}
-                onDeleteEvent={handleDeleteEvent}
                 onOpenModal={openModal}
-                currentDate={currentDate}
-                setCurrentDate={setCurrentDate}
-                selectedDate={selectedDate}
-                setSelectedDate={setSelectedDate}
-                viewMode={viewMode}
-                setViewMode={setViewMode}
-              />
+              currentDate={currentDate}
+              setCurrentDate={setCurrentDate}
+              selectedDate={selectedDate}
+              setSelectedDate={setSelectedDate}
+              viewMode={viewMode}
+              setViewMode={setViewMode}
+              isSidebarCollapsed={isSidebarCollapsed}
+              onToggleSidebarCollapsed={() => setIsSidebarCollapsed(prev => !prev)}
+            />
               {!currentUser && events.length === 0 && (
                 <div className="absolute inset-0 flex items-center justify中心">
                   <div className="px-4 py-2 rounded-xl bg-white border border-gray-200 shadow-sm text-gray-600 text-sm">请先登录以查看日程</div>
@@ -973,6 +1223,30 @@ const App: React.FC = () => {
           }
         }}
       />
+
+      {toast && (
+        <div className="fixed bottom-6 left-1/2 z-[90] w-[calc(100%-2rem)] max-w-md -translate-x-1/2">
+          <div className={`toast-card toast-${toast.tone} rounded-2xl border bg-white/95 px-4 py-3 shadow-2xl backdrop-blur-xl flex items-center gap-3 animate-[slideInUp_0.25s_ease-out_forwards]`}>
+            <div className="toast-dot h-2.5 w-2.5 rounded-full flex-shrink-0" />
+            <div className="min-w-0 flex-1">
+              <div className="text-sm font-semibold text-gray-900">{toast.message}</div>
+              {toast.detail && <div className="text-xs text-gray-500 mt-0.5 truncate">{toast.detail}</div>}
+            </div>
+            {toast.actionLabel && toast.onAction && (
+              <button
+                onClick={toast.onAction}
+                className="px-3 py-1.5 rounded-full bg-gray-900 text-white text-xs font-semibold hover:bg-black transition-colors"
+              >
+                {toast.actionLabel}
+              </button>
+            )}
+            <button onClick={dismissToast} className="text-gray-400 hover:text-gray-700 transition-colors">
+              <span className="sr-only">关闭提示</span>
+              ×
+            </button>
+          </div>
+        </div>
+      )}
 
     </div>
   );

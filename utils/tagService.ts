@@ -55,16 +55,35 @@ export const fetchTags = async (userId: string, page: number = 1, perPage: numbe
 
 
     // Attempt 2: Fallback without 'order'
-    const query = supabase
+    let data: any[] | null = null;
+    let error: any = null;
+
+    const queryWithCreatedAt = supabase
       .from('tags')
       .select('id,label,color,icon,created_at')
       .eq('user_id', userId)
       .order('created_at', { ascending: true })
       .range((page - 1) * perPage, page * perPage - 1);
 
-    if (signal) query.abortSignal(signal);
+    if (signal) queryWithCreatedAt.abortSignal(signal);
 
-    const { data, error } = await query;
+    const resultWithCreatedAt = await queryWithCreatedAt;
+    data = resultWithCreatedAt.data;
+    error = resultWithCreatedAt.error;
+
+    if (error && String(error.message ?? '').includes('created_at')) {
+      const basicQuery = supabase
+        .from('tags')
+        .select('id,label,color,icon')
+        .eq('user_id', userId)
+        .range((page - 1) * perPage, page * perPage - 1);
+
+      if (signal) basicQuery.abortSignal(signal);
+
+      const basicResult = await basicQuery;
+      data = basicResult.data;
+      error = basicResult.error;
+    }
 
     if (error) {
       const msg = String(error?.message ?? '');

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Icons } from './Icons';
-import { AVAILABLE_COLORS } from '../utils/dateUtils';
+import { APPLE_CALENDAR_COLORS, AVAILABLE_COLORS, getTagColorHex } from '../utils/dateUtils';
 import { Tag } from '../types';
 
 interface CreateTagModalProps {
@@ -22,9 +22,13 @@ const CreateTagModal: React.FC<CreateTagModalProps> = ({ isOpen, onClose, onConf
   useEffect(() => {
     if (isOpen) {
       if (mode === 'edit' && initialTag) {
+        const normalizedColor = AVAILABLE_COLORS.includes(initialTag.color)
+          ? initialTag.color
+          : APPLE_CALENDAR_COLORS.find(color => color.hex === getTagColorHex(initialTag.color))?.className || AVAILABLE_COLORS[0];
+
         setLabel(initialTag.label);
         setIcon(initialTag.icon);
-        setSelectedColor(initialTag.color);
+        setSelectedColor(normalizedColor);
       } else {
         setLabel('');
         setIcon('🏷️');
@@ -60,21 +64,6 @@ const CreateTagModal: React.FC<CreateTagModalProps> = ({ isOpen, onClose, onConf
     }
   };
 
-  const tagColorMap: Record<string, string> = {
-    'bg-cyan-400': 'bg-blue-500 text-white',
-    'bg-emerald-400': 'bg-green-500 text-white',
-    'bg-orange-400': 'bg-orange-500 text-white',
-    'bg-purple-400': 'bg-purple-500 text-white',
-    'bg-rose-400': 'bg-pink-500 text-white',
-    'bg-pink-400': 'bg-pink-500 text-white',
-    'bg-indigo-400': 'bg-indigo-500 text-white',
-    'bg-teal-400': 'bg-teal-500 text-white',
-    'bg-yellow-400': 'bg-yellow-500 text-white',
-    'bg-lime-400': 'bg-lime-500 text-white',
-    'bg-red-400': 'bg-red-500 text-white',
-    'bg-blue-400': 'bg-blue-500 text-white',
-  };
-
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/20 backdrop-blur-sm animate-[fadeIn_0.3s]" onClick={onClose} />
@@ -100,11 +89,14 @@ const CreateTagModal: React.FC<CreateTagModalProps> = ({ isOpen, onClose, onConf
         <div>
           <label className="text-xs font-semibold text-gray-500">颜色选择</label>
           <div className="grid grid-cols-6 gap-3 mt-2">
-            {AVAILABLE_COLORS.map(color => (
+            {APPLE_CALENDAR_COLORS.map(({ className: color, label, hex }) => (
               <button
                 key={color}
                 onClick={() => setSelectedColor(color)}
-                className={`w-10 h-10 rounded-full ${color} transition-transform hover:scale-110 flex items-center justify-center ${selectedColor === color ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-white' : ''}`}
+                className={`w-10 h-10 rounded-full transition-transform hover:scale-110 flex items-center justify-center shadow-sm ${selectedColor === color ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-white' : ''}`}
+                style={{ backgroundColor: hex }}
+                title={label}
+                aria-label={label}
               >
                 {selectedColor === color && <Icons.Check size={18} className="text-white" />}
               </button>
@@ -127,7 +119,10 @@ const CreateTagModal: React.FC<CreateTagModalProps> = ({ isOpen, onClose, onConf
         <div>
           <label className="text-xs font-semibold text-gray-500">预览</label>
           <div className="flex gap-2 mt-2">
-            <div className={`px-3 py-1.5 rounded-full text-sm font-medium ${tagColorMap[selectedColor] || 'bg-blue-500 text-white'} flex items-center gap-1.5`}>
+            <div
+              className="px-3 py-1.5 rounded-full text-sm font-medium text-white flex items-center gap-1.5"
+              style={{ backgroundColor: getTagColorHex(selectedColor) }}
+            >
               <span>{icon || '🏷️'}</span>
               <span>{label || '标签预览'}</span>
             </div>

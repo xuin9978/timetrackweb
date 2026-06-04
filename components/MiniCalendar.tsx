@@ -17,9 +17,10 @@ import { Icons } from './Icons';
 interface MiniCalendarProps {
   selectedDate: Date;
   onDateSelect: (date: Date) => void;
+  eventDates?: Date[];
 }
 
-const MiniCalendar: React.FC<MiniCalendarProps> = React.memo(({ selectedDate, onDateSelect }) => {
+const MiniCalendar: React.FC<MiniCalendarProps> = React.memo(({ selectedDate, onDateSelect, eventDates = [] }) => {
   const [currentMonth, setCurrentMonth] = useState(selectedDate);
   const today = new Date();
 
@@ -31,6 +32,10 @@ const MiniCalendar: React.FC<MiniCalendarProps> = React.memo(({ selectedDate, on
 
     return eachDayOfInterval({ start: startDate, end: endDate });
   }, [currentMonth]);
+
+  const eventDateKeys = useMemo(() => {
+    return new Set(eventDates.map(date => format(date, 'yyyy-MM-dd')));
+  }, [eventDates]);
 
   const weekHeaders = ['一', '二', '三', '四', '五', '六', '日'];
 
@@ -69,6 +74,7 @@ const MiniCalendar: React.FC<MiniCalendarProps> = React.memo(({ selectedDate, on
           const isSelected = isSameDay(day, selectedDate);
           const isCurrent = isSameDay(day, today);
           const isThisMonth = isSameMonth(day, currentMonth);
+          const hasEvent = eventDateKeys.has(format(day, 'yyyy-MM-dd'));
 
           return (
             <button
@@ -85,6 +91,9 @@ const MiniCalendar: React.FC<MiniCalendarProps> = React.memo(({ selectedDate, on
                 <div className="absolute inset-0 border-2 border-red-500 rounded-full"></div>
               )}
               <span className={isSelected ? 'pt-[3px]' : ''}>{format(day, 'd')}</span>
+              {hasEvent && (
+                <span className={`absolute bottom-0.5 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full ${isSelected ? 'bg-white' : 'bg-blue-500'}`} />
+              )}
             </button>
           );
         })}

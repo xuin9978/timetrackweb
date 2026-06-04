@@ -3,18 +3,18 @@ import React, { useState } from 'react';
 import GlassCard from './GlassCard';
 import { Icons } from './Icons';
 import { Tag } from '../types';
-import { AVAILABLE_COLORS } from '../utils/dateUtils';
+import { APPLE_CALENDAR_COLORS, AVAILABLE_COLORS, getTagColorHex, getTagColorRgba } from '../utils/dateUtils';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 
 interface TagManagerModalProps {
   isOpen: boolean;
   onClose: () => void;
   tags: Tag[];
-  onAddTag: (label: string, color: string, icon: string) => void;
-  onUpdateTag: (tag: Tag) => void;
-  onDeleteTag: (id: string) => void;
+  onAddTag: (label: string, color: string, icon: string) => Promise<void> | void;
+  onUpdateTag: (tag: Tag) => Promise<void> | void;
+  onDeleteTag: (id: string) => Promise<void> | void;
   onReorderTags: (tags: Tag[]) => void;
-  onSaveOrder?: () => Promise<void>;
+  onSaveOrder?: (tagsToSave?: Tag[]) => Promise<void>;
 }
 
 const TagManagerModal: React.FC<TagManagerModalProps> = ({
@@ -34,11 +34,17 @@ const TagManagerModal: React.FC<TagManagerModalProps> = ({
   const [isCreating, setIsCreating] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isFormSaving, setIsFormSaving] = useState(false);
+  const [formError, setFormError] = useState('');
+  const [orderError, setOrderError] = useState('');
+  const [deletingTagId, setDeletingTagId] = useState<string | null>(null);
 
   // Reset dirty state when modal opens
   React.useEffect(() => {
     if (isOpen) {
       setHasUnsavedChanges(false);
+      setOrderError('');
+      setFormError('');
     }
   }, [isOpen]);
 
@@ -47,11 +53,12 @@ const TagManagerModal: React.FC<TagManagerModalProps> = ({
   const handleSaveOrderClick = async () => {
     if (!onSaveOrder) return;
     setIsSaving(true);
+    setOrderError('');
     try {
-      await onSaveOrder();
+      await onSaveOrder(tags);
       setHasUnsavedChanges(false);
     } catch (e) {
-      // Error is handled in parent
+      setOrderError('排序保存失败，请检查网络后重试。');
     } finally {
       setIsSaving(false);
     }
@@ -63,14 +70,20 @@ const TagManagerModal: React.FC<TagManagerModalProps> = ({
     setEditIcon('');
     setEditColor(AVAILABLE_COLORS[0]);
     setIsCreating(false);
+    setFormError('');
   };
 
   const handleStartEdit = (tag: Tag) => {
+    const normalizedColor = AVAILABLE_COLORS.includes(tag.color)
+      ? tag.color
+      : APPLE_CALENDAR_COLORS.find(color => color.hex === getTagColorHex(tag.color))?.className || AVAILABLE_COLORS[0];
+
     setEditingTagId(tag.id);
     setEditLabel(tag.label);
     setEditIcon(tag.icon || '🏷️');
-    setEditColor(tag.color);
+    setEditColor(normalizedColor);
     setIsCreating(false);
+    setFormError('');
   };
 
   const handleStartCreate = () => {
@@ -79,52 +92,83 @@ const TagManagerModal: React.FC<TagManagerModalProps> = ({
     setEditIcon('🏷️');
     setEditColor(AVAILABLE_COLORS[Math.floor(Math.random() * AVAILABLE_COLORS.length)]);
     setIsCreating(true);
+    setFormError('');
   };
 
-  const handleSave = () => {
-    if (!editLabel.trim()) return;
-
-    if (isCreating) {
-      onAddTag(editLabel, editColor, editIcon);
-    } else if (editingTagId) {
-      onUpdateTag({
-        id: editingTagId,
-        label: editLabel,
-        color: editColor,
-        icon: editIcon,
-      });
+  const handleSave = async () => {
+    if (!editLabel.trim()) {
+      setFormError('请输入标签名称。');
+      return;
     }
-    resetForm();
+
+    const normalizedIcon = editIcon.trim();
+
+    setIsFormSaving(true);
+    setFormError('');
+    try {
+      if (isCreating) {
+        await onAddTag(editLabel.trim(), editColor, normalizedIcon);
+      } else if (editingTagId) {
+        await onUpdateTag({
+          id: editingTagId,
+          label: editLabel.trim(),
+          color: editColor,
+          icon: normalizedIcon,
+        });
+      }
+      resetForm();
+    } catch (e) {
+      setFormError(e instanceof Error ? e.message : '标签保存失败，请稍后重试。');
+    } finally {
+      setIsFormSaving(false);
+    }
   };
 
-  const handleDelete = (id: string) => {
-    onDeleteTag(id);
-    if (editingTagId === id) {
-      resetForm();
+  const handleDelete = async (id: string) => {
+    setDeletingTagId(id);
+    setFormError('');
+    try {
+      await onDeleteTag(id);
+      if (editingTagId === id) {
+        resetForm();
+      }
+    } catch (e) {
+      setFormError(e instanceof Error ? e.message : '标签删除失败，请稍后重试。');
+    } finally {
+      setDeletingTagId(null);
     }
   };
 
   const onDragEnd = async (result: DropResult) => {
-    if (!result.destination) return;
+    if (!result.destination) {
+      setHasUnsavedChanges(false);
+      return;
+    }
 
     const sourceIndex = result.source.index;
     const destinationIndex = result.destination.index;
 
-    if (sourceIndex === destinationIndex) return;
+    if (sourceIndex === destinationIndex) {
+      setHasUnsavedChanges(false);
+      return;
+    }
 
     const newTags = Array.from(tags);
     const [reorderedTag] = newTags.splice(sourceIndex, 1);
     newTags.splice(destinationIndex, 0, reorderedTag);
 
+    const previousTags = tags;
     onReorderTags(newTags);
+    setOrderError('');
     if (onSaveOrder) {
       setIsSaving(true);
       try {
-        await onSaveOrder();
+        await onSaveOrder(newTags);
         setHasUnsavedChanges(false);
       } catch (e) {
+        onReorderTags(previousTags);
         setHasUnsavedChanges(true);
-        alert('排序保存失败，请检查网络');
+        setOrderError('排序保存失败，已恢复原顺序。');
       } finally {
         setIsSaving(false);
       }
@@ -166,6 +210,12 @@ const TagManagerModal: React.FC<TagManagerModalProps> = ({
           </button>
         </div>
 
+        {(orderError || isSaving) && (
+          <div className={`px-4 py-2 text-xs border-b ${orderError ? 'bg-red-50 text-red-600 border-red-100' : 'bg-blue-50 text-blue-600 border-blue-100'}`}>
+            {orderError || '正在保存排序...'}
+          </div>
+        )}
+
         <div className="flex flex-col h-full overflow-hidden">
           {/* Edit/Create Area */}
           {(editingTagId || isCreating) && (
@@ -175,13 +225,23 @@ const TagManagerModal: React.FC<TagManagerModalProps> = ({
                   {/* Icon Input */}
                   <div className="w-14">
                     <label className="text-xs text-gray-400 block mb-1 uppercase font-bold">图标</label>
-                    <input
-                      type="text"
-                      value={editIcon}
-                      onChange={(e) => setEditIcon(e.target.value)}
-                      className="w-full h-12 bg-white border border-gray-200 rounded-xl text-center text-2xl focus:outline-none focus:border-blue-500 transition-all"
-                      placeholder="🏷️"
-                    />
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={editIcon}
+                        onChange={(e) => setEditIcon(e.target.value)}
+                        disabled={isFormSaving}
+                        className="w-full h-12 bg-white border border-gray-200 rounded-xl text-center text-2xl focus:outline-none focus:border-blue-500 transition-all"
+                        placeholder=""
+                        maxLength={4}
+                        aria-label="自定义标签图标"
+                      />
+                      {!editIcon && (
+                        <div className="pointer-events-none absolute inset-0 flex items-center justify-center text-xs text-gray-300">
+                          无图标
+                        </div>
+                      )}
+                    </div>
                   </div>
                   {/* Name Input */}
                   <div className="flex-1">
@@ -190,6 +250,7 @@ const TagManagerModal: React.FC<TagManagerModalProps> = ({
                       type="text"
                       value={editLabel}
                       onChange={(e) => setEditLabel(e.target.value)}
+                      disabled={isFormSaving}
                       className="w-full h-12 bg-white border border-gray-200 rounded-xl px-4 text-black text-lg focus:outline-none focus:border-blue-500 transition-all"
                       placeholder="标签名称"
                       autoFocus
@@ -197,17 +258,27 @@ const TagManagerModal: React.FC<TagManagerModalProps> = ({
                   </div>
                 </div>
 
+                {formError && (
+                  <div className="rounded-xl border border-red-100 bg-red-50 px-3 py-2 text-sm text-red-600">
+                    {formError}
+                  </div>
+                )}
+
                 {/* Color Picker */}
                 <div>
                   <label className="text-xs text-gray-400 block mb-2 uppercase font-bold">颜色</label>
-                  <div className="flex flex-wrap gap-2">
-                    {AVAILABLE_COLORS.map(color => (
+                  <div className="grid grid-cols-6 gap-2.5">
+                    {APPLE_CALENDAR_COLORS.map(({ className: color, label, hex }) => (
                       <button
                         key={color}
                         onClick={() => setEditColor(color)}
-                        className={`w-8 h-8 rounded-full ${color} transition-transform hover:scale-110 relative flex items-center justify-center ${editColor === color ? 'scale-110 ring-2 ring-gray-400 ring-offset-2' : 'opacity-70'}`}
+                        disabled={isFormSaving}
+                        className={`w-8 h-8 rounded-full transition-all hover:scale-110 relative flex items-center justify-center shadow-sm ${editColor === color ? 'scale-110 ring-2 ring-[#007AFF] ring-offset-2' : 'opacity-90'}`}
+                        style={{ backgroundColor: hex }}
+                        title={label}
+                        aria-label={label}
                       >
-                        {editColor === color && <div className="w-2 h-2 bg-white rounded-full shadow-sm" />}
+                        {editColor === color && <Icons.Check size={14} className="text-white drop-shadow-sm" />}
                       </button>
                     ))}
                   </div>
@@ -217,12 +288,14 @@ const TagManagerModal: React.FC<TagManagerModalProps> = ({
                 <div className="flex gap-3 pt-2">
                   <button
                     onClick={handleSave}
+                    disabled={isFormSaving}
                     className="flex-1 py-2 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition-colors font-medium"
                   >
-                    {isCreating ? '创建标签' : '保存修改'}
+                    {isFormSaving ? '保存中...' : isCreating ? '创建标签' : '保存修改'}
                   </button>
                   <button
                     onClick={resetForm}
+                    disabled={isFormSaving}
                     className="px-4 py-2 bg-white border border-gray-200 text-gray-500 rounded-xl hover:bg-gray-50 transition-colors"
                   >
                     取消
@@ -245,8 +318,9 @@ const TagManagerModal: React.FC<TagManagerModalProps> = ({
                   className="flex-1 overflow-y-auto hide-scrollbar p-4 space-y-2 bg-white"
                 >
                   {tags.map((tag, index) => (
-                    <Draggable key={tag.id} draggableId={tag.id} index={index}>
-                      {(provided, snapshot) => (
+                    <React.Fragment key={tag.id}>
+                      <Draggable draggableId={tag.id} index={index}>
+                        {(provided, snapshot) => (
                         <div
                           ref={provided.innerRef}
                           {...provided.draggableProps}
@@ -270,25 +344,31 @@ const TagManagerModal: React.FC<TagManagerModalProps> = ({
                               <Icons.GripVertical size={16} />
                             </div>
 
-                            <div className={`w-10 h-10 rounded-lg ${tag.color} bg-opacity-20 flex items-center justify-center text-xl flex-shrink-0`}>
-                              {tag.icon || '🏷️'}
+                            <div
+                              className="w-10 h-10 rounded-lg flex items-center justify-center text-xl flex-shrink-0"
+                              style={{ backgroundColor: getTagColorRgba(tag.color, 0.18), color: getTagColorHex(tag.color) }}
+                            >
+                              {tag.icon ? tag.icon : <span className="w-2 h-2 rounded-full bg-white/70" />}
                             </div>
                             <div>
                               <div className="text-black font-medium">{tag.label}</div>
                             </div>
                           </div>
-                          <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="flex items-center gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                             <button
                               onClick={(e) => { e.stopPropagation(); handleDelete(tag.id); }}
+                              disabled={deletingTagId === tag.id}
+                              aria-label={`删除标签 ${tag.label}`}
                               className="p-2 hover:bg-red-50 text-gray-300 hover:text-red-500 rounded-lg transition-colors"
                             >
-                              <Icons.X size={16} />
+                              {deletingTagId === tag.id ? <span className="text-xs text-red-500">删</span> : <Icons.X size={16} />}
                             </button>
                             <Icons.ChevronRight className="text-gray-300" size={16} />
                           </div>
                         </div>
-                      )}
-                    </Draggable>
+                        )}
+                      </Draggable>
+                    </React.Fragment>
                   ))}
                   {provided.placeholder}
 

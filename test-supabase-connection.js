@@ -1,14 +1,20 @@
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
 dotenv.config({ path: '.env.local' });
+dotenv.config({ path: '.env', override: false });
 
 const norm = v => typeof v === 'string' ? v.trim().replace(/^['"`]|['"`]$/g, '') : undefined;
-const supabaseUrl = norm(process.env.VITE_SUPABASE_URL) || 'https://qlnwwewhbgjffjevevij.supabase.co';
+const supabaseUrl = norm(process.env.VITE_SUPABASE_URL);
 const supabaseKey = norm(process.env.VITE_SUPABASE_ANON_KEY);
 
 console.log('Testing Supabase connection...');
-console.log('URL:', supabaseUrl);
-console.log('Key:', (supabaseKey || '').substring(0, 20) + '...');
+console.log('URL configured:', Boolean(supabaseUrl));
+console.log('Anonymous key configured:', Boolean(supabaseKey));
+
+if (!supabaseUrl || !supabaseKey) {
+  console.error('Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY');
+  process.exit(1);
+}
 
 try {
   const supabase = createClient(supabaseUrl, supabaseKey);

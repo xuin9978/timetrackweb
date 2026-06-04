@@ -1,14 +1,24 @@
 // Supabase Connection Status Checker
-// This script checks the Supabase connection status
+// Reads credentials from .env.local/.env and never prints secrets.
+import dotenv from 'dotenv';
 
-const SUPABASE_URL = 'https://gbmecshpfuksylwflawi.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdibWVjc2hwZnVrc3lsd2ZsYXdpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzNjM1OTEsImV4cCI6MjA5NTkzOTU5MX0.0PCXzmlSjGQvTtHssLN4HqcHng7aUZaNjxIJZjB7un8';
+dotenv.config({ path: '.env.local' });
+dotenv.config({ path: '.env', override: false });
+
+const norm = v => typeof v === 'string' ? v.trim().replace(/^['"`]|['"`]$/g, '') : undefined;
+const SUPABASE_URL = norm(process.env.VITE_SUPABASE_URL);
+const SUPABASE_KEY = norm(process.env.VITE_SUPABASE_ANON_KEY);
 
 async function checkSupabaseConnection() {
-  console.log('🔍 Checking Supabase connection status...\n');
+  console.log('Checking Supabase connection status...\n');
+
+  if (!SUPABASE_URL || !SUPABASE_KEY) {
+    console.error('Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY');
+    process.exit(1);
+  }
   
   // Check 1: URL Accessibility
-  console.log('1️⃣ Testing URL accessibility...');
+  console.log('1. Testing URL accessibility...');
   try {
     const response = await fetch(`${SUPABASE_URL}/auth/v1/settings`, {
       method: 'GET',
@@ -19,16 +29,16 @@ async function checkSupabaseConnection() {
     });
     
     if (response.ok) {
-      console.log('✅ Supabase URL is accessible');
+      console.log('OK: Supabase URL is accessible');
     } else {
-      console.log(`❌ URL test failed: ${response.status} ${response.statusText}`);
+      console.log(`FAILED: URL test failed: ${response.status} ${response.statusText}`);
     }
   } catch (error) {
-    console.log('❌ URL is not accessible:', error.message);
+    console.log('FAILED: URL is not accessible:', error.message);
   }
   
   // Check 2: Authentication endpoint
-  console.log('\n2️⃣ Testing authentication endpoint...');
+  console.log('\n2. Testing authentication endpoint...');
   try {
     const response = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
       method: 'POST',
@@ -43,16 +53,16 @@ async function checkSupabaseConnection() {
     });
     
     if (response.status === 400) {
-      console.log('✅ Auth endpoint is working (expected 400 for wrong credentials)');
+      console.log('OK: Auth endpoint is working (expected 400 for wrong credentials)');
     } else {
-      console.log(`⚠️  Auth endpoint returned: ${response.status}`);
+      console.log(`WARN: Auth endpoint returned: ${response.status}`);
     }
   } catch (error) {
-    console.log('❌ Auth endpoint test failed:', error.message);
+    console.log('FAILED: Auth endpoint test failed:', error.message);
   }
   
   // Check 3: REST API endpoint
-  console.log('\n3️⃣ Testing REST API endpoint...');
+  console.log('\n3. Testing REST API endpoint...');
   try {
     const response = await fetch(`${SUPABASE_URL}/rest/v1/`, {
       method: 'GET',
@@ -63,49 +73,57 @@ async function checkSupabaseConnection() {
     });
     
     if (response.ok || response.status === 404) {
-      console.log('✅ REST API endpoint is accessible');
+      console.log('OK: REST API endpoint is accessible');
     } else {
-      console.log(`⚠️  REST API returned: ${response.status}`);
+      console.log(`WARN: REST API returned: ${response.status}`);
     }
   } catch (error) {
-    console.log('❌ REST API test failed:', error.message);
+    console.log('FAILED: REST API test failed:', error.message);
   }
   
-  // Check 4: Realtime connection
-  console.log('\n4️⃣ Testing realtime connection...');
+  // Check 4: Events table access
+  console.log('\n4. Testing events table access...');
   try {
-    const ws = new WebSocket(`wss://${SUPABASE_URL.replace('https://', '')}/realtime/v1/websocket?apikey=${SUPABASE_KEY}`);
-    
-    ws.onopen = () => {
-      console.log('✅ Realtime WebSocket connection established');
-      ws.close();
-    };
-    
-    ws.onerror = (error) => {
-      console.log('❌ Realtime WebSocket connection failed');
-    };
-    
-    ws.onclose = () => {
-      // Connection test completed
-    };
-    
-    // Timeout after 5 seconds
-    setTimeout(() => {
-      if (ws.readyState === WebSocket.CONNECTING) {
-        console.log('⏱️  Realtime connection timeout');
-        ws.close();
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/events?select=id&limit=1`, {
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`
       }
-    }, 5000);
-    
+    });
+
+    if (response.ok) {
+      console.log('OK: events table is reachable');
+    } else {
+      console.log(`FAILED: events table returned: ${response.status}`);
+    }
   } catch (error) {
-    console.log('❌ Realtime test failed:', error.message);
+    console.log('FAILED: events table test failed:', error.message);
+  }
+
+  // Check 5: Tags table access
+  console.log('\n5. Testing tags table access...');
+  try {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/tags?select=id&limit=1`, {
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`
+      }
+    });
+
+    if (response.ok) {
+      console.log('OK: tags table is reachable');
+    } else {
+      console.log(`FAILED: tags table returned: ${response.status}`);
+    }
+  } catch (error) {
+    console.log('FAILED: tags table test failed:', error.message);
   }
   
-  console.log('\n📊 Connection Summary:');
-  console.log('- URL: https://qlnwwewhbgjffjevevij.supabase.co');
+  console.log('\nConnection Summary:');
+  console.log('- URL configured:', Boolean(SUPABASE_URL));
   console.log('- Status: Configuration loaded from environment');
   console.log('- Key: Anonymous key configured');
-  console.log('\n💡 Tips for troubleshooting:');
+  console.log('\nTips for troubleshooting:');
   console.log('1. Check if Supabase service is running');
   console.log('2. Verify API keys are correct');
   console.log('3. Check network connectivity');

@@ -15,6 +15,11 @@ export interface CalendarEvent {
   category: string; // References Tag.id
   date: Date;
   description?: string;
+  seriesId?: string;
+  segmentIndex?: number;
+  segmentCount?: number;
+  continuesFromPreviousDay?: boolean;
+  continuesToNextDay?: boolean;
 }
 
 export interface DayData {

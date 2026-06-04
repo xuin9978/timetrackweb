@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import GlassCard from './GlassCard';
 import { Icons } from './Icons';
 import { CalendarEvent, Tag } from '../types';
-import { getDurationInMinutes, formatDurationFromMinutes } from '../utils/dateUtils';
+import { getDurationInMinutes, formatDurationFromMinutes, getMinutesFromTime } from '../utils/dateUtils';
 
 type PanelContext = 'day' | 'week' | 'month';
 
@@ -15,6 +15,7 @@ interface EventPanelProps {
     onToggleTagVisibility: (tagId: string) => void;
     onAddEvent: () => void;
     onEventClick?: (event: CalendarEvent) => void;
+    hasHiddenAllTags?: boolean;
 }
 
 type EventViewType = 'list' | 'group' | 'stats';
@@ -26,11 +27,22 @@ interface EventCardProps {
     index: number;
 }
 
+const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const getDisplayTitle = (title: string, icon?: string) => {
+    if (!icon) return title.replace(/^[\p{Extended_Pictographic}\uFE0F]+\s*[：:]\s*/u, '');
+    return title
+        .replace(new RegExp(`^${escapeRegExp(icon)}\\s*[：:]\\s*`), '')
+        .replace(/^[\p{Extended_Pictographic}\uFE0F]+\s*[：:]\s*/u, '');
+};
+
 const EventCard = React.memo(({ event, tag, onClick, index }: EventCardProps) => {
+    const displayTitle = getDisplayTitle(event.title, tag.icon);
+
     return (
         <div
             onClick={() => onClick?.(event)}
-            className="group flex items-center gap-3 p-3 rounded-xl bg-gray-50 border border-transparent hover:border-gray-200 hover:shadow-sm transition-all duration-200 cursor-pointer animate-[slideInUp_0.4s_ease-out_forwards]"
+            className="event-panel-card group flex items-center gap-3 p-3 rounded-xl bg-gray-50 border border-transparent hover:border-gray-200 hover:shadow-sm transition-all duration-200 cursor-pointer animate-[slideInUp_0.4s_ease-out_forwards]"
             style={{ animationDelay: `${index * 50}ms`, opacity: 0 }}
         >
             <div className={`
@@ -40,7 +52,7 @@ const EventCard = React.memo(({ event, tag, onClick, index }: EventCardProps) =>
 
             <div className="flex-1 min-w-0">
                 <h3 className="text-gray-900 font-medium text-sm truncate group-hover:text-black transition-colors">
-                    {event.title}
+                    {displayTitle}
                 </h3>
                 <div className="flex items-center gap-2 text-gray-500 text-[11px] mt-0.5">
                     <Icons.Clock size={11} />
@@ -48,14 +60,14 @@ const EventCard = React.memo(({ event, tag, onClick, index }: EventCardProps) =>
                 </div>
             </div>
 
-            <button className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-gray-600 transition-all duration-200">
+            <div className="opacity-0 group-hover:opacity-100 text-gray-400 group-hover:text-gray-600 transition-all duration-200" aria-hidden="true">
                 <Icons.ChevronRight size={16} />
-            </button>
+            </div>
         </div>
     );
 });
 
-const EventPanel: React.FC<EventPanelProps> = ({ panelTitle, panelContext, events, tags, visibleTags, onToggleTagVisibility, onAddEvent, onEventClick }) => {
+const EventPanel: React.FC<EventPanelProps> = ({ panelTitle, panelContext, events, tags, visibleTags, onToggleTagVisibility, onAddEvent, onEventClick, hasHiddenAllTags = false }) => {
     const [viewType, setViewType] = useState<EventViewType>('list');
     const [isButtonAnimating, setIsButtonAnimating] = useState('');
     const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -104,6 +116,81 @@ const EventPanel: React.FC<EventPanelProps> = ({ panelTitle, panelContext, event
         return Object.entries(stats).sort(([, timeA], [, timeB]) => timeB - timeA);
     }, [events, viewType]);
 
+    const insights = useMemo(() => {
+        const sorted = [...events].sort((a, b) => {
+            const dateDiff = a.date.getTime() - b.date.getTime();
+            if (dateDiff !== 0) return dateDiff;
+            return a.startTime.localeCompare(b.startTime);
+        });
+        const totalMinutes = sorted.reduce((sum, event) => sum + getDurationInMinutes(event.startTime, event.endTime), 0);
+        const tagTotals = sorted.reduce<Record<string, number>>((acc, event) => {
+            acc[event.category] = (acc[event.category] || 0) + getDurationInMinutes(event.startTime, event.endTime);
+            return acc;
+        }, {});
+        const topTagEntry = Object.entries(tagTotals).sort(([, a], [, b]) => b - a)[0];
+
+        const eventsByDay = sorted.reduce<Record<string, CalendarEvent[]>>((acc, event) => {
+            const key = event.date.toDateString();
+            acc[key] = acc[key] || [];
+            acc[key].push(event);
+            return acc;
+        }, {});
+
+        let longestContinuous = 0;
+        let nextFree = '暂无明显空档';
+        let foundFree = false;
+        const now = new Date();
+        const nowMinutes = getMinutesFromTime(`${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`);
+
+        Object.values(eventsByDay).forEach(dayEvents => {
+            const daySorted = [...dayEvents].sort((a, b) => a.startTime.localeCompare(b.startTime));
+            let clusterStart = getMinutesFromTime(daySorted[0].startTime);
+            let clusterEnd = getMinutesFromTime(daySorted[0].endTime);
+            const isTodayGroup = daySorted[0].date.toDateString() === now.toDateString();
+            let previousEnd = isTodayGroup ? nowMinutes : 0;
+
+            daySorted.forEach((event, index) => {
+                const start = getMinutesFromTime(event.startTime);
+                const end = getMinutesFromTime(event.endTime);
+                if (!foundFree && start - previousEnd >= 15) {
+                    const freeStartH = Math.floor(previousEnd / 60).toString().padStart(2, '0');
+                    const freeStartM = (previousEnd % 60).toString().padStart(2, '0');
+                    nextFree = `${freeStartH}:${freeStartM} - ${event.startTime}`;
+                    foundFree = true;
+                }
+
+                if (index === 0) {
+                    clusterStart = start;
+                    clusterEnd = end;
+                } else if (start - clusterEnd <= 5) {
+                    clusterEnd = Math.max(clusterEnd, end);
+                } else {
+                    longestContinuous = Math.max(longestContinuous, clusterEnd - clusterStart);
+                    clusterStart = start;
+                    clusterEnd = end;
+                }
+                previousEnd = Math.max(previousEnd, end);
+            });
+
+            longestContinuous = Math.max(longestContinuous, clusterEnd - clusterStart);
+            if (!foundFree && 1440 - previousEnd >= 15) {
+                const freeStartH = Math.floor(previousEnd / 60).toString().padStart(2, '0');
+                const freeStartM = (previousEnd % 60).toString().padStart(2, '0');
+                nextFree = `${freeStartH}:${freeStartM} - 24:00`;
+                foundFree = true;
+            }
+        });
+
+        const topTag = topTagEntry ? getTagInfo(topTagEntry[0]) : null;
+
+        return {
+            total: formatDurationFromMinutes(totalMinutes),
+            topTagLabel: topTag ? `${topTag.icon || ''} ${topTag.label}`.trim() : '暂无',
+            longest: longestContinuous > 0 ? formatDurationFromMinutes(longestContinuous) : '暂无',
+            nextFree
+        };
+    }, [events, getTagInfo]);
+
 
     const handleSetViewType = (type: EventViewType) => {
         setIsButtonAnimating(type);
@@ -111,7 +198,13 @@ const EventPanel: React.FC<EventPanelProps> = ({ panelTitle, panelContext, event
         setTimeout(() => setIsButtonAnimating(''), 300);
     };
 
-    const noEventsMessage = panelContext === 'month' ? '本月无日程' : panelContext === 'week' ? '本周无日程' : '今日无日程';
+    const noEventsMessage = hasHiddenAllTags
+        ? '已隐藏全部标签'
+        : panelContext === 'month'
+            ? '本月无日程'
+            : panelContext === 'week'
+                ? '本周无日程'
+                : '今日无日程';
 
     const renderEventCard = (event: CalendarEvent, index: number, tag?: Tag) => {
         const tagInfo = tag || getTagInfo(event.category);
@@ -127,7 +220,7 @@ const EventPanel: React.FC<EventPanelProps> = ({ panelTitle, panelContext, event
     };
 
     return (
-        <GlassCard intensity="medium" className="h-full flex flex-col p-5 overflow-hidden bg-white shadow-lg border-l border-gray-100">
+        <GlassCard intensity="medium" className="event-panel h-full flex flex-col p-5 overflow-hidden bg-white shadow-lg border-l border-gray-100">
             {/* Header */}
             <div className="flex flex-col gap-4 mb-4 flex-shrink-0">
                 <div>
@@ -141,22 +234,27 @@ const EventPanel: React.FC<EventPanelProps> = ({ panelTitle, panelContext, event
                     <div className="flex items-center gap-2">
                         <button
                             onClick={() => handleSetViewType('group')}
+                            title="分类"
+                            aria-label="分类"
                             className={`
+                        event-panel-chip
                         flex items-center gap-2 px-3 py-1.5 rounded-full transition-all duration-300 text-xs font-medium border
                         ${viewType === 'group'
                                     ? 'bg-gray-100 text-black border-gray-200'
                                     : 'bg-white text-gray-500 border-gray-100 hover:bg-gray-50'
                                 }
                         ${isButtonAnimating === 'group' ? 'scale-95' : ''}
-                    `}
+                        `}
                         >
                             <Icons.Timer size={14} className={`transition-transform duration-500 ${viewType === 'group' ? 'rotate-180' : ''}`} />
-                            <span>分类</span>
                         </button>
 
                         <button
                             onClick={() => handleSetViewType('stats')}
+                            title="统计"
+                            aria-label="统计"
                             className={`
+                        event-panel-chip
                         flex items-center gap-2 px-3 py-1.5 rounded-full transition-all duration-300 text-xs font-medium border
                         ${viewType === 'stats'
                                     ? 'bg-gray-100 text-black border-gray-200'
@@ -171,7 +269,10 @@ const EventPanel: React.FC<EventPanelProps> = ({ panelTitle, panelContext, event
                         <div className="relative">
                             <button
                                 onClick={() => setIsFilterOpen(prev => !prev)}
+                                title="筛选标签"
+                                aria-label="筛选标签"
                                 className={`
+                            event-panel-chip
                             flex items-center gap-2 px-3 py-1.5 rounded-full transition-all duration-300 text-xs font-medium border
                             ${isFilterOpen
                                         ? 'bg-gray-100 text-black border-gray-200'
@@ -184,11 +285,11 @@ const EventPanel: React.FC<EventPanelProps> = ({ panelTitle, panelContext, event
                             {isFilterOpen && (
                                 <>
                                     <div className="fixed inset-0 z-40" onClick={() => setIsFilterOpen(false)}></div>
-                                    <div className="absolute top-full left-0 mt-2 w-60 bg-white shadow-xl rounded-2xl border border-gray-100 z-50 p-3 animate-[scaleIn_0.2s_ease-out_forwards] origin-top-left">
+                                    <div className="event-panel-popover absolute top-full left-0 mt-2 w-60 bg-white shadow-xl rounded-2xl border border-gray-100 z-50 p-3 animate-[scaleIn_0.2s_ease-out_forwards] origin-top-left">
                                         <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider px-2 pb-2">显示日历</h4>
                                         <div className="space-y-1">
                                             {tags.map(tag => (
-                                                <label key={tag.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer">
+                                                <label key={tag.id} className="event-panel-filter-row flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer">
                                                     <input
                                                         type="checkbox"
                                                         checked={visibleTags.includes(tag.id)}
@@ -208,7 +309,9 @@ const EventPanel: React.FC<EventPanelProps> = ({ panelTitle, panelContext, event
 
                     <button
                         onClick={onAddEvent}
-                        className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-black hover:bg-gray-200 transition-all duration-200 hover:rotate-90 active:scale-90"
+                        title="新增日程"
+                        aria-label="新增日程"
+                        className="event-panel-add w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-black hover:bg-gray-200 transition-all duration-200 hover:rotate-90 active:scale-90"
                     >
                         <Icons.Plus size={18} />
                     </button>
@@ -241,7 +344,7 @@ const EventPanel: React.FC<EventPanelProps> = ({ panelTitle, panelContext, event
                                             className="space-y-2 animate-[slideInUp_0.4s_ease-out_forwards]"
                                             style={{ animationDelay: `${groupIndex * 100}ms`, opacity: 0 }}
                                         >
-                                            <div className="flex items-center gap-3 py-1 text-gray-400">
+                                            <div className="event-panel-group-header flex items-center gap-3 py-1 text-gray-400">
                                                 <div className="flex items-center gap-2 flex-shrink-0">
                                                     <div className={`w-1.5 h-1.5 rounded-full ${tagInfo.color}`} />
                                                     <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">
@@ -299,7 +402,7 @@ const EventPanel: React.FC<EventPanelProps> = ({ panelTitle, panelContext, event
                                                 </span>
                                                 <div className="h-[1px] flex-1 bg-gray-100" />
                                             </div>
-                                            <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-100">
+                                            <div className="event-panel-stat-row flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-100">
                                                 <div className={`w-10 h-10 rounded-lg ${tagInfo.color} bg-opacity-20 flex items-center justify-center text-xl shrink-0`}>
                                                     {tagInfo.icon || '⏱️'}
                                                 </div>
@@ -317,19 +420,40 @@ const EventPanel: React.FC<EventPanelProps> = ({ panelTitle, panelContext, event
                     </div>
                 ) : (
                     <div className="h-full flex flex-col items-center justify-center text-gray-400 space-y-3 animate-[fadeIn_0.5s]">
-                        <div className="w-14 h-14 rounded-full bg-gray-50 flex items-center justify-center">
+                        <div className="event-panel-empty-icon w-14 h-14 rounded-full bg-gray-50 flex items-center justify-center">
                             <Icons.Calendar size={24} className="text-gray-300" />
                         </div>
                         <p className="font-medium text-sm text-gray-400">{noEventsMessage}</p>
+                        {hasHiddenAllTags && (
+                            <p className="max-w-40 text-center text-xs text-gray-300">在筛选里至少勾选一个标签即可恢复显示。</p>
+                        )}
                     </div>
                 )}
             </div>
 
             {/* Insight Footer */}
-            <div className="mt-4 pt-3 border-t border-gray-100 flex-shrink-0">
+            <div className="event-panel-insights mt-4 pt-3 border-t border-gray-100 flex-shrink-0">
                 <div className="flex items-center gap-2 text-indigo-500 text-[10px] uppercase tracking-widest font-bold mb-1">
                     <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full" />
                     智能洞察
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-[11px]">
+                    <div className="event-panel-insight rounded-xl bg-gray-50 border border-gray-100 p-2">
+                        <div className="text-gray-400">总时长</div>
+                        <div className="font-semibold text-gray-800">{insights.total}</div>
+                    </div>
+                    <div className="event-panel-insight rounded-xl bg-gray-50 border border-gray-100 p-2">
+                        <div className="text-gray-400">最多标签</div>
+                        <div className="font-semibold text-gray-800 truncate">{insights.topTagLabel}</div>
+                    </div>
+                    <div className="event-panel-insight rounded-xl bg-gray-50 border border-gray-100 p-2">
+                        <div className="text-gray-400">最长连续</div>
+                        <div className="font-semibold text-gray-800">{insights.longest}</div>
+                    </div>
+                    <div className="event-panel-insight rounded-xl bg-gray-50 border border-gray-100 p-2">
+                        <div className="text-gray-400">下一段空闲</div>
+                        <div className="font-semibold text-gray-800 truncate">{insights.nextFree}</div>
+                    </div>
                 </div>
             </div>
         </GlassCard>

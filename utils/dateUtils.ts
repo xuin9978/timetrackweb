@@ -39,28 +39,65 @@ export {
 // Re-export isSameDay from timezoneUtils for consistency
 export const isSameDay = isSameDaySafe;
 
-export const AVAILABLE_COLORS = [
-  'bg-cyan-400',
-  'bg-purple-400',
-  'bg-rose-400',
-  'bg-orange-400',
-  'bg-emerald-400',
-  'bg-pink-400',
-  'bg-indigo-400',
-  'bg-teal-400',
-  'bg-yellow-400',
-  'bg-lime-400',
-  'bg-blue-400',
-  'bg-red-400',
-  'bg-amber-400',
-  'bg-green-400',
-  'bg-sky-400',
-  'bg-violet-400',
-  'bg-fuchsia-400',
-  'bg-slate-400',
-  'bg-gray-400',
-  'bg-stone-400',
+export const APPLE_CALENDAR_COLORS = [
+  { label: '红色', className: 'bg-[#FF3B30]', hex: '#FF3B30' },
+  { label: '橙色', className: 'bg-[#FF9500]', hex: '#FF9500' },
+  { label: '黄色', className: 'bg-[#FFCC00]', hex: '#FFCC00' },
+  { label: '绿色', className: 'bg-[#34C759]', hex: '#34C759' },
+  { label: '薄荷', className: 'bg-[#00C7BE]', hex: '#00C7BE' },
+  { label: '青色', className: 'bg-[#32ADE6]', hex: '#32ADE6' },
+  { label: '蓝色', className: 'bg-[#007AFF]', hex: '#007AFF' },
+  { label: '靛蓝', className: 'bg-[#5856D6]', hex: '#5856D6' },
+  { label: '紫色', className: 'bg-[#AF52DE]', hex: '#AF52DE' },
+  { label: '粉色', className: 'bg-[#FF2D55]', hex: '#FF2D55' },
+  { label: '棕色', className: 'bg-[#A2845E]', hex: '#A2845E' },
+  { label: '灰色', className: 'bg-[#8E8E93]', hex: '#8E8E93' },
 ];
+
+export const AVAILABLE_COLORS = APPLE_CALENDAR_COLORS.map(color => color.className);
+
+const LEGACY_COLOR_HEX_MAP: Record<string, string> = {
+  'bg-cyan-400': '#32ADE6',
+  'bg-purple-400': '#AF52DE',
+  'bg-rose-400': '#FF2D55',
+  'bg-orange-400': '#FF9500',
+  'bg-emerald-400': '#34C759',
+  'bg-pink-400': '#FF2D55',
+  'bg-indigo-400': '#5856D6',
+  'bg-teal-400': '#00C7BE',
+  'bg-yellow-400': '#FFCC00',
+  'bg-lime-400': '#34C759',
+  'bg-blue-400': '#007AFF',
+  'bg-red-400': '#FF3B30',
+  'bg-amber-400': '#FF9500',
+  'bg-green-400': '#34C759',
+  'bg-sky-400': '#32ADE6',
+  'bg-violet-400': '#AF52DE',
+  'bg-fuchsia-400': '#FF2D55',
+  'bg-slate-400': '#8E8E93',
+  'bg-gray-400': '#8E8E93',
+  'bg-stone-400': '#8E8E93',
+};
+
+export const getTagColorHex = (color?: string): string => {
+  if (!color) return '#8E8E93';
+
+  const appleColor = APPLE_CALENDAR_COLORS.find(item => item.className === color);
+  if (appleColor) return appleColor.hex;
+
+  const arbitraryHexMatch = color.match(/^bg-\[(#[0-9A-Fa-f]{6})\]$/);
+  if (arbitraryHexMatch) return arbitraryHexMatch[1];
+
+  return LEGACY_COLOR_HEX_MAP[color] || '#8E8E93';
+};
+
+export const getTagColorRgba = (color: string | undefined, alpha: number): string => {
+  const hex = getTagColorHex(color);
+  const red = parseInt(hex.slice(1, 3), 16);
+  const green = parseInt(hex.slice(3, 5), 16);
+  const blue = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
+};
 
 // Initial Mock Tags - Empty for clean default state
 export const INITIAL_TAGS: Tag[] = [];
@@ -178,6 +215,46 @@ export const getDurationInMinutes = (startTime: string, endTime: string): number
   return endMinutes - startMinutes;
 };
 
+export interface EventBlockPresentation {
+  showTitle: boolean;
+  showTimeRange: boolean;
+  layoutDirection: 'row' | 'column';
+  titleClamp: 'truncate' | 'wrap';
+  titleMaxLines: number;
+  fontSize: string;
+  timeFontSize: string;
+  compact: boolean;
+}
+
+export const getEventBlockPresentation = ({
+  duration,
+  viewMode,
+  columnWidth = 0,
+}: {
+  duration: number;
+  viewMode: ViewMode.Day | ViewMode.Week;
+  columnWidth?: number;
+}): EventBlockPresentation => {
+  const isWeek = viewMode === ViewMode.Week;
+  const isVeryShort = duration < 30;
+  const isShort = duration < 45;
+  const narrowColumn = columnWidth > 0 && columnWidth < 96;
+  const crampedColumn = columnWidth > 0 && columnWidth < 72;
+  const compact = isVeryShort || (isShort && (isWeek || narrowColumn)) || (crampedColumn && duration < 60);
+  const titleMaxLines = compact ? 1 : duration >= 90 ? 4 : duration >= 60 ? 3 : 2;
+
+  return {
+    showTitle: true,
+    showTimeRange: duration >= 30,
+    layoutDirection: compact ? 'row' : 'column',
+    titleClamp: compact ? 'truncate' : 'wrap',
+    titleMaxLines,
+    fontSize: isWeek ? (compact ? '10px' : '10.5px') : (isShort ? '10px' : '11px'),
+    timeFontSize: isWeek ? (compact ? '9px' : '9.5px') : (isShort ? '9px' : '10px'),
+    compact,
+  };
+};
+
 export const getDurationString = (startTime: string, endTime: string): string => {
   const minutes = getDurationInMinutes(startTime, endTime);
   if (minutes < 60) {
@@ -239,14 +316,14 @@ export const splitEventAcrossDays = (event: Omit<CalendarEvent, 'id'>): Omit<Cal
     endDateTime = addDays(endDateTime, 1);
   }
 
-  const eventsList: Omit<CalendarEvent, 'id'>[] = [];
+  const rawSegments: Omit<CalendarEvent, 'id'>[] = [];
   let currentStart = startDateTime;
 
   while (isAfter(endDateTime, currentStart)) {
     const endOfCurrentDay = endOfDay(currentStart);
     const segmentEnd = isAfter(endDateTime, endOfCurrentDay) ? endOfCurrentDay : endDateTime;
 
-    eventsList.push({
+    rawSegments.push({
       ...event,
       date: currentStart,
       startTime: formatTime(currentStart),
@@ -256,7 +333,19 @@ export const splitEventAcrossDays = (event: Omit<CalendarEvent, 'id'>): Omit<Cal
     currentStart = startOfDay(addDays(currentStart, 1));
   }
 
-  return eventsList;
+  if (rawSegments.length <= 1) {
+    return rawSegments;
+  }
+
+  const seriesId = event.seriesId || crypto.randomUUID();
+  return rawSegments.map((segment, index) => ({
+    ...segment,
+    seriesId,
+    segmentIndex: index,
+    segmentCount: rawSegments.length,
+    continuesFromPreviousDay: index > 0,
+    continuesToNextDay: index < rawSegments.length - 1,
+  }));
 };
 
 export const exportToICS = (events: CalendarEvent[], filenameSuffix?: string) => {
@@ -441,14 +530,29 @@ export interface EventLayout {
   isContainer: boolean; // true if this event contains other events
 }
 
+type NormalizedEventInterval = {
+  event: CalendarEvent;
+  index: number;
+  start: number;
+  end: number;
+};
+
+const getNormalizedEventInterval = (event: CalendarEvent, index = 0): NormalizedEventInterval => {
+  const start = getMinutesFromTime(event.startTime);
+  let end = getMinutesFromTime(event.endTime);
+  if (end <= start) {
+    end += 24 * 60;
+  }
+
+  return { event, index, start, end };
+};
+
 /**
  * Check if two events overlap in time
  */
 export const eventsOverlap = (event1: CalendarEvent, event2: CalendarEvent): boolean => {
-  const start1 = getMinutesFromTime(event1.startTime);
-  const end1 = getMinutesFromTime(event1.endTime);
-  const start2 = getMinutesFromTime(event2.startTime);
-  const end2 = getMinutesFromTime(event2.endTime);
+  const { start: start1, end: end1 } = getNormalizedEventInterval(event1);
+  const { start: start2, end: end2 } = getNormalizedEventInterval(event2);
 
   return start1 < end2 && start2 < end1;
 };
@@ -461,10 +565,8 @@ export const getOverlapType = (event1: CalendarEvent, event2: CalendarEvent): Ov
     return 'none';
   }
 
-  const start1 = getMinutesFromTime(event1.startTime);
-  const end1 = getMinutesFromTime(event1.endTime);
-  const start2 = getMinutesFromTime(event2.startTime);
-  const end2 = getMinutesFromTime(event2.endTime);
+  const { start: start1, end: end1 } = getNormalizedEventInterval(event1);
+  const { start: start2, end: end2 } = getNormalizedEventInterval(event2);
 
   // Complete overlap: same start AND same end
   if (start1 === start2 && end1 === end2) {
@@ -489,184 +591,56 @@ export const calculateEventLayouts = (events: CalendarEvent[]): Map<string, Even
 
   if (events.length === 0) return layouts;
 
-  // Sort events by start time, then by duration (longer first)
-  const sortedEvents = [...events].sort((a, b) => {
-    const startDiff = getMinutesFromTime(a.startTime) - getMinutesFromTime(b.startTime);
-    if (startDiff !== 0) return startDiff;
+  const sortedEvents = events
+    .map((event, index) => getNormalizedEventInterval(event, index))
+    .sort((a, b) => {
+      if (a.start !== b.start) return a.start - b.start;
+      if (a.end !== b.end) return b.end - a.end;
+      return a.index - b.index;
+    });
 
-    const durationA = getMinutesFromTime(a.endTime) - getMinutesFromTime(a.startTime);
-    const durationB = getMinutesFromTime(b.endTime) - getMinutesFromTime(b.startTime);
-    return durationB - durationA; // Longer events first
+  const activeLanes: Array<{ lane: number; end: number }> = [];
+
+  sortedEvents.forEach(item => {
+    for (let index = activeLanes.length - 1; index >= 0; index -= 1) {
+      if (activeLanes[index].end <= item.start) {
+        activeLanes.splice(index, 1);
+      }
+    }
+
+    let lane = 0;
+    while (activeLanes.some(active => active.lane === lane)) {
+      lane += 1;
+    }
+
+    activeLanes.push({ lane, end: item.end });
+
+    const overlappingEvents = events.filter(otherEvent => otherEvent.id !== item.event.id && eventsOverlap(item.event, otherEvent));
+    const overlapType = overlappingEvents.reduce<OverlapType>((current, otherEvent) => {
+      if (current === 'complete') return current;
+      const nextType = getOverlapType(item.event, otherEvent);
+      if (nextType === 'complete') return 'complete';
+      if (nextType === 'nested') return current === 'partial' ? 'partial' : 'nested';
+      if (nextType === 'partial') return 'partial';
+      return current;
+    }, 'none');
+
+    layouts.set(item.event.id, {
+      eventId: item.event.id,
+      overlapType,
+      column: 0,
+      totalColumns: 1,
+      width: 100,
+      left: 0,
+      indent: Math.min(lane * 24, 72),
+      isNested: overlapType === 'nested',
+      isContainer: overlappingEvents.some(otherEvent => {
+        const { start, end } = getNormalizedEventInterval(item.event);
+        const other = getNormalizedEventInterval(otherEvent);
+        return start <= other.start && end >= other.end;
+      })
+    });
   });
-
-  // Group overlapping events
-  const overlapGroups: CalendarEvent[][] = [];
-  const processed = new Set<string>();
-
-  for (const event of sortedEvents) {
-    if (processed.has(event.id)) continue;
-
-    const group: CalendarEvent[] = [event];
-    processed.add(event.id);
-
-    // Find all events that overlap with any event in the current group
-    let changed = true;
-    while (changed) {
-      changed = false;
-      for (const otherEvent of sortedEvents) {
-        if (processed.has(otherEvent.id)) continue;
-
-        // Check if otherEvent overlaps with any event in the group
-        if (group.some(e => eventsOverlap(e, otherEvent))) {
-          group.push(otherEvent);
-          processed.add(otherEvent.id);
-          changed = true;
-        }
-      }
-    }
-
-    overlapGroups.push(group);
-  }
-
-  // Calculate layout for each group
-  for (const group of overlapGroups) {
-    if (group.length === 1) {
-      // Single event, no overlap
-      layouts.set(group[0].id, {
-        eventId: group[0].id,
-        overlapType: 'none',
-        column: 0,
-        totalColumns: 1,
-        width: 100,
-        left: 0,
-        indent: 0,
-        isNested: false,
-        isContainer: false
-      });
-      continue;
-    }
-
-    // Determine overlap type for the group
-    const firstEvent = group[0];
-    const allSameTime = group.every(e =>
-      e.startTime === firstEvent.startTime && e.endTime === firstEvent.endTime
-    );
-
-    if (allSameTime) {
-      // Complete overlap: side-by-side layout
-      const columnWidth = 100 / group.length;
-      group.forEach((event, index) => {
-        layouts.set(event.id, {
-          eventId: event.id,
-          overlapType: 'complete',
-          column: index,
-          totalColumns: group.length,
-          width: columnWidth,
-          left: columnWidth * index,
-          indent: 0,
-          isNested: false,
-          isContainer: false
-        });
-      });
-    } else {
-      // Check for nested relationships and partial overlaps
-      const nestedPairs: Array<{ container: CalendarEvent; nested: CalendarEvent }> = [];
-      let hasPartialOverlap = false;
-
-      for (let i = 0; i < group.length; i++) {
-        for (let j = i + 1; j < group.length; j++) {
-          const e1 = group[i];
-          const e2 = group[j];
-
-          if (!eventsOverlap(e1, e2)) continue;
-
-          const start1 = getMinutesFromTime(e1.startTime);
-          const end1 = getMinutesFromTime(e1.endTime);
-          const start2 = getMinutesFromTime(e2.startTime);
-          const end2 = getMinutesFromTime(e2.endTime);
-
-          // Check for nesting
-          const e1ContainsE2 = start1 <= start2 && end1 >= end2 && !(start1 === start2 && end1 === end2);
-          const e2ContainsE1 = start2 <= start1 && end2 >= end1 && !(start1 === start2 && end1 === end2);
-
-          if (e1ContainsE2) {
-            nestedPairs.push({ container: e1, nested: e2 });
-          } else if (e2ContainsE1) {
-            nestedPairs.push({ container: e2, nested: e1 });
-          } else {
-            // If they overlap but neither contains the other, it's a partial overlap
-            hasPartialOverlap = true;
-          }
-        }
-      }
-
-      // Only use nested layout if we have nesting AND no partial overlaps that would cause collisions
-      if (nestedPairs.length > 0 && !hasPartialOverlap) {
-        // Nested layout
-        const containerIds = new Set(nestedPairs.map(p => p.container.id));
-        const nestedIds = new Set(nestedPairs.map(p => p.nested.id));
-
-        group.forEach(event => {
-          const isContainer = containerIds.has(event.id);
-          const isNested = nestedIds.has(event.id);
-
-          layouts.set(event.id, {
-            eventId: event.id,
-            overlapType: 'nested',
-            column: 0,
-            totalColumns: 1,
-            width: 100,
-            left: 0,
-            indent: isNested ? 16 : 0,
-            isNested,
-            isContainer
-          });
-        });
-      } else {
-        // Partial overlap: column-based layout
-        // This handles both pure partial overlaps and mixed scenarios (nesting + partial)
-        const columns: CalendarEvent[][] = [];
-
-        for (const event of group) {
-          let placed = false;
-
-          // Try to place in existing column
-          for (const column of columns) {
-            const canPlace = column.every(e => !eventsOverlap(e, event));
-            if (canPlace) {
-              column.push(event);
-              placed = true;
-              break;
-            }
-          }
-
-          // Create new column if needed
-          if (!placed) {
-            columns.push([event]);
-          }
-        }
-
-        const totalColumns = columns.length;
-        const columnWidth = 100 / totalColumns;
-
-        columns.forEach((column, columnIndex) => {
-          column.forEach(event => {
-            layouts.set(event.id, {
-              eventId: event.id,
-              overlapType: 'partial',
-              column: columnIndex,
-              totalColumns,
-              width: columnWidth,
-              left: columnWidth * columnIndex,
-              indent: 0,
-              isNested: false,
-              isContainer: false
-            });
-          });
-        });
-      }
-    }
-  }
 
   return layouts;
 };
