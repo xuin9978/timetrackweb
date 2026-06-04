@@ -1,6 +1,6 @@
 
-import { ViewMode } from './types';
-import { isSameDay } from './utils/dateUtils';
+import { ViewMode } from '../types';
+import { isSameDay } from '../utils/dateUtils';
 
 // Mock state and handler
 let currentDate = new Date('2023-11-01'); // November 2023

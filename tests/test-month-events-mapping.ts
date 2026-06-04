@@ -1,5 +1,5 @@
-import { ViewMode, CalendarEvent } from './types';
-import { generateCalendarData } from './utils/dateUtils';
+import { ViewMode, CalendarEvent } from '../types';
+import { generateCalendarData } from '../utils/dateUtils';
 
 const mk = (dateStr: string, start: string, end: string, category = 'x'): CalendarEvent => ({
   id: Math.random().toString(36).slice(2),

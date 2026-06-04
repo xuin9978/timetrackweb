@@ -104,10 +104,10 @@ These root-level files are not currently wired into `package.json` scripts. Trea
 | `test-supabase-connection.js` | Development check script | Tests Supabase client setup, session, and sample `events`/`tags` queries. | Medium: depends on env and live Supabase state. |
 | `debug-supabase.cjs` | One-off debug script | Debugs Supabase connection and manually reads `.env.local` when needed. | Medium-high: moving it can break `__dirname` env lookup. |
 | `test-auth.html` | Temporary/manual test file | Standalone browser page for Supabase auth testing. | Medium: may be opened manually and stores test values in localStorage. |
-| `test-calendar-logic.ts` | Temporary test file | Manual check for month-to-day calendar date selection behavior. | Low-medium: imports app types/helpers by relative path. |
-| `test-month-events-mapping.ts` | Temporary test file | Manual check for month view event mapping. | Low-medium: imports app types/helpers by relative path. |
-| `test-time-segment-logic.ts` | Development check script | Assertion-style checks for event duration presentation, cross-day splitting, and overlap layout. | Medium: useful coverage for calendar logic; moving requires import updates. |
-| `test-visible-range-coverage.ts` | Development check script | Logs visible date ranges for day/week/month views. | Medium: useful coverage for calendar range behavior. |
+| `tests/test-calendar-logic.ts` | Temporary test file | Manual check for month-to-day calendar date selection behavior. | Low-medium: imports app types/helpers by relative path. |
+| `tests/test-month-events-mapping.ts` | Temporary test file | Manual check for month view event mapping. | Low-medium: imports app types/helpers by relative path. |
+| `test-time-segment-logic.ts` | Development check script | Assertion-style checks for event duration presentation, cross-day splitting, and overlap layout. Current local test fails before moving; keep at root and handle separately. | Medium: useful coverage for calendar logic; moving requires import updates. |
+| `tests/test-visible-range-coverage.ts` | Development check script | Logs visible date ranges for day/week/month views. | Medium: useful coverage for calendar range behavior. |
 | `tests/test-timezone-fix.js` | Temporary test file | Manual timezone/date comparison diagnostic. | Low: standalone historical check. |
 | `test-alarm-sync.js` | Temporary test file | Simulates alarm finish/session logging into event data. | Medium: relates to alarm/calendar boundary logic. |
 | `tests/test-alarm-sync.cjs` | Temporary test file | CommonJS variant of the alarm/session simulation. | Medium: may exist for runtime compatibility. |

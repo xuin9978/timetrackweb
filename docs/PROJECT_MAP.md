@@ -78,7 +78,7 @@ This map is for maintainers and AI coding agents who need to quickly locate beha
 | App shell/state | `App.tsx` | `types.ts` |
 | Calendar views | `components/Calendar.tsx` | `components/TimeGrid.tsx`, `components/DayCell.tsx`, `components/EventPanel.tsx`, `components/MiniCalendar.tsx` |
 | Event create/edit/delete | `App.tsx` | `components/AddEventModal.tsx`, `utils/eventService.ts`, `utils/dateUtils.ts` |
-| Event time/date math | `utils/dateUtils.ts` | `utils/timezoneUtils.ts`, `test-time-segment-logic.ts`, `test-calendar-logic.ts` |
+| Event time/date math | `utils/dateUtils.ts` | `utils/timezoneUtils.ts`, `test-time-segment-logic.ts`, `tests/test-calendar-logic.ts` |
 | Tags | `utils/tagService.ts` | `components/CreateTagModal.tsx`, `components/TagManagerModal.tsx`, `components/History.tsx` |
 | Auth/account | `App.tsx` | `components/AuthModal.tsx`, `components/AccountModal.tsx`, `utils/supabaseClient.ts` |
 | Supabase schema/RLS | `supabase/migrations.sql` | `supabase/migrations/*.sql`, `supabase-rls-policies.sql`, `supabase_rls_policies.sql` |
@@ -121,10 +121,10 @@ These files look like manual checks, debug pages, or ad hoc tests. They are reco
 - `test-supabase-connection.js`: development check script for Supabase client/session/table access. Risk: medium because it depends on live Supabase state.
 - `debug-supabase.cjs`: one-off Supabase debug script with manual `.env.local` reading. Risk: medium-high because moving it can break `__dirname` based env lookup.
 - `test-auth.html`: temporary/manual Supabase auth test page. Risk: medium because it may be opened directly and uses browser localStorage.
-- `test-calendar-logic.ts`: temporary calendar selection logic test. Risk: low-medium because it imports app helpers with relative paths.
-- `test-month-events-mapping.ts`: temporary month event mapping test. Risk: low-medium because it imports app helpers with relative paths.
-- `test-time-segment-logic.ts`: development check script for event presentation, cross-day splitting, and overlap layout. Risk: medium because it covers calendar logic and imports app helpers.
-- `test-visible-range-coverage.ts`: development check script for visible date ranges. Risk: medium because it covers calendar range behavior.
+- `tests/test-calendar-logic.ts`: temporary calendar selection logic test. Risk: low-medium because it imports app helpers with relative paths.
+- `tests/test-month-events-mapping.ts`: temporary month event mapping test. Risk: low-medium because it imports app helpers with relative paths.
+- `test-time-segment-logic.ts`: development check script for event presentation, cross-day splitting, and overlap layout. Current local test fails before moving, so it remains at the root and should be handled separately. Risk: medium because it covers calendar logic and imports app helpers.
+- `tests/test-visible-range-coverage.ts`: development check script for visible date ranges. Risk: medium because it covers calendar range behavior.
 - `tests/test-timezone-fix.js`: temporary timezone/date diagnostic. Risk: low because it is standalone.
 - `test-alarm-sync.js`: temporary alarm-to-event sync simulation. Risk: medium because it touches alarm/calendar boundary assumptions.
 - `tests/test-alarm-sync.cjs`: CommonJS variant of the alarm/session simulation. Risk: medium because it may exist for runtime compatibility.
