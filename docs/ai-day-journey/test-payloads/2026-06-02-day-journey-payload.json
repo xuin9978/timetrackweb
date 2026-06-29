@@ -1,0 +1,198 @@
+{
+  "date": "2026-06-02",
+  "timezone": "Asia/Shanghai",
+  "events": [
+    {
+      "id": "2026-06-02-001",
+      "title": "日常：起床后收拾泡咖啡、收拾房间、电解质等。",
+      "start": "2026-06-02T08:00:00+08:00",
+      "end": "2026-06-02T08:30:00+08:00",
+      "displayStartTime": "8:00",
+      "displayEndTime": "8:30",
+      "tagName": "日常",
+      "category": "🌀"
+    },
+    {
+      "id": "2026-06-02-002",
+      "title": "回顾一下LearnClaudeCode和6月的规划安排",
+      "start": "2026-06-02T08:30:00+08:00",
+      "end": "2026-06-02T08:55:00+08:00",
+      "displayStartTime": "8:30",
+      "displayEndTime": "8:55",
+      "tagName": "早上",
+      "category": "☀️"
+    },
+    {
+      "id": "2026-06-02-003",
+      "title": "回顾了一下之前归档的Agent专项的几个聊天窗口，重新命名梳理了一下，分成v0、v1、更好的管理上下文窗口。",
+      "start": "2026-06-02T09:00:00+08:00",
+      "end": "2026-06-02T09:44:00+08:00",
+      "displayStartTime": "9:00",
+      "displayEndTime": "9:44",
+      "tagName": "早上",
+      "category": "☀️"
+    },
+    {
+      "id": "2026-06-02-004",
+      "title": "修复了一下ChatGPT侧边栏的问题。",
+      "start": "2026-06-02T09:45:00+08:00",
+      "end": "2026-06-02T10:00:00+08:00",
+      "displayStartTime": "9:45",
+      "displayEndTime": "10:00",
+      "tagName": "早上",
+      "category": "☀️"
+    },
+    {
+      "id": "2026-06-02-005",
+      "title": "和AI对话评估6月份的大局，以及对话思考梳理以项目驱动为主",
+      "start": "2026-06-02T10:01:00+08:00",
+      "end": "2026-06-02T10:43:00+08:00",
+      "displayStartTime": "10:01",
+      "displayEndTime": "10:43",
+      "tagName": "早上",
+      "category": "☀️"
+    },
+    {
+      "id": "2026-06-02-006",
+      "title": "找之前做的时间管理项目，进行Deepseek的API配置，同时和AI对话",
+      "start": "2026-06-02T10:45:00+08:00",
+      "end": "2026-06-02T11:05:00+08:00",
+      "displayStartTime": "10:45",
+      "displayEndTime": "11:05",
+      "tagName": "早上",
+      "category": "☀️"
+    },
+    {
+      "id": "2026-06-02-007",
+      "title": "连接Trae和Supabase、连接邮箱和网站问题。中途帮老爸弄了照片",
+      "start": "2026-06-02T11:05:00+08:00",
+      "end": "2026-06-02T11:50:00+08:00",
+      "displayStartTime": "11:05",
+      "displayEndTime": "11:50",
+      "tagName": "早上",
+      "category": "☀️"
+    },
+    {
+      "id": "2026-06-02-008",
+      "title": "吃饭",
+      "start": "2026-06-02T11:50:00+08:00",
+      "end": "2026-06-02T12:00:00+08:00",
+      "displayStartTime": "11:50",
+      "displayEndTime": "12:00",
+      "tagName": "午饭",
+      "category": "🍚"
+    },
+    {
+      "id": "2026-06-02-009",
+      "title": "完善Supabase的链接问题、数据库标签页面问题、回复学姐的问题咨询",
+      "start": "2026-06-02T12:15:00+08:00",
+      "end": "2026-06-02T12:43:00+08:00",
+      "displayStartTime": "12:15",
+      "displayEndTime": "12:43",
+      "tagName": "下午",
+      "category": "🌇"
+    },
+    {
+      "id": "2026-06-02-010",
+      "title": "休息：午休",
+      "start": "2026-06-02T12:45:00+08:00",
+      "end": "2026-06-02T13:10:00+08:00",
+      "displayStartTime": "12:45",
+      "displayEndTime": "13:10",
+      "tagName": "休息",
+      "category": "💤"
+    },
+    {
+      "id": "2026-06-02-011",
+      "title": "调试Trae的登录账号问题，以及同步",
+      "start": "2026-06-02T13:15:00+08:00",
+      "end": "2026-06-02T14:00:00+08:00",
+      "displayStartTime": "13:15",
+      "displayEndTime": "14:00",
+      "tagName": "下午",
+      "category": "🌇"
+    },
+    {
+      "id": "2026-06-02-012",
+      "title": "优化了一下关于项目的功能",
+      "start": "2026-06-02T14:00:00+08:00",
+      "end": "2026-06-02T14:30:00+08:00",
+      "displayStartTime": "14:00",
+      "displayEndTime": "14:30",
+      "tagName": "下午",
+      "category": "🌇"
+    },
+    {
+      "id": "2026-06-02-013",
+      "title": "用CodeX加了新功能、结合新的，进行增删查改。",
+      "start": "2026-06-02T14:30:00+08:00",
+      "end": "2026-06-02T15:00:00+08:00",
+      "displayStartTime": "14:30",
+      "displayEndTime": "15:00",
+      "tagName": "下午",
+      "category": "🌇"
+    },
+    {
+      "id": "2026-06-02-014",
+      "title": "日常：收拾快递、拆衣服",
+      "start": "2026-06-02T15:00:00+08:00",
+      "end": "2026-06-02T15:12:00+08:00",
+      "displayStartTime": "15:00",
+      "displayEndTime": "15:12",
+      "tagName": "日常",
+      "category": "🌀"
+    },
+    {
+      "id": "2026-06-02-015",
+      "title": "和AI聊天关于产出物的想法，以及和ClaudeCode聊关于插件的想法。中途和许倩聊了一下最近情况",
+      "start": "2026-06-02T15:15:00+08:00",
+      "end": "2026-06-02T16:30:00+08:00",
+      "displayStartTime": "15:15",
+      "displayEndTime": "16:30",
+      "tagName": "下午",
+      "category": "🌇"
+    },
+    {
+      "id": "2026-06-02-016",
+      "title": "和许倩聊了一下",
+      "start": "2026-06-02T16:30:00+08:00",
+      "end": "2026-06-02T17:00:00+08:00",
+      "displayStartTime": "16:30",
+      "displayEndTime": "17:00",
+      "tagName": "下午",
+      "category": "🌇"
+    },
+    {
+      "id": "2026-06-02-017",
+      "title": "和AI对话关于AI PRD的撰写要求，以及和ClaudeCode沟通关于浏览器插件的设计。",
+      "start": "2026-06-02T17:00:00+08:00",
+      "end": "2026-06-02T18:20:00+08:00",
+      "displayStartTime": "17:00",
+      "displayEndTime": "18:20",
+      "tagName": "晚上",
+      "category": "🌃"
+    },
+    {
+      "id": "2026-06-02-018",
+      "title": "日常：出去吃很久很久以前羊肉串，然后去健身房锻炼到8:40然后去吃野人先生冰淇淋，走路回家，回到家装三重镁，聊天",
+      "start": "2026-06-02T18:30:00+08:00",
+      "end": "2026-06-02T23:00:00+08:00",
+      "displayStartTime": "18:30",
+      "displayEndTime": "23:00",
+      "tagName": "日常",
+      "category": "🌀"
+    }
+  ],
+  "tags": [
+    { "id": "morning", "name": "早上", "label": "早上", "color": "bg-blue-500", "icon": "☀️" },
+    { "id": "afternoon", "name": "下午", "label": "下午", "color": "bg-orange-500", "icon": "🌇" },
+    { "id": "evening", "name": "晚上", "label": "晚上", "color": "bg-indigo-500", "icon": "🌃" },
+    { "id": "daily", "name": "日常", "label": "日常", "color": "bg-gray-500", "icon": "🌀" },
+    { "id": "rest", "name": "休息", "label": "休息", "color": "bg-slate-500", "icon": "💤" },
+    { "id": "lunch", "name": "午饭", "label": "午饭", "color": "bg-red-500", "icon": "🍚" }
+  ],
+  "options": {
+    "promptVersion": "day-journey-system-prompt-v1.3",
+    "outputFormat": "markdown"
+  }
+}

@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect, useLayoutEffect, useMemo } from 're
 import { addMinutes, parse } from 'date-fns';
 import { DayData, CalendarEvent, DragSelection, Tag, ViewMode } from '../types';
 import { formatDayName, formatDayNumber, isSameDay, getPositionFromTime, getTimeFromPosition, getMinutesFromTime, formatTime, calculateEventLayouts, getTagColorHex, getTagColorRgba, getDurationInMinutes, getEventBlockPresentation } from '../utils/dateUtils';
+import { getChinaWallDateTime } from '../utils/timezoneUtils';
 
 interface TimeGridProps {
   days: DayData[];
@@ -121,36 +122,36 @@ type EventVisualStyle = {
 const getTagStyles = (categoryId: string, tags: Tag[]): EventVisualStyle => {
   const tag = tags.find(t => t.id === categoryId);
   const defaultStyle = {
-    bg: 'rgba(156, 163, 175, 0.09)',
+    bg: 'rgba(142, 142, 147, 0.13)',
     border: '#9CA3AF',
-    text: '#4B5563',
-    subtleText: '#6B7280'
+    text: '#2F3744',
+    subtleText: '#4B5563'
   };
 
   if (!tag) return defaultStyle;
 
   const themeColorMap: Record<string, EventVisualStyle> = {
-    'bg-cyan-400': { bg: 'rgba(52, 170, 220, 0.10)', border: '#34AADC', text: '#0A5E7D', subtleText: '#1C7DA5' },
-    'bg-purple-400': { bg: 'rgba(175, 82, 222, 0.09)', border: '#AF52DE', text: '#6B2E8E', subtleText: '#8540AB' },
-    'bg-rose-400': { bg: 'rgba(255, 59, 48, 0.09)', border: '#FF3B30', text: '#A12B24', subtleText: '#C1362E' },
-    'bg-orange-400': { bg: 'rgba(255, 149, 0, 0.10)', border: '#FF9500', text: '#9A5A00', subtleText: '#B86D00' },
-    'bg-emerald-400': { bg: 'rgba(52, 199, 89, 0.09)', border: '#34C759', text: '#1F7A3D', subtleText: '#28964D' },
-    'bg-pink-400': { bg: 'rgba(255, 45, 85, 0.09)', border: '#FF2D55', text: '#A32645', subtleText: '#C42B50' },
-    'bg-indigo-400': { bg: 'rgba(88, 86, 214, 0.10)', border: '#5856D6', text: '#36358A', subtleText: '#4846B5' },
-    'bg-teal-400': { bg: 'rgba(90, 200, 250, 0.10)', border: '#5AC8FA', text: '#0D6487', subtleText: '#1D82AD' },
-    'bg-yellow-400': { bg: 'rgba(255, 204, 0, 0.10)', border: '#FFCC00', text: '#806400', subtleText: '#9A7800' },
-    'bg-lime-400': { bg: 'rgba(164, 196, 0, 0.10)', border: '#A4C400', text: '#617300', subtleText: '#7A9100' },
-    'bg-blue-400': { bg: 'rgba(0, 122, 255, 0.10)', border: '#007AFF', text: '#0056B3', subtleText: '#0A6ED1' },
-    'bg-red-400': { bg: 'rgba(255, 59, 48, 0.09)', border: '#FF3B30', text: '#A12B24', subtleText: '#C1362E' },
+    'bg-cyan-400': { bg: 'rgba(50, 173, 230, 0.15)', border: '#32ADE6', text: '#043E54', subtleText: '#075A78' },
+    'bg-purple-400': { bg: 'rgba(175, 82, 222, 0.14)', border: '#AF52DE', text: '#3D184F', subtleText: '#55256F' },
+    'bg-rose-400': { bg: 'rgba(255, 45, 85, 0.14)', border: '#FF2D55', text: '#681426', subtleText: '#861D34' },
+    'bg-orange-400': { bg: 'rgba(255, 149, 0, 0.16)', border: '#FF9500', text: '#553000', subtleText: '#714300' },
+    'bg-emerald-400': { bg: 'rgba(52, 199, 89, 0.14)', border: '#34C759', text: '#104A22', subtleText: '#196331' },
+    'bg-pink-400': { bg: 'rgba(255, 45, 85, 0.14)', border: '#FF2D55', text: '#681426', subtleText: '#861D34' },
+    'bg-indigo-400': { bg: 'rgba(88, 86, 214, 0.15)', border: '#5856D6', text: '#25245F', subtleText: '#343285' },
+    'bg-teal-400': { bg: 'rgba(0, 199, 190, 0.15)', border: '#00C7BE', text: '#064944', subtleText: '#08665F' },
+    'bg-yellow-400': { bg: 'rgba(255, 204, 0, 0.17)', border: '#FFCC00', text: '#4C3D00', subtleText: '#665300' },
+    'bg-lime-400': { bg: 'rgba(52, 199, 89, 0.14)', border: '#34C759', text: '#104A22', subtleText: '#196331' },
+    'bg-blue-400': { bg: 'rgba(0, 122, 255, 0.15)', border: '#007AFF', text: '#003766', subtleText: '#00508F' },
+    'bg-red-400': { bg: 'rgba(255, 59, 48, 0.14)', border: '#FF3B30', text: '#681511', subtleText: '#861E18' },
   };
 
   if (themeColorMap[tag.color]) return themeColorMap[tag.color];
 
   return {
-    bg: getTagColorRgba(tag.color, 0.09),
+    bg: getTagColorRgba(tag.color, 0.14),
     border: getTagColorHex(tag.color),
     text: getTagColorHex(tag.color),
-    subtleText: getTagColorRgba(tag.color, 0.82)
+    subtleText: getTagColorRgba(tag.color, 0.94)
   };
 };
 
@@ -294,6 +295,8 @@ const EventBlock = React.memo(({
       } as React.CSSProperties}
       onPointerDown={(e) => { if (e.altKey || e.shiftKey) return; e.stopPropagation(); }}
     >
+      <div className="apple-event-block-surface absolute inset-0 z-0 pointer-events-none" />
+
       {/* Resize handle - top */}
       <div
         className="time-grid-resize-handle absolute top-0 left-0 right-0 h-3 md:h-2 cursor-ns-resize z-20"
@@ -321,7 +324,7 @@ const EventBlock = React.memo(({
 
       {/* Event content */}
       <div
-        className={`relative z-0 pointer-events-none flex w-full h-full`}
+        className={`relative z-[1] pointer-events-none flex w-full h-full`}
         style={{
           padding: duration < 15 ? '1px 4px' : (presentation.compact ? '2px 5px' : (duration < 60 ? '3px 5px' : '4px 6px')),
           flexDirection: presentation.layoutDirection,
@@ -331,10 +334,12 @@ const EventBlock = React.memo(({
         }}
       >
         <span
-          className={`font-medium ${presentation.titleClamp === 'truncate' ? 'leading-none truncate' : 'leading-tight break-words whitespace-normal'}`}
+          className={`font-semibold ${presentation.titleClamp === 'truncate' ? 'leading-none truncate' : 'leading-tight break-words whitespace-normal'}`}
           style={{
             color: style.text,
             fontSize: presentation.fontSize,
+            fontWeight: 650,
+            letterSpacing: '-0.01em',
             minWidth: 0,
             flex: presentation.compact ? '1 1 auto' : undefined,
             wordBreak: 'break-word',
@@ -358,6 +363,8 @@ const EventBlock = React.memo(({
             style={{
               color: style.subtleText,
               fontSize: presentation.timeFontSize,
+              fontWeight: 550,
+              letterSpacing: '-0.005em',
               whiteSpace: 'nowrap',
               lineHeight: presentation.compact ? 1 : 1.1
             }}
@@ -376,6 +383,8 @@ const EventBlock = React.memo(({
             style={{
               color: style.subtleText,
               fontSize: presentation.timeFontSize,
+              fontWeight: 550,
+              letterSpacing: '-0.005em',
               whiteSpace: 'nowrap'
             }}
           >
@@ -407,7 +416,7 @@ const TimeGrid = React.memo<TimeGridProps>(({ days, tags, onDateClick, onAddEven
   const [interaction, setInteraction] = useState<InteractionState | null>(null);
   const [isScrolling, setIsScrolling] = useState(false);
   const [scrollState, setScrollState] = useState({ startX: 0, startScrollLeft: 0, checking: false });
-  const [now, setNow] = useState(new Date());
+  const [now, setNow] = useState(getChinaWallDateTime(new Date()));
   const hours = Array.from({ length: 24 }, (_, i) => i);
 
   // Refs to track state inside event listeners without closure issues
@@ -501,13 +510,14 @@ const TimeGrid = React.memo<TimeGridProps>(({ days, tags, onDateClick, onAddEven
   }, [days, isInfinite]);
 
   useEffect(() => {
-    const timer = setInterval(() => setNow(new Date()), 1000);
+    const timer = setInterval(() => setNow(getChinaWallDateTime(new Date())), 1000);
     return () => clearInterval(timer);
   }, []);
 
   useEffect(() => {
     if (bodyRef.current) {
-      const currentMinutes = isWeekView ? 6 * 60 : new Date().getHours() * 60 + new Date().getMinutes();
+      const chinaNow = getChinaWallDateTime(new Date());
+      const currentMinutes = isWeekView ? 6 * 60 : chinaNow.getHours() * 60 + chinaNow.getMinutes();
       const scrollHeight = bodyRef.current.scrollHeight;
       const scrollTop = (Math.max(0, currentMinutes - 60) / 1440) * scrollHeight;
       bodyRef.current.scrollTop = scrollTop;

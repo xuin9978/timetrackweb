@@ -7,6 +7,7 @@ import TagManagerModal from './TagManagerModal';
 import MiniCalendar from './MiniCalendar';
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
+import { getChinaWallDate } from '../utils/timezoneUtils';
 
 interface HistoryProps {
     events: CalendarEvent[];
@@ -15,12 +16,13 @@ interface HistoryProps {
     onAddTag: (label: string, color: string, icon: string) => Promise<void> | void;
     onUpdateTag: (tag: Tag) => Promise<void> | void;
     onDeleteTag: (id: string) => Promise<void> | void;
+    onMergeTag: (sourceTagId: string, targetTagId: string) => Promise<void> | void;
     onReorderTags: (tags: Tag[]) => void;
     onSaveOrder?: (tagsToSave?: Tag[]) => Promise<void>;
 }
 
-const History: React.FC<HistoryProps> = ({ events, tags, onOpenModal, onAddTag, onUpdateTag, onDeleteTag, onReorderTags, onSaveOrder }) => {
-    const [viewDate, setViewDate] = useState(new Date());
+const History: React.FC<HistoryProps> = ({ events, tags, onOpenModal, onAddTag, onUpdateTag, onDeleteTag, onMergeTag, onReorderTags, onSaveOrder }) => {
+    const [viewDate, setViewDate] = useState(getChinaWallDate(new Date()));
     const [groupMode, setGroupMode] = useState(false);
     const [isButtonAnimating, setIsButtonAnimating] = useState(false);
     const [isTagManagerOpen, setIsTagManagerOpen] = useState(false);
@@ -220,7 +222,7 @@ const History: React.FC<HistoryProps> = ({ events, tags, onOpenModal, onAddTag, 
                             </div>
                             <div className="text-center space-y-3">
                                 <p className="text-xl font-normal tracking-tight text-gray-300">
-                                    {hasHiddenAllTags ? '已隐藏全部标签' : hiddenByFilter ? '当前筛选下无记录' : isSameDay(viewDate, new Date()) ? '今日暂无记录' : '该日无记录'}
+                                    {hasHiddenAllTags ? '已隐藏全部标签' : hiddenByFilter ? '当前筛选下无记录' : isSameDay(viewDate, getChinaWallDate(new Date())) ? '今日暂无记录' : '该日无记录'}
                                 </p>
                                 {(hasHiddenAllTags || hiddenByFilter) && (
                                     <button
@@ -320,8 +322,10 @@ const History: React.FC<HistoryProps> = ({ events, tags, onOpenModal, onAddTag, 
                 onAddTag={onAddTag}
                 onUpdateTag={onUpdateTag}
                 onDeleteTag={onDeleteTag}
+                onMergeTag={onMergeTag}
                 onReorderTags={onReorderTags}
                 onSaveOrder={onSaveOrder}
+                getTagEventCount={(tagId) => events.filter(event => event.category === tagId).length}
             />
         </>
     );

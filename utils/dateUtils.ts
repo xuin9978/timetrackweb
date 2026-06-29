@@ -23,7 +23,13 @@ import {
 } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 import { DayData, CalendarEvent, ViewMode, Tag } from '../types';
-import { isSameDaySafe, normalizeDateToLocal } from './timezoneUtils';
+import {
+  APP_TIME_ZONE,
+  formatChinaWallTime,
+  getChinaWallDate,
+  isSameDaySafe,
+  normalizeDateToLocal,
+} from './timezoneUtils';
 
 // FIX: Explicitly export date-fns functions used by other components.
 export {
@@ -115,8 +121,7 @@ export const generateCalendarData = (
 
   const dayInterval = eachDayOfInterval({ start: startDate, end: endDate });
   
-  // 统一使用UTC时间进行"今天"判断，避免时区问题
-  const today = new Date();
+  const today = getChinaWallDate(new Date());
 
   // Optimization: Pre-group events by date key to avoid O(N*M) complexity
   const eventsByDate = new Map<string, CalendarEvent[]>();
@@ -355,13 +360,28 @@ export const exportToICS = (events: CalendarEvent[], filenameSuffix?: string) =>
     'PRODID:-//Liquid Calendar//CN',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
+    'BEGIN:VTIMEZONE',
+    `TZID:${APP_TIME_ZONE}`,
+    `X-LIC-LOCATION:${APP_TIME_ZONE}`,
+    'BEGIN:STANDARD',
+    'TZOFFSETFROM:+0800',
+    'TZOFFSETTO:+0800',
+    'TZNAME:CST',
+    'DTSTART:19700101T000000',
+    'END:STANDARD',
+    'END:VTIMEZONE',
   ];
 
-  events.forEach(event => {
-    const startDateTime = parse(`${format(event.date, 'yyyy-MM-dd')}T${event.startTime}`, "yyyy-MM-dd'T'HH:mm", new Date());
-    const endDateTime = parse(`${format(event.date, 'yyyy-MM-dd')}T${event.endTime}`, "yyyy-MM-dd'T'HH:mm", new Date());
+  const formatICSLocalDate = (date: Date, time: string) => {
+    return `${format(date, 'yyyyMMdd')}T${time.replace(':', '')}00`;
+  };
 
-    // Format dates to UTC string: YYYYMMDDTHHMMSSZ
+  events.forEach(event => {
+    const endDate = getMinutesFromTime(event.endTime) < getMinutesFromTime(event.startTime)
+      ? addDays(event.date, 1)
+      : event.date;
+
+    // DTSTAMP should stay UTC; event times are exported as China local time via TZID.
     const formatICSDate = (date: Date) => {
       return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
     };
@@ -369,8 +389,8 @@ export const exportToICS = (events: CalendarEvent[], filenameSuffix?: string) =>
     icsContent.push('BEGIN:VEVENT');
     icsContent.push(`UID:${event.id}@liquidcalendar.com`);
     icsContent.push(`DTSTAMP:${formatICSDate(new Date())}`);
-    icsContent.push(`DTSTART:${formatICSDate(startDateTime)}`);
-    icsContent.push(`DTEND:${formatICSDate(endDateTime)}`);
+    icsContent.push(`DTSTART;TZID=${APP_TIME_ZONE}:${formatICSLocalDate(event.date, event.startTime)}`);
+    icsContent.push(`DTEND;TZID=${APP_TIME_ZONE}:${formatICSLocalDate(endDate, event.endTime)}`);
     icsContent.push(`SUMMARY:${event.title}`);
     icsContent.push(`DESCRIPTION:Category: ${event.category}`);
     icsContent.push('END:VEVENT');
@@ -380,12 +400,17 @@ export const exportToICS = (events: CalendarEvent[], filenameSuffix?: string) =>
 
   const blob = new Blob([icsContent.join('\r\n')], { type: 'text/calendar;charset=utf-8' });
   const link = document.createElement('a');
-  link.href = window.URL.createObjectURL(blob);
+  const url = window.URL.createObjectURL(blob);
+  link.href = url;
   const filename = filenameSuffix ? `calendar_export_${filenameSuffix}.ics` : 'calendar_export.ics';
   link.setAttribute('download', filename);
+  link.style.display = 'none';
   document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+  link.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
+  window.setTimeout(() => {
+    document.body.removeChild(link);
+  }, 0);
+  return { filename, url };
 };
 
 export const parseICS = (icsContent: string): Partial<CalendarEvent>[] => {
@@ -489,14 +514,16 @@ export const parseICS = (icsContent: string): Partial<CalendarEvent>[] => {
       case 'DTSTART':
         const startDate = parseICSDate(propValue);
         if (startDate) {
-          currentEvent.date = startDate;
-          currentEvent.startTime = formatTime(startDate);
+          const isUTC = propValue.trim().endsWith('Z');
+          currentEvent.date = isUTC ? getChinaWallDate(startDate) : startDate;
+          currentEvent.startTime = isUTC ? formatChinaWallTime(startDate) : formatTime(startDate);
         }
         break;
       case 'DTEND':
         const endDate = parseICSDate(propValue);
         if (endDate) {
-          currentEvent.endTime = formatTime(endDate);
+          const isUTC = propValue.trim().endsWith('Z');
+          currentEvent.endTime = isUTC ? formatChinaWallTime(endDate) : formatTime(endDate);
         }
         break;
       case 'DESCRIPTION':

@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import GlassCard from './GlassCard';
 import { Icons } from './Icons';
 import { CalendarEvent, ModalConfig, Tag } from '../types';
@@ -23,21 +23,21 @@ const getTagPrefix = (tag?: Tag) => {
   return icon ? `${icon}：` : '';
 };
 
-const applyTagPrefix = (currentTitle: string, nextTag: Tag, tags: Tag[]) => {
+const getKnownTagPrefixes = (tags: Tag[]) => Array.from(
+  new Set(
+    tags
+      .flatMap(tag => {
+        const icon = tag.icon?.trim();
+        return icon ? [`${icon}：`, `${icon}:`] : [];
+      })
+  )
+).sort((a, b) => b.length - a.length);
+
+const applyTagPrefix = (currentTitle: string, nextTag: Tag, knownPrefixes: string[]) => {
   const nextPrefix = getTagPrefix(nextTag);
   if (!nextPrefix) return currentTitle;
 
   const title = currentTitle.trimStart();
-  const knownPrefixes = Array.from(
-    new Set(
-      tags
-        .flatMap(tag => {
-          const icon = tag.icon?.trim();
-          return icon ? [`${icon}：`, `${icon}:`] : [];
-        })
-    )
-  ).sort((a, b) => b.length - a.length);
-
   const matchedPrefix = knownPrefixes.find(prefix => title.startsWith(prefix));
   const body = matchedPrefix ? title.slice(matchedPrefix.length).trimStart() : title;
 
@@ -80,7 +80,23 @@ const AddEventModal: React.FC<AddEventModalProps> = ({
         setCategoryId(workTag?.id || tags[0]?.id || '');
       }
     }
-  }, [isOpen, initialData, mode, tags]);
+  }, [isOpen, initialData, mode]);
+
+  useEffect(() => {
+    if (!isOpen || mode !== 'create' || categoryId || tags.length === 0) return;
+
+    const workTag = tags.find(t => t.id === 'work');
+    setCategoryId(workTag?.id || tags[0].id);
+  }, [categoryId, isOpen, mode, tags]);
+
+  const knownTagPrefixes = useMemo(() => getKnownTagPrefixes(tags), [tags]);
+
+  const handleSelectTag = useCallback((tag: Tag) => {
+    setCategoryId(tag.id);
+    setTitle(prev => applyTagPrefix(prev, tag, knownTagPrefixes));
+  }, [knownTagPrefixes]);
+
+  const selectedTag = useMemo(() => tags.find(t => t.id === categoryId), [tags, categoryId]);
 
   if (!isOpen || !initialData) return null;
 
@@ -125,13 +141,6 @@ const AddEventModal: React.FC<AddEventModalProps> = ({
       onClose();
     }
   };
-
-  const handleSelectTag = (tag: Tag) => {
-    setCategoryId(tag.id);
-    setTitle(prev => applyTagPrefix(prev, tag, tags));
-  };
-
-  const selectedTag = tags.find(t => t.id === categoryId);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -187,7 +196,7 @@ const AddEventModal: React.FC<AddEventModalProps> = ({
                     e.preventDefault();
                     onEditTag(tag);
                   }}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all border ${categoryId === tag.id
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-[background-color,border-color,color,box-shadow,transform] duration-150 border ${categoryId === tag.id
                     ? `${tag.color} text-white border-transparent shadow-md scale-105`
                     : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-100'
                     }`}

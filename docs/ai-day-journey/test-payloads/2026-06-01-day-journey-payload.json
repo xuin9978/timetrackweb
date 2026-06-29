@@ -1,0 +1,169 @@
+{
+  "date": "2026-06-01",
+  "timezone": "Asia/Shanghai",
+  "events": [
+    {
+      "id": "2026-06-01-001",
+      "title": "阅读：《最重要的事情只有一件》",
+      "start": "2026-06-01T07:45:00+08:00",
+      "end": "2026-06-01T09:25:00+08:00",
+      "displayStartTime": "7:45",
+      "displayEndTime": "9:25",
+      "tagName": "阅读",
+      "category": "📖"
+    },
+    {
+      "id": "2026-06-01-002",
+      "title": "复盘：周复盘5.25-5.31",
+      "start": "2026-06-01T10:10:00+08:00",
+      "end": "2026-06-01T11:30:00+08:00",
+      "displayStartTime": "10:10",
+      "displayEndTime": "11:30",
+      "tagName": "复盘",
+      "category": "☀️"
+    },
+    {
+      "id": "2026-06-01-003",
+      "title": "午饭（粽子+青团）、泡黑芝麻粉+亚麻籽粉、刷牙洗漱。",
+      "start": "2026-06-01T11:30:00+08:00",
+      "end": "2026-06-01T12:00:00+08:00",
+      "displayStartTime": "11:30",
+      "displayEndTime": "12:00",
+      "tagName": "午饭",
+      "category": "🍚"
+    },
+    {
+      "id": "2026-06-01-004",
+      "title": "复盘：5月份月度复盘",
+      "start": "2026-06-01T12:00:00+08:00",
+      "end": "2026-06-01T13:15:00+08:00",
+      "displayStartTime": "12:00",
+      "displayEndTime": "13:15",
+      "tagName": "复盘",
+      "category": "🌇"
+    },
+    {
+      "id": "2026-06-01-005",
+      "title": "休息：喝咖啡、回消息",
+      "start": "2026-06-01T13:15:00+08:00",
+      "end": "2026-06-01T13:29:00+08:00",
+      "displayStartTime": "13:15",
+      "displayEndTime": "13:29",
+      "tagName": "休息",
+      "category": "💤"
+    },
+    {
+      "id": "2026-06-01-006",
+      "title": "复盘：5月份复盘",
+      "start": "2026-06-01T13:31:00+08:00",
+      "end": "2026-06-01T14:45:00+08:00",
+      "displayStartTime": "13:31",
+      "displayEndTime": "14:45",
+      "tagName": "复盘",
+      "category": "🌇"
+    },
+    {
+      "id": "2026-06-01-007",
+      "title": "休息：午休",
+      "start": "2026-06-01T14:50:00+08:00",
+      "end": "2026-06-01T15:15:00+08:00",
+      "displayStartTime": "14:50",
+      "displayEndTime": "15:15",
+      "tagName": "休息",
+      "category": "💤"
+    },
+    {
+      "id": "2026-06-01-008",
+      "title": "复盘：5月份复盘，开始6月份规划",
+      "start": "2026-06-01T15:16:00+08:00",
+      "end": "2026-06-01T15:44:00+08:00",
+      "displayStartTime": "15:16",
+      "displayEndTime": "15:44",
+      "tagName": "复盘",
+      "category": "🌇"
+    },
+    {
+      "id": "2026-06-01-009",
+      "title": "日常：讨论营养补剂购买",
+      "start": "2026-06-01T15:45:00+08:00",
+      "end": "2026-06-01T16:25:00+08:00",
+      "displayStartTime": "15:45",
+      "displayEndTime": "16:25",
+      "tagName": "日常",
+      "category": "🌀"
+    },
+    {
+      "id": "2026-06-01-010",
+      "title": "复盘：4月复盘回顾电子化",
+      "start": "2026-06-01T16:30:00+08:00",
+      "end": "2026-06-01T17:15:00+08:00",
+      "displayStartTime": "16:30",
+      "displayEndTime": "17:15",
+      "tagName": "复盘",
+      "category": "🌇"
+    },
+    {
+      "id": "2026-06-01-011",
+      "title": "复盘：5月份复盘语音输入",
+      "start": "2026-06-01T17:15:00+08:00",
+      "end": "2026-06-01T17:34:00+08:00",
+      "displayStartTime": "17:15",
+      "displayEndTime": "17:34",
+      "tagName": "复盘",
+      "category": "🌇"
+    },
+    {
+      "id": "2026-06-01-012",
+      "title": "复盘：1-3月份回顾。中途花了7分钟吃饭",
+      "start": "2026-06-01T17:34:00+08:00",
+      "end": "2026-06-01T18:33:00+08:00",
+      "displayStartTime": "17:34",
+      "displayEndTime": "18:33",
+      "tagName": "复盘",
+      "category": "🌇"
+    },
+    {
+      "id": "2026-06-01-013",
+      "title": "复盘：把文档合并处理2024年和2025年的内容",
+      "start": "2026-06-01T18:33:00+08:00",
+      "end": "2026-06-01T18:53:00+08:00",
+      "displayStartTime": "18:33",
+      "displayEndTime": "18:53",
+      "tagName": "复盘",
+      "category": "🌃"
+    },
+    {
+      "id": "2026-06-01-014",
+      "title": "日常：收拾整理笔记本日记，出发去图书馆",
+      "start": "2026-06-01T18:53:00+08:00",
+      "end": "2026-06-01T19:47:00+08:00",
+      "displayStartTime": "18:53",
+      "displayEndTime": "19:47",
+      "tagName": "日常",
+      "category": "🌀"
+    },
+    {
+      "id": "2026-06-01-015",
+      "title": "去图书馆，主要是在和AI对话关于6月的计划思考，以及讨论。中途看了Learn Claude Code，查询了一下是否适合我",
+      "start": "2026-06-01T20:00:00+08:00",
+      "end": "2026-06-01T22:12:00+08:00",
+      "displayStartTime": "20:00",
+      "displayEndTime": "22:12",
+      "tagName": "晚上",
+      "category": "🌃"
+    }
+  ],
+  "tags": [
+    { "id": "reading", "name": "阅读", "label": "阅读", "color": "bg-purple-500", "icon": "📖" },
+    { "id": "review", "name": "复盘", "label": "复盘", "color": "bg-blue-500", "icon": "☀️" },
+    { "id": "afternoon", "name": "下午", "label": "下午", "color": "bg-orange-500", "icon": "🌇" },
+    { "id": "evening", "name": "晚上", "label": "晚上", "color": "bg-indigo-500", "icon": "🌃" },
+    { "id": "daily", "name": "日常", "label": "日常", "color": "bg-gray-500", "icon": "🌀" },
+    { "id": "rest", "name": "休息", "label": "休息", "color": "bg-slate-500", "icon": "💤" },
+    { "id": "lunch", "name": "午饭", "label": "午饭", "color": "bg-red-500", "icon": "🍚" }
+  ],
+  "options": {
+    "promptVersion": "day-journey-system-prompt-v1.3",
+    "outputFormat": "markdown"
+  }
+}

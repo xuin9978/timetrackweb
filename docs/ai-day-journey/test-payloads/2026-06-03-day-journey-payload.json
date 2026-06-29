@@ -1,0 +1,186 @@
+{
+  "date": "2026-06-03",
+  "timezone": "Asia/Shanghai",
+  "events": [
+    {
+      "id": "2026-06-03-001",
+      "title": "泡咖啡、泡茶、列待办事项",
+      "start": "2026-06-03T05:30:00+08:00",
+      "end": "2026-06-03T06:15:00+08:00",
+      "displayStartTime": "5:30",
+      "displayEndTime": "6:15",
+      "tagName": "日常",
+      "category": "🌀"
+    },
+    {
+      "id": "2026-06-03-002",
+      "title": "和CodeX对话，优化改进时间管理项目的功能，生成关于项目的说明了解，主要是以改进项目优化为主",
+      "start": "2026-06-03T06:30:00+08:00",
+      "end": "2026-06-03T08:00:00+08:00",
+      "displayStartTime": "6:30",
+      "displayEndTime": "8:00",
+      "tagName": "早上",
+      "category": "☀️"
+    },
+    {
+      "id": "2026-06-03-003",
+      "title": "去地铁站、罗森买东方树叶、泡电解质+维生素C粉",
+      "start": "2026-06-03T08:00:00+08:00",
+      "end": "2026-06-03T08:30:00+08:00",
+      "displayStartTime": "8:00",
+      "displayEndTime": "8:30",
+      "tagName": "日常",
+      "category": "🌀"
+    },
+    {
+      "id": "2026-06-03-004",
+      "title": "和ChatGPT梳理我的思路和想法，以及时间管理项目的想法",
+      "start": "2026-06-03T08:30:00+08:00",
+      "end": "2026-06-03T09:00:00+08:00",
+      "displayStartTime": "8:30",
+      "displayEndTime": "9:00",
+      "tagName": "早上",
+      "category": "☀️"
+    },
+    {
+      "id": "2026-06-03-005",
+      "title": "收拾、戴隐形眼镜、和妈妈拿生活费、还花呗",
+      "start": "2026-06-03T09:10:00+08:00",
+      "end": "2026-06-03T09:30:00+08:00",
+      "displayStartTime": "9:10",
+      "displayEndTime": "9:30",
+      "tagName": "日常",
+      "category": "🌀"
+    },
+    {
+      "id": "2026-06-03-006",
+      "title": "看优衣库的衣服，思考要不要买鱼油，退货换货处理",
+      "start": "2026-06-03T09:36:00+08:00",
+      "end": "2026-06-03T10:07:00+08:00",
+      "displayStartTime": "9:36",
+      "displayEndTime": "10:07",
+      "tagName": "日常",
+      "category": "🌀"
+    },
+    {
+      "id": "2026-06-03-007",
+      "title": "和ChatGPT重新回顾对话分析，输出我关于“时间管理”的看法。中途纠结是否要买Astaxin的虾青素，并且进行了购买",
+      "start": "2026-06-03T10:07:00+08:00",
+      "end": "2026-06-03T11:00:00+08:00",
+      "displayStartTime": "10:07",
+      "displayEndTime": "11:00",
+      "tagName": "早上",
+      "category": "☀️"
+    },
+    {
+      "id": "2026-06-03-008",
+      "title": "和ChatGPT聊关于6月的安排思考",
+      "start": "2026-06-03T11:00:00+08:00",
+      "end": "2026-06-03T12:04:00+08:00",
+      "displayStartTime": "11:00",
+      "displayEndTime": "12:04",
+      "tagName": "早上",
+      "category": "☀️"
+    },
+    {
+      "id": "2026-06-03-009",
+      "title": "吃饭、吃完饭去给车充电，充完电在图书馆回顾了一下《人工智能白皮书》回家一点左右，聊了一下关于Freitag。一点半睡20分钟",
+      "start": "2026-06-03T12:04:00+08:00",
+      "end": "2026-06-03T13:55:00+08:00",
+      "displayStartTime": "12:04",
+      "displayEndTime": "13:55",
+      "tagName": "日常",
+      "category": "🌀"
+    },
+    {
+      "id": "2026-06-03-010",
+      "title": "优化时间管理功能",
+      "start": "2026-06-03T13:55:00+08:00",
+      "end": "2026-06-03T14:30:00+08:00",
+      "displayStartTime": "13:55",
+      "displayEndTime": "14:30",
+      "tagName": "下午",
+      "category": "🌇"
+    },
+    {
+      "id": "2026-06-03-011",
+      "title": "去会所把电瓶车开回来",
+      "start": "2026-06-03T14:30:00+08:00",
+      "end": "2026-06-03T14:48:00+08:00",
+      "displayStartTime": "14:30",
+      "displayEndTime": "14:48",
+      "tagName": "日常",
+      "category": "🌀"
+    },
+    {
+      "id": "2026-06-03-012",
+      "title": "优化了一下时间管理项目的功能添加",
+      "start": "2026-06-03T14:48:00+08:00",
+      "end": "2026-06-03T15:15:00+08:00",
+      "displayStartTime": "14:48",
+      "displayEndTime": "15:15",
+      "tagName": "下午",
+      "category": "🌇"
+    },
+    {
+      "id": "2026-06-03-013",
+      "title": "和ChatGPT对话，生成6月份提纲规划和行动指南，假设最低投递标准和最高投递标准",
+      "start": "2026-06-03T15:15:00+08:00",
+      "end": "2026-06-03T16:00:00+08:00",
+      "displayStartTime": "15:15",
+      "displayEndTime": "16:00",
+      "tagName": "下午",
+      "category": "🌇"
+    },
+    {
+      "id": "2026-06-03-014",
+      "title": "对话完善行为路线，以及“系统法”的阐述和沉淀为可供下载的文件md",
+      "start": "2026-06-03T16:00:00+08:00",
+      "end": "2026-06-03T16:41:00+08:00",
+      "displayStartTime": "16:00",
+      "displayEndTime": "16:41",
+      "tagName": "下午",
+      "category": "🌇"
+    },
+    {
+      "id": "2026-06-03-015",
+      "title": "完善一下思路，优化一下“系统法”",
+      "start": "2026-06-03T16:41:00+08:00",
+      "end": "2026-06-03T17:01:00+08:00",
+      "displayStartTime": "16:41",
+      "displayEndTime": "17:01",
+      "tagName": "下午",
+      "category": "🌇"
+    },
+    {
+      "id": "2026-06-03-016",
+      "title": "优化改进CodeX的相关功能，添加了左侧按钮的功能描述，以及优化测试。看李笑来的“客观评判标准”和“最佳实践标准”",
+      "start": "2026-06-03T17:01:00+08:00",
+      "end": "2026-06-03T18:00:00+08:00",
+      "displayStartTime": "17:01",
+      "displayEndTime": "18:00",
+      "tagName": "下午",
+      "category": "🌇"
+    },
+    {
+      "id": "2026-06-03-017",
+      "title": "给老爸过生日",
+      "start": "2026-06-03T18:00:00+08:00",
+      "end": "2026-06-03T23:30:00+08:00",
+      "displayStartTime": "18:00",
+      "displayEndTime": "23:30",
+      "tagName": "晚饭",
+      "category": "🍚"
+    }
+  ],
+  "tags": [
+    { "id": "morning", "name": "早上", "label": "早上", "color": "bg-blue-500", "icon": "☀️" },
+    { "id": "afternoon", "name": "下午", "label": "下午", "color": "bg-orange-500", "icon": "🌇" },
+    { "id": "daily", "name": "日常", "label": "日常", "color": "bg-gray-500", "icon": "🌀" },
+    { "id": "dinner", "name": "晚饭", "label": "晚饭", "color": "bg-red-500", "icon": "🍚" }
+  ],
+  "options": {
+    "promptVersion": "day-journey-system-prompt-v1.2",
+    "outputFormat": "markdown"
+  }
+}

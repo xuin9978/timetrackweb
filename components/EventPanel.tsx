@@ -1,6 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import GlassCard from './GlassCard';
 import { Icons } from './Icons';
+import AIDailyReviewModal from './AIDailyReviewModal';
+import { getChinaWallDateTime } from '../utils/timezoneUtils';
 import { CalendarEvent, Tag } from '../types';
 import { getDurationInMinutes, formatDurationFromMinutes, getMinutesFromTime } from '../utils/dateUtils';
 
@@ -10,12 +12,16 @@ interface EventPanelProps {
     panelTitle: string;
     panelContext: PanelContext;
     events: CalendarEvent[];
+    comparisonEvents: CalendarEvent[];
+    referenceDate: Date;
     tags: Tag[];
     visibleTags: string[];
     onToggleTagVisibility: (tagId: string) => void;
     onAddEvent: () => void;
     onEventClick?: (event: CalendarEvent) => void;
     hasHiddenAllTags?: boolean;
+    isReviewBoardOpen?: boolean;
+    onToggleReviewBoard?: () => void;
 }
 
 type EventViewType = 'list' | 'group' | 'stats';
@@ -67,10 +73,11 @@ const EventCard = React.memo(({ event, tag, onClick, index }: EventCardProps) =>
     );
 });
 
-const EventPanel: React.FC<EventPanelProps> = ({ panelTitle, panelContext, events, tags, visibleTags, onToggleTagVisibility, onAddEvent, onEventClick, hasHiddenAllTags = false }) => {
+const EventPanel: React.FC<EventPanelProps> = ({ panelTitle, panelContext, events, comparisonEvents, referenceDate, tags, visibleTags, onToggleTagVisibility, onAddEvent, onEventClick, hasHiddenAllTags = false, isReviewBoardOpen = false, onToggleReviewBoard }) => {
     const [viewType, setViewType] = useState<EventViewType>('list');
     const [isButtonAnimating, setIsButtonAnimating] = useState('');
     const [isFilterOpen, setIsFilterOpen] = useState(false);
+    const [isReviewOpen, setIsReviewOpen] = useState(false);
     const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
 
     const toggleGroup = (categoryId: string) => {
@@ -139,7 +146,7 @@ const EventPanel: React.FC<EventPanelProps> = ({ panelTitle, panelContext, event
         let longestContinuous = 0;
         let nextFree = '暂无明显空档';
         let foundFree = false;
-        const now = new Date();
+        const now = getChinaWallDateTime(new Date());
         const nowMinutes = getMinutesFromTime(`${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`);
 
         Object.values(eventsByDay).forEach(dayEvents => {
@@ -305,16 +312,41 @@ const EventPanel: React.FC<EventPanelProps> = ({ panelTitle, panelContext, event
                                 </>
                             )}
                         </div>
+
+                        <button
+                            onClick={() => setIsReviewOpen(true)}
+                            title="AI 日复盘"
+                            aria-label="AI 日复盘"
+                            className="event-panel-chip flex items-center gap-2 px-3 py-1.5 rounded-full transition-all duration-300 text-xs font-medium border bg-white text-blue-500 border-blue-100 hover:bg-blue-50 hover:text-blue-600"
+                        >
+                            <Icons.Sparkles size={14} />
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={onToggleReviewBoard}
+                            title="回顾"
+                            aria-label="回顾"
+                            aria-pressed={isReviewBoardOpen}
+                            className={`event-panel-chip flex items-center gap-2 px-3 py-1.5 rounded-full transition-all duration-300 text-xs font-medium border ${isReviewBoardOpen
+                                ? 'bg-gray-100 text-black border-gray-200'
+                                : 'bg-white text-gray-500 border-gray-100 hover:bg-gray-50 hover:text-gray-700'
+                                }`}
+                        >
+                            <Icons.History size={14} />
+                        </button>
                     </div>
 
-                    <button
-                        onClick={onAddEvent}
-                        title="新增日程"
-                        aria-label="新增日程"
-                        className="event-panel-add w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-black hover:bg-gray-200 transition-all duration-200 hover:rotate-90 active:scale-90"
-                    >
-                        <Icons.Plus size={18} />
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={onAddEvent}
+                            title="新增日程"
+                            aria-label="新增日程"
+                            className="event-panel-add w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-black hover:bg-gray-200 transition-all duration-200 hover:rotate-90 active:scale-90"
+                        >
+                            <Icons.Plus size={18} />
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -456,6 +488,16 @@ const EventPanel: React.FC<EventPanelProps> = ({ panelTitle, panelContext, event
                     </div>
                 </div>
             </div>
+
+            <AIDailyReviewModal
+                isOpen={isReviewOpen}
+                onClose={() => setIsReviewOpen(false)}
+                panelTitle={panelTitle}
+                events={events}
+                comparisonEvents={comparisonEvents}
+                referenceDate={referenceDate}
+                tags={tags}
+            />
         </GlassCard>
     );
 };
