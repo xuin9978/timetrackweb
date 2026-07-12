@@ -1,7 +1,81 @@
 // 时区处理工具函数
 // 专门用于解决"今天"事件显示问题的时区处理
 
-import { startOfDay, endOfDay } from 'date-fns';
+import { startOfDay, endOfDay, format } from 'date-fns';
+
+export const APP_TIME_ZONE = 'Asia/Shanghai';
+export const CHINA_TIMEZONE_OFFSET_MINUTES = 8 * 60;
+
+export const getChinaWallDate = (date: Date): Date => {
+  const chinaTime = new Date(date.getTime() + CHINA_TIMEZONE_OFFSET_MINUTES * 60 * 1000);
+  return new Date(chinaTime.getUTCFullYear(), chinaTime.getUTCMonth(), chinaTime.getUTCDate());
+};
+
+export const getChinaWallDateTime = (date: Date): Date => {
+  const chinaTime = new Date(date.getTime() + CHINA_TIMEZONE_OFFSET_MINUTES * 60 * 1000);
+  return new Date(
+    chinaTime.getUTCFullYear(),
+    chinaTime.getUTCMonth(),
+    chinaTime.getUTCDate(),
+    chinaTime.getUTCHours(),
+    chinaTime.getUTCMinutes(),
+    chinaTime.getUTCSeconds(),
+    chinaTime.getUTCMilliseconds()
+  );
+};
+
+export const formatChinaWallTime = (date: Date): string => {
+  const chinaTime = new Date(date.getTime() + CHINA_TIMEZONE_OFFSET_MINUTES * 60 * 1000);
+  return `${chinaTime.getUTCHours().toString().padStart(2, '0')}:${chinaTime.getUTCMinutes().toString().padStart(2, '0')}`;
+};
+
+export const formatChinaDateKey = (date: Date): string => {
+  return format(date, 'yyyy-MM-dd');
+};
+
+export const chinaWallTimeToISOString = (date: Date, time: string): string => {
+  const [hours, minutes] = time.split(':').map(Number);
+  const utcMillis = Date.UTC(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+    hours - 8,
+    minutes,
+    0,
+    0
+  );
+  return new Date(utcMillis).toISOString();
+};
+
+export const chinaWallDateToISOString = (date: Date): string => {
+  const utcMillis = Date.UTC(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+    date.getHours() - 8,
+    date.getMinutes(),
+    date.getSeconds(),
+    date.getMilliseconds()
+  );
+  return new Date(utcMillis).toISOString();
+};
+
+export const startOfChinaDayISOString = (date: Date): string => {
+  return chinaWallTimeToISOString(date, '00:00');
+};
+
+export const endOfChinaDayISOString = (date: Date): string => {
+  const utcMillis = Date.UTC(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+    15,
+    59,
+    59,
+    999
+  );
+  return new Date(utcMillis).toISOString();
+};
 
 /**
  * 标准化日期处理，确保时区一致性
@@ -9,8 +83,6 @@ import { startOfDay, endOfDay } from 'date-fns';
  */
 export const normalizeDateToLocal = (date: Date): Date => {
   const d = new Date(date);
-  // 提取本地时间的年、月、日，重新构建日期对象
-  // 这样可以避免UTC时间转换导致的日期偏移
   const year = d.getFullYear();
   const month = d.getMonth();
   const day = d.getDate();
@@ -22,7 +94,7 @@ export const normalizeDateToLocal = (date: Date): Date => {
  * 避免时区问题导致的比较错误
  */
 export const isTodaySafe = (date: Date): boolean => {
-  const today = new Date();
+  const today = getChinaWallDate(new Date());
   const normalizedToday = normalizeDateToLocal(today);
   const normalizedDate = normalizeDateToLocal(date);
   
@@ -35,12 +107,13 @@ export const isTodaySafe = (date: Date): boolean => {
  */
 export const getTodayTimeRange = () => {
   const today = new Date();
-  const start = startOfDay(today);
-  const end = endOfDay(today);
+  const chinaToday = getChinaWallDate(today);
+  const start = startOfDay(chinaToday);
+  const end = endOfDay(chinaToday);
   
   return {
-    start: start.toISOString(),
-    end: end.toISOString(),
+    start: startOfChinaDayISOString(start),
+    end: endOfChinaDayISOString(end),
     startLocal: start,
     endLocal: end
   };
@@ -52,7 +125,7 @@ export const getTodayTimeRange = () => {
  */
 export const convertUTCToLocalDate = (utcDateString: string): Date => {
   const utcDate = new Date(utcDateString);
-  return normalizeDateToLocal(utcDate);
+  return getChinaWallDate(utcDate);
 };
 
 /**

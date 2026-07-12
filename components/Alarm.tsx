@@ -5,6 +5,7 @@ import { formatTime as formatTimeStr } from '../utils/dateUtils';
 import { AlarmState, AlarmMode } from '../types';
 import { Icons } from './Icons';
 import TimerSetupModal from './TimerSetupModal';
+import { getChinaWallDateTime } from '../utils/timezoneUtils';
 
 interface AlarmProps {
     alarmState: AlarmState;
@@ -103,7 +104,7 @@ const Alarm: React.FC<AlarmProps> = ({
         finalElapsed = Math.min(spent, totalDuration);
     }
     
-    const now = new Date();
+    const now = getChinaWallDateTime(new Date());
     const endTimeStr = formatTimeStr(now);
     const startTimeDate = new Date(now.getTime() - finalElapsed);
     const startTimeStr = formatTimeStr(startTimeDate);

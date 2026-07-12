@@ -888,7 +888,11 @@
       .App .apple-event-block {
         border-left-width: 3px !important;
         border-radius: 3px !important;
-        box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--event-border) 18%, transparent) !important;
+        box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--event-border) 24%, transparent) !important;
+      }
+
+      .App .apple-event-block-surface {
+        background: color-mix(in srgb, var(--event-border) 14%, var(--app-panel)) !important;
       }
 
       .App.dark-mode .apple-event-block {
@@ -896,8 +900,12 @@
         border-color: color-mix(in srgb, var(--event-border) 90%, #ffffff 8%) !important;
       }
 
+      .App.dark-mode .apple-event-block-surface {
+        background: color-mix(in srgb, var(--event-border) 42%, #151615) !important;
+      }
+
       .App:not(.dark-mode) .apple-event-block {
-        background-color: color-mix(in srgb, var(--event-border) 14%, #ffffff) !important;
+        background-color: color-mix(in srgb, var(--event-border) 13%, #ffffff) !important;
         border-color: color-mix(in srgb, var(--event-border) 88%, #000000 5%) !important;
       }
 
@@ -1012,12 +1020,18 @@
       }
 
       .App .event-panel-chip,
-      .App .event-panel-add,
-      .App .event-panel-popover {
+      .App .event-panel-add {
         background: color-mix(in srgb, var(--app-text) 5%, transparent) !important;
         border-color: var(--app-border) !important;
         color: var(--app-text-muted) !important;
         box-shadow: none !important;
+      }
+
+      .App .event-panel-popover {
+        background: var(--app-surface) !important;
+        border-color: var(--app-border) !important;
+        color: var(--app-text-muted) !important;
+        box-shadow: 0 18px 40px rgba(15, 23, 42, 0.14) !important;
       }
 
       .App .event-panel-chip.bg-gray-100,
@@ -1228,13 +1242,17 @@
       }
 
       .App:not(.dark-mode) .apple-event-block {
-        background-color: color-mix(in srgb, var(--event-border) 14%, transparent) !important;
+        background-color: color-mix(in srgb, var(--event-border) 8%, transparent) !important;
         border-color: var(--event-border) !important;
         box-shadow: none !important;
       }
 
       .App:not(.dark-mode) .apple-event-block span {
-        text-shadow: none !important;
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", sans-serif;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: geometricPrecision;
+        -webkit-text-stroke: 0.08px rgba(0, 0, 0, 0.12);
+        text-shadow: 0 0.5px 0 rgba(0, 0, 0, 0.045) !important;
       }
 
       .App:not(.dark-mode) .event-panel-card,
@@ -1245,9 +1263,14 @@
       }
 
       .App:not(.dark-mode) .event-panel-chip,
-      .App:not(.dark-mode) .event-panel-add,
-      .App:not(.dark-mode) .event-panel-popover {
+      .App:not(.dark-mode) .event-panel-add {
         background: rgba(255, 255, 255, 0.78) !important;
+        border-color: rgba(243, 244, 246, 0.96) !important;
+        color: #6b7280 !important;
+      }
+
+      .App:not(.dark-mode) .event-panel-popover {
+        background: #ffffff !important;
         border-color: rgba(243, 244, 246, 0.96) !important;
         color: #6b7280 !important;
       }
@@ -1377,9 +1400,14 @@
       }
 
       .App.dark-mode .event-panel-chip,
-      .App.dark-mode .event-panel-add,
-      .App.dark-mode .event-panel-popover {
+      .App.dark-mode .event-panel-add {
         background: rgba(255, 255, 255, 0.055) !important;
+        border-color: rgba(255, 255, 255, 0.095) !important;
+        color: rgba(235, 235, 245, 0.56) !important;
+      }
+
+      .App.dark-mode .event-panel-popover {
+        background: #202220 !important;
         border-color: rgba(255, 255, 255, 0.095) !important;
         color: rgba(235, 235, 245, 0.56) !important;
       }

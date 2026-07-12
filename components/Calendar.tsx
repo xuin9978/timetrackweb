@@ -15,6 +15,7 @@ import {
   formatDateTitle,
   formatDateRange,
 } from '../utils/dateUtils';
+import { getChinaWallDate } from '../utils/timezoneUtils';
 import { DayData, ViewMode, CalendarEvent, DragSelection, Tag } from '../types';
 
 interface CalendarProps {
@@ -34,11 +35,13 @@ interface CalendarProps {
   hasHiddenAllTags?: boolean;
   isSidebarCollapsed?: boolean;
   onToggleSidebarCollapsed?: () => void;
+  isReviewBoardOpen?: boolean;
+  onToggleReviewBoard?: () => void;
 }
 
-const Calendar: React.FC<CalendarProps> = ({ events, tags, visibleTags, onToggleTagVisibility, onSmartAddEvent, onUpdateEvent, onOpenModal, currentDate: cdProp, setCurrentDate: setCdProp, selectedDate: sdProp, setSelectedDate: setSdProp, viewMode: vmProp, setViewMode: setVmProp, hasHiddenAllTags = false, isSidebarCollapsed = false, onToggleSidebarCollapsed }) => {
-  const [currentDateState, setCurrentDateState] = useState(new Date());
-  const [selectedDateState, setSelectedDateState] = useState(new Date());
+const Calendar: React.FC<CalendarProps> = ({ events, tags, visibleTags, onToggleTagVisibility, onSmartAddEvent, onUpdateEvent, onOpenModal, currentDate: cdProp, setCurrentDate: setCdProp, selectedDate: sdProp, setSelectedDate: setSdProp, viewMode: vmProp, setViewMode: setVmProp, hasHiddenAllTags = false, isSidebarCollapsed = false, onToggleSidebarCollapsed, isReviewBoardOpen = false, onToggleReviewBoard }) => {
+  const [currentDateState, setCurrentDateState] = useState(getChinaWallDate(new Date()));
+  const [selectedDateState, setSelectedDateState] = useState(getChinaWallDate(new Date()));
   const [viewModeState, setViewModeState] = useState<ViewMode>(ViewMode.Day);
   const currentDate = cdProp ?? currentDateState;
   const setCurrentDate = setCdProp ?? setCurrentDateState;
@@ -180,8 +183,9 @@ const Calendar: React.FC<CalendarProps> = ({ events, tags, visibleTags, onToggle
               {isWeekView && (
                 <button
                   onClick={() => {
-                    setCurrentDate(new Date());
-                    setSelectedDate(new Date());
+                    const today = getChinaWallDate(new Date());
+                    setCurrentDate(today);
+                    setSelectedDate(today);
                   }}
                   className="calendar-week-today-button px-3 h-8 rounded-full bg-gray-100 text-black hover:bg-gray-200 transition-all active:scale-95 text-xs font-medium"
                 >
@@ -297,8 +301,9 @@ const Calendar: React.FC<CalendarProps> = ({ events, tags, visibleTags, onToggle
         <div className={`calendar-footer flex items-center gap-4 ${isWeekView ? 'is-hidden-for-week' : ''}`}>
           <button
             onClick={() => {
-              setCurrentDate(new Date());
-              setSelectedDate(new Date());
+              const today = getChinaWallDate(new Date());
+              setCurrentDate(today);
+              setSelectedDate(today);
             }}
             className="calendar-today-button flex items-center gap-2 hover:text-black transition-colors"
           >
@@ -316,12 +321,16 @@ const Calendar: React.FC<CalendarProps> = ({ events, tags, visibleTags, onToggle
               panelTitle={panelTitle}
               panelContext={panelContext}
               events={panelEvents}
+              comparisonEvents={events}
+              referenceDate={selectedDate}
               tags={tags}
               visibleTags={visibleTags}
               onToggleTagVisibility={onToggleTagVisibility}
               onAddEvent={onSmartAddEvent}
               onEventClick={handleEventClick}
               hasHiddenAllTags={hasHiddenAllTags}
+              isReviewBoardOpen={isReviewBoardOpen}
+              onToggleReviewBoard={onToggleReviewBoard}
             />
           </div>
         </div>

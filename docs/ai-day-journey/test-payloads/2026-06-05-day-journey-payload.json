@@ -1,0 +1,229 @@
+{
+  "date": "2026-06-05",
+  "timezone": "Asia/Shanghai",
+  "events": [
+    {
+      "id": "c172adb4-878b-4cff-8a47-da639d9c76b7",
+      "title": "醒来后泡咖啡，去罗森，深蹲俯卧撑练习，到家后复盘昨日以及Rethink，泡黑芝麻亚麻籽粉以及煮鸡蛋吃",
+      "description": "",
+      "start": "2026-06-05T07:45:00+08:00",
+      "end": "2026-06-05T09:30:00+08:00",
+      "displayStartTime": "7:45",
+      "displayEndTime": "9:30",
+      "startTime": "07:45",
+      "endTime": "09:30",
+      "tagId": "5eb989a5-e51e-4cb8-8eae-d28a52e3b4f6",
+      "tagName": "日常",
+      "category": "🌀"
+    },
+    {
+      "id": "028caf97-a0a9-4354-acab-393d7fdf870e",
+      "title": "看了一下b站，调整了一下ChatGPT",
+      "description": "",
+      "start": "2026-06-05T09:30:00+08:00",
+      "end": "2026-06-05T10:15:00+08:00",
+      "displayStartTime": "9:30",
+      "displayEndTime": "10:15",
+      "startTime": "09:30",
+      "endTime": "10:15",
+      "tagId": "5eb989a5-e51e-4cb8-8eae-d28a52e3b4f6",
+      "tagName": "日常",
+      "category": "🌀"
+    },
+    {
+      "id": "bc96744d-6200-4328-8f30-375b4c282a0e",
+      "title": "生成AI PRD，研究了一下Claude模式，中途给老爸弄转账。研究Claude",
+      "description": "",
+      "start": "2026-06-05T10:15:00+08:00",
+      "end": "2026-06-05T11:00:00+08:00",
+      "displayStartTime": "10:15",
+      "displayEndTime": "11:00",
+      "startTime": "10:15",
+      "endTime": "11:00",
+      "tagId": "9fae68fb-7535-48fd-b774-02bd206f5274",
+      "tagName": "早上",
+      "category": "☀️"
+    },
+    {
+      "id": "f68852be-f248-4e6e-8378-e50d5208ddbb",
+      "title": "优化时间管理项目，加“AI复盘“功能",
+      "description": "",
+      "start": "2026-06-05T11:00:00+08:00",
+      "end": "2026-06-05T12:00:00+08:00",
+      "displayStartTime": "11:00",
+      "displayEndTime": "12:00",
+      "startTime": "11:00",
+      "endTime": "12:00",
+      "tagId": "9fae68fb-7535-48fd-b774-02bd206f5274",
+      "tagName": "早上",
+      "category": "☀️"
+    },
+    {
+      "id": "2c9bf464-a13b-4901-b653-580f14745e36",
+      "title": "吃饭、吃完饭去会所充电，回家",
+      "description": "",
+      "start": "2026-06-05T12:00:00+08:00",
+      "end": "2026-06-05T12:38:00+08:00",
+      "displayStartTime": "12:00",
+      "displayEndTime": "12:38",
+      "startTime": "12:00",
+      "endTime": "12:38",
+      "tagId": "a2efc7a1-b4a4-4968-b62e-cc319dcb53c3",
+      "tagName": "吃饭",
+      "category": "🍚"
+    },
+    {
+      "id": "e5221b89-cdde-428b-9737-e368a82ad23f",
+      "title": "优化AI功能和看板",
+      "description": "",
+      "start": "2026-06-05T12:38:00+08:00",
+      "end": "2026-06-05T12:55:00+08:00",
+      "displayStartTime": "12:38",
+      "displayEndTime": "12:55",
+      "startTime": "12:38",
+      "endTime": "12:55",
+      "tagId": "937b0818-4c95-4610-b34a-ddb38179bbb6",
+      "tagName": "下午",
+      "category": "🌇"
+    },
+    {
+      "id": "f78aa846-e02a-4753-8fd1-c7308b908b5e",
+      "title": "午休",
+      "description": "",
+      "start": "2026-06-05T12:55:00+08:00",
+      "end": "2026-06-05T13:26:00+08:00",
+      "displayStartTime": "12:55",
+      "displayEndTime": "13:26",
+      "startTime": "12:55",
+      "endTime": "13:26",
+      "tagId": "11168841-6e23-4a8a-b799-75516a0b87c5",
+      "tagName": "休息",
+      "category": "💤"
+    },
+    {
+      "id": "b1c7caa6-b6cd-425d-b102-b15c733320dc",
+      "title": "优化更新“时间管理”生成AI的功能效果，添加系统提示词以及相关的功能",
+      "description": "",
+      "start": "2026-06-05T13:26:00+08:00",
+      "end": "2026-06-05T14:00:00+08:00",
+      "displayStartTime": "13:26",
+      "displayEndTime": "14:00",
+      "startTime": "13:26",
+      "endTime": "14:00",
+      "tagId": "937b0818-4c95-4610-b34a-ddb38179bbb6",
+      "tagName": "下午",
+      "category": "🌇"
+    },
+    {
+      "id": "d93785d4-6a06-495e-b1e4-46241425c217",
+      "title": "优化改进“时间管理”的AI功能以及生成“一天之旅”版本",
+      "description": "",
+      "start": "2026-06-05T14:00:00+08:00",
+      "end": "2026-06-05T14:43:00+08:00",
+      "displayStartTime": "14:00",
+      "displayEndTime": "14:43",
+      "startTime": "14:00",
+      "endTime": "14:43",
+      "tagId": "937b0818-4c95-4610-b34a-ddb38179bbb6",
+      "tagName": "下午",
+      "category": "🌇"
+    },
+    {
+      "id": "1927b246-3b52-4296-929e-40005a3a21ad",
+      "title": "优化改进生产“一天之旅”。",
+      "description": "",
+      "start": "2026-06-05T14:43:00+08:00",
+      "end": "2026-06-05T15:31:00+08:00",
+      "displayStartTime": "14:43",
+      "displayEndTime": "15:31",
+      "startTime": "14:43",
+      "endTime": "15:31",
+      "tagId": "937b0818-4c95-4610-b34a-ddb38179bbb6",
+      "tagName": "下午",
+      "category": "🌇"
+    },
+    {
+      "id": "783e12dc-bd35-4ae6-801d-03911579d8d0",
+      "title": "休息了15分钟",
+      "description": "",
+      "start": "2026-06-05T15:31:00+08:00",
+      "end": "2026-06-05T15:46:00+08:00",
+      "displayStartTime": "15:31",
+      "displayEndTime": "15:46",
+      "startTime": "15:31",
+      "endTime": "15:46",
+      "tagId": "11168841-6e23-4a8a-b799-75516a0b87c5",
+      "tagName": "休息",
+      "category": "💤"
+    },
+    {
+      "id": "db0d8b4c-001d-4aac-a736-a01f55c55a8f",
+      "title": "优化“一天之旅”的看板视图和改进组件按钮",
+      "description": "",
+      "start": "2026-06-05T15:46:00+08:00",
+      "end": "2026-06-05T17:26:00+08:00",
+      "displayStartTime": "15:46",
+      "displayEndTime": "17:26",
+      "startTime": "15:46",
+      "endTime": "17:26",
+      "tagId": "937b0818-4c95-4610-b34a-ddb38179bbb6",
+      "tagName": "下午",
+      "category": "🌇"
+    },
+    {
+      "id": "112217f8-26c5-4752-bce5-d631424d11b5",
+      "title": "锻炼，锻炼完去吃饭，到家9点，然后休息看了会手机",
+      "description": "",
+      "start": "2026-06-05T17:26:00+08:00",
+      "end": "2026-06-05T21:45:00+08:00",
+      "displayStartTime": "17:26",
+      "displayEndTime": "21:45",
+      "startTime": "17:26",
+      "endTime": "21:45",
+      "tagId": "5eb989a5-e51e-4cb8-8eae-d28a52e3b4f6",
+      "tagName": "日常",
+      "category": "🌀"
+    }
+  ],
+  "tags": [
+    {
+      "id": "937b0818-4c95-4610-b34a-ddb38179bbb6",
+      "name": "下午",
+      "label": "下午",
+      "color": "bg-[#FF9500]",
+      "icon": "🌇"
+    },
+    {
+      "id": "11168841-6e23-4a8a-b799-75516a0b87c5",
+      "name": "休息",
+      "label": "休息",
+      "color": "bg-[#8E8E93]",
+      "icon": "💤"
+    },
+    {
+      "id": "a2efc7a1-b4a4-4968-b62e-cc319dcb53c3",
+      "name": "吃饭",
+      "label": "吃饭",
+      "color": "bg-[#34C759]",
+      "icon": "🍚"
+    },
+    {
+      "id": "5eb989a5-e51e-4cb8-8eae-d28a52e3b4f6",
+      "name": "日常",
+      "label": "日常",
+      "color": "bg-[#32ADE6]",
+      "icon": "🌀"
+    },
+    {
+      "id": "9fae68fb-7535-48fd-b774-02bd206f5274",
+      "name": "早上",
+      "label": "早上",
+      "color": "bg-[#FF3B30]",
+      "icon": "☀️"
+    }
+  ],
+  "options": {
+    "promptVersion": "day-journey-system-prompt-v1.5",
+    "outputFormat": "markdown"
+  }
+}

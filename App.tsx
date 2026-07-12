@@ -4,6 +4,7 @@ import Calendar from './components/Calendar';
 import Alarm from './components/Alarm';
 import History from './components/History';
 import Sidebar from './components/Sidebar';
+import ReviewBoard from './components/ReviewBoard';
 import AddEventModal from './components/AddEventModal';
 import LogSessionModal from './components/LogSessionModal';
 import CreateTagModal from './components/CreateTagModal';
@@ -15,11 +16,16 @@ import { getVisibleDateRange, splitEventAcrossDays, isSameDay, formatTime, getMi
 import { fetchEvents, createEvents, updateEvent as updateEventDB, deleteEvent as deleteEventDB, replaceAllEvents, clearEventCategory, restoreEventCategory } from './utils/eventService';
 import { backupEventsToLocalStorage, restoreEventsFromLocalStorage, cleanOldBackups } from './utils/dataBackupService';
 import { fetchTags as fetchTagsDB, createTag as createTagDB, updateTag as updateTagDB, deleteTag as deleteTagDB, updateTagOrder } from './utils/tagService';
+import { getDayJourney, saveDayJourney, DayJourneyRecord } from './utils/dayJourneyService';
+import { getChinaWallDate, getChinaWallDateTime } from './utils/timezoneUtils';
 
 import { CalendarEvent, Tag, ModalConfig, AlarmState, AlarmMode, LogSessionModalConfig, ViewMode } from './types';
 
 type ToastTone = 'success' | 'error' | 'info';
 type SyncStatus = 'synced' | 'offline-cache' | 'sync-error' | 'session-expired';
+type DayJourneyStatus = 'idle' | 'loading' | 'success' | 'error';
+type DayJourneySaveStatus = 'idle' | 'loading' | 'success' | 'error';
+type DayJourneyLoadStatus = 'idle' | 'loading' | 'success' | 'error';
 
 interface ToastState {
   id: number;
@@ -29,6 +35,37 @@ interface ToastState {
   actionLabel?: string;
   onAction?: () => void;
 }
+
+interface DayJourneyResponse {
+  success: boolean;
+  markdown?: string;
+  provider?: string;
+  model?: string;
+  promptVersion?: string;
+  warnings?: string[];
+  error?: {
+    code?: string;
+    message?: string;
+  };
+}
+
+const getTagTitlePrefixes = (tag?: Pick<Tag, 'icon'>) => {
+  const icon = tag?.icon?.trim();
+  return icon ? [`${icon}：`, `${icon}:`] : [];
+};
+
+const replaceMergedTagPrefix = (title: string, sourceTag: Tag, targetTag: Tag) => {
+  const sourcePrefixes = getTagTitlePrefixes(sourceTag);
+  if (sourcePrefixes.length === 0) return title;
+
+  const targetPrefix = getTagTitlePrefixes(targetTag)[0] || '';
+  const trimmedTitle = title.trimStart();
+  const leadingWhitespace = title.slice(0, title.length - trimmedTitle.length);
+  const matchedPrefix = sourcePrefixes.find(prefix => trimmedTitle.startsWith(prefix));
+  if (!matchedPrefix) return title;
+
+  return `${leadingWhitespace}${targetPrefix}${trimmedTitle.slice(matchedPrefix.length).trimStart()}`;
+};
 
 const retry = async <T,>(fn: () => Promise<T>, retries = 3, delay = 300): Promise<T> => {
   let attempt = 0;
@@ -44,6 +81,80 @@ const retry = async <T,>(fn: () => Promise<T>, retries = 3, delay = 300): Promis
       await new Promise(r => setTimeout(r, delay * Math.pow(2, attempt - 1)));
     }
   }
+};
+
+const getEventFetchRange = (currentDate: Date, viewMode: ViewMode, selectedDate: Date) => {
+  const { startDate, endDate } = getVisibleDateRange(currentDate, viewMode, selectedDate);
+  const comparisonStartDate = new Date(startDate);
+  comparisonStartDate.setDate(comparisonStartDate.getDate() - 1);
+  return { startDate: comparisonStartDate, endDate };
+};
+
+const toDateKey = (date: Date) => {
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, '0');
+  const day = `${date.getDate()}`.padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const toLocalIso = (date: Date, time: string) => {
+  const [hour = '0', minute = '0'] = time.split(':');
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, '0');
+  const day = `${date.getDate()}`.padStart(2, '0');
+  return `${year}-${month}-${day}T${hour.padStart(2, '0')}:${minute.padStart(2, '0')}:00+08:00`;
+};
+
+const buildDayJourneyPayload = (
+  selectedDateKey: string,
+  selectedDate: Date,
+  events: CalendarEvent[],
+  tags: Tag[]
+) => {
+  const tagById = new Map(tags.map(tag => [tag.id, tag]));
+  const dayEvents = events
+    .filter(event => toDateKey(event.date) === selectedDateKey)
+    .sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+  return {
+    date: selectedDateKey,
+    timezone: 'Asia/Shanghai',
+    events: dayEvents.map(event => {
+      const tag = tagById.get(event.category);
+      return {
+        id: event.id,
+        title: event.title,
+        description: event.description || '',
+        start: toLocalIso(selectedDate, event.startTime),
+        end: toLocalIso(selectedDate, event.endTime),
+        displayStartTime: event.startTime.replace(/^0/, ''),
+        displayEndTime: event.endTime.replace(/^0/, ''),
+        startTime: event.startTime,
+        endTime: event.endTime,
+        tagId: event.category,
+        tagName: tag?.label || '',
+        category: tag?.icon || event.category
+      };
+    }),
+    tags: tags.map(tag => ({
+      id: tag.id,
+      name: tag.label,
+      label: tag.label,
+      color: tag.color,
+      icon: tag.icon
+    })),
+    options: {
+      promptVersion: 'day-journey-system-prompt-v1.6',
+      outputFormat: 'markdown'
+    }
+  };
+};
+
+const getDayJourneyErrorMessage = (code?: string, fallback?: string) => {
+  if (code === 'NO_EVENTS') return '当前日期暂无可生成的一天之旅记录';
+  if (code === 'AI_GENERATION_FAILED') return '一天之旅生成失败，请稍后重试';
+  if (code === 'MISSING_API_KEY') return '当前 AI 配置未完成，暂时无法生成一天之旅';
+  return fallback || '一天之旅生成失败，请稍后重试';
 };
 
 const App: React.FC = () => {
@@ -65,10 +176,26 @@ const App: React.FC = () => {
 
 
   // Calendar State
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [currentDate, setCurrentDate] = useState(getChinaWallDate(new Date()));
+  const [selectedDate, setSelectedDate] = useState(getChinaWallDate(new Date()));
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Day);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isReviewBoardOpen, setIsReviewBoardOpen] = useState(false);
+  const [dayJourneyStatus, setDayJourneyStatus] = useState<DayJourneyStatus>('idle');
+  const [dayJourneyMarkdown, setDayJourneyMarkdown] = useState('');
+  const [dayJourneyError, setDayJourneyError] = useState('');
+  const [dayJourneyWarnings, setDayJourneyWarnings] = useState<string[]>([]);
+  const [dayJourneyLoadStatus, setDayJourneyLoadStatus] = useState<DayJourneyLoadStatus>('idle');
+  const [dayJourneySaveStatus, setDayJourneySaveStatus] = useState<DayJourneySaveStatus>('idle');
+  const [dayJourneySaveMessage, setDayJourneySaveMessage] = useState('');
+  const [dayJourneySavedRecord, setDayJourneySavedRecord] = useState<DayJourneyRecord | null>(null);
+  const [dayJourneyIsDirty, setDayJourneyIsDirty] = useState(false);
+  const [dayJourneyProvider, setDayJourneyProvider] = useState('');
+  const [dayJourneyModel, setDayJourneyModel] = useState('');
+  const [dayJourneyPromptVersion, setDayJourneyPromptVersion] = useState('day-journey-system-prompt-v1.6');
+  const [dayJourneyInputSnapshot, setDayJourneyInputSnapshot] = useState<Record<string, unknown> | null>(null);
+  const dayJourneyRequestIdRef = React.useRef(0);
+  const selectedDateKeyRef = React.useRef('');
 
   // Shared State
   const [events, setEvents] = useState<CalendarEvent[]>([]);
@@ -144,6 +271,221 @@ const App: React.FC = () => {
     }, 620);
   }, []);
 
+  const selectedDateKey = useMemo(() => toDateKey(selectedDate), [selectedDate]);
+
+  React.useEffect(() => {
+    selectedDateKeyRef.current = selectedDateKey;
+  }, [selectedDateKey]);
+
+  const generateDayJourney = useCallback(async () => {
+    const requestDateKey = selectedDateKey;
+    const requestId = ++dayJourneyRequestIdRef.current;
+    const payload = buildDayJourneyPayload(requestDateKey, selectedDate, events, tags);
+
+    setDayJourneyStatus('loading');
+    setDayJourneyMarkdown('');
+    setDayJourneyError('');
+    setDayJourneyWarnings([]);
+    setDayJourneySaveStatus('idle');
+    setDayJourneySaveMessage('');
+    setDayJourneySavedRecord(null);
+    setDayJourneyIsDirty(false);
+
+    try {
+      const response = await fetch('/api/ai/day-journey', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data: DayJourneyResponse = await response.json();
+
+      if (requestId !== dayJourneyRequestIdRef.current || selectedDateKeyRef.current !== requestDateKey) {
+        return;
+      }
+
+      if (!response.ok || !data.success || !data.markdown) {
+        throw new Error(getDayJourneyErrorMessage(data.error?.code, data.error?.message));
+      }
+
+      const warnings = data.warnings || [];
+      const provider = data.provider || '';
+      const model = data.model || '';
+      const promptVersion = data.promptVersion || payload.options.promptVersion;
+      const sourceEventIds = payload.events.map(event => event.id);
+      const inputSnapshot = {
+        ...payload,
+        promptVersion,
+        source_event_ids: sourceEventIds,
+        provider,
+        model,
+        warnings
+      };
+
+      setDayJourneyMarkdown(data.markdown);
+      setDayJourneyWarnings(warnings);
+      setDayJourneyProvider(provider);
+      setDayJourneyModel(model);
+      setDayJourneyPromptVersion(promptVersion);
+      setDayJourneyInputSnapshot(inputSnapshot);
+      setDayJourneyIsDirty(true);
+      setDayJourneyStatus('success');
+    } catch (error) {
+      if (requestId !== dayJourneyRequestIdRef.current || selectedDateKeyRef.current !== requestDateKey) {
+        return;
+      }
+      setDayJourneyError(error instanceof Error ? error.message : '一天之旅生成失败，请稍后重试');
+      setDayJourneyStatus('error');
+    }
+  }, [events, selectedDate, selectedDateKey, tags]);
+
+  const handleToggleReviewBoard = useCallback(() => {
+    setIsReviewBoardOpen(prev => !prev);
+  }, []);
+
+  React.useEffect(() => {
+    const requestDateKey = selectedDateKey;
+    const requestId = ++dayJourneyRequestIdRef.current;
+
+    setDayJourneyStatus('idle');
+    setDayJourneyMarkdown('');
+    setDayJourneyError('');
+    setDayJourneyWarnings([]);
+    setDayJourneyLoadStatus(currentUser ? 'loading' : 'idle');
+    setDayJourneySaveStatus('idle');
+    setDayJourneySaveMessage('');
+    setDayJourneySavedRecord(null);
+    setDayJourneyIsDirty(false);
+    setDayJourneyProvider('');
+    setDayJourneyModel('');
+    setDayJourneyPromptVersion('day-journey-system-prompt-v1.6');
+    setDayJourneyInputSnapshot(null);
+
+    if (!currentUser) {
+      return;
+    }
+
+    const loadSaved = async () => {
+      try {
+        const record = await getDayJourney(currentUser.id, requestDateKey);
+        if (requestId !== dayJourneyRequestIdRef.current || selectedDateKeyRef.current !== requestDateKey) {
+          return;
+        }
+
+        if (!record) {
+          setDayJourneyLoadStatus('success');
+          return;
+        }
+
+        setDayJourneySavedRecord(record);
+        setDayJourneyMarkdown(record.markdown);
+        setDayJourneyWarnings(record.warnings || []);
+        setDayJourneyProvider(record.modelProvider || '');
+        setDayJourneyModel(record.modelName || '');
+        setDayJourneyPromptVersion(record.promptVersion || 'day-journey-system-prompt-v1.6');
+        setDayJourneyInputSnapshot(record.inputSnapshot || null);
+        setDayJourneyStatus('success');
+        setDayJourneyLoadStatus('success');
+        setDayJourneyIsDirty(false);
+        setDayJourneySaveMessage('已保存到当前日期');
+      } catch (error) {
+        if (requestId !== dayJourneyRequestIdRef.current || selectedDateKeyRef.current !== requestDateKey) {
+          return;
+        }
+        setDayJourneyLoadStatus('error');
+        setDayJourneyStatus('error');
+        setDayJourneyError(error instanceof Error ? error.message : '读取已保存的一天之旅失败');
+      }
+    };
+
+    void loadSaved();
+  }, [currentUser, selectedDateKey]);
+
+  const saveCurrentDayJourney = useCallback(async () => {
+    const requestDateKey = selectedDateKey;
+    const requestMarkdown = dayJourneyMarkdown;
+    const requestSnapshot = dayJourneyInputSnapshot;
+
+    if (!currentUser) {
+      setDayJourneySaveStatus('error');
+      setDayJourneySaveMessage('请先登录后保存一天之旅');
+      return;
+    }
+
+    if (!requestMarkdown.trim()) {
+      setDayJourneySaveStatus('error');
+      setDayJourneySaveMessage('请先生成一天之旅');
+      return;
+    }
+
+    if (selectedDateKeyRef.current !== requestDateKey) {
+      setDayJourneySaveStatus('error');
+      setDayJourneySaveMessage('当前日期已变化，请重新生成后再保存');
+      return;
+    }
+
+    setDayJourneySaveStatus('loading');
+    setDayJourneySaveMessage('');
+
+    try {
+      const fallbackPayload = buildDayJourneyPayload(requestDateKey, selectedDate, events, tags);
+      const sourceEventIds = Array.isArray(requestSnapshot?.source_event_ids)
+        ? requestSnapshot.source_event_ids as string[]
+        : fallbackPayload.events.map(event => event.id);
+      const inputSnapshot = requestSnapshot || {
+        ...fallbackPayload,
+        promptVersion: dayJourneyPromptVersion,
+        source_event_ids: sourceEventIds,
+        provider: dayJourneyProvider,
+        model: dayJourneyModel,
+        warnings: dayJourneyWarnings
+      };
+
+      const saved = await saveDayJourney({
+        userId: currentUser.id,
+        date: requestDateKey,
+        markdown: requestMarkdown,
+        promptVersion: dayJourneyPromptVersion,
+        modelProvider: dayJourneyProvider,
+        modelName: dayJourneyModel,
+        sourceEventIds,
+        inputSnapshot,
+        warnings: dayJourneyWarnings
+      });
+
+      if (selectedDateKeyRef.current !== requestDateKey) {
+        return;
+      }
+
+      setDayJourneySavedRecord(saved);
+      setDayJourneyPromptVersion(saved.promptVersion || dayJourneyPromptVersion);
+      setDayJourneyProvider(saved.modelProvider || dayJourneyProvider);
+      setDayJourneyModel(saved.modelName || dayJourneyModel);
+      setDayJourneyInputSnapshot(saved.inputSnapshot || inputSnapshot);
+      setDayJourneyWarnings(saved.warnings || dayJourneyWarnings);
+      setDayJourneyIsDirty(false);
+      setDayJourneySaveStatus('success');
+      setDayJourneySaveMessage('已保存到当前日期');
+    } catch (error) {
+      if (selectedDateKeyRef.current !== requestDateKey) {
+        return;
+      }
+      setDayJourneySaveStatus('error');
+      setDayJourneySaveMessage(error instanceof Error ? error.message : '保存一天之旅失败');
+    }
+  }, [
+    currentUser,
+    dayJourneyInputSnapshot,
+    dayJourneyMarkdown,
+    dayJourneyModel,
+    dayJourneyPromptVersion,
+    dayJourneyProvider,
+    dayJourneyWarnings,
+    events,
+    selectedDate,
+    selectedDateKey,
+    tags
+  ]);
+
   // Set default view mode to Day when in PWA mode
   React.useEffect(() => {
     const isPwa = () => {
@@ -186,7 +528,7 @@ const App: React.FC = () => {
   const [isCreateTagModalOpen, setIsCreateTagModalOpen] = useState(false);
   const [editingTag, setEditingTag] = useState<Tag | undefined>(undefined);
 
-  const openModal = useCallback(async (start = '09:00', end = '10:00', date = new Date(), event?: CalendarEvent) => {
+  const openModal = useCallback(async (start = '09:00', end = '10:00', date = getChinaWallDate(new Date()), event?: CalendarEvent) => {
     setModalConfig({
       isOpen: true,
       mode: event ? 'edit' : 'create',
@@ -223,7 +565,7 @@ const App: React.FC = () => {
 
   const refreshEvents = useCallback(async () => {
     if (!currentUser) return;
-    const { startDate, endDate } = getVisibleDateRange(currentDate, viewMode, selectedDate);
+    const { startDate, endDate } = getEventFetchRange(currentDate, viewMode, selectedDate);
     const refreshed = await fetchEvents(currentUser.id, startDate, endDate, undefined, { loadAll: false });
     setEvents(refreshed);
 
@@ -367,7 +709,7 @@ const App: React.FC = () => {
     }
 
     // Determine default end time: use current time if possible
-    const now = new Date();
+    const now = getChinaWallDateTime(new Date());
     const currentTimeStr = formatTime(now);
 
     const startMinutes = getMinutesFromTime(defaultStartTime);
@@ -393,7 +735,7 @@ const App: React.FC = () => {
 
     // Use the actual start date if available, otherwise fallback to current time
     // This fixes issues where the session started on a previous day
-    const eventDate = startDate || new Date();
+    const eventDate = startDate || getChinaWallDate(new Date());
 
     if (tagIds.length === 0) {
       // If no tags are selected, create one event with a default title and the first available tag
@@ -642,6 +984,76 @@ const App: React.FC = () => {
     }
   }, [currentUser, supabase, tags, events, visibleTags]);
 
+  const handleMergeTag = useCallback(async (sourceTagId: string, targetTagId: string) => {
+    if (sourceTagId === targetTagId) {
+      throw new Error('不能将标签合并到自身。');
+    }
+
+    const sourceTag = tags.find(t => t.id === sourceTagId);
+    const targetTag = tags.find(t => t.id === targetTagId);
+    if (!sourceTag || !targetTag) {
+      throw new Error('标签不存在，请刷新后重试。');
+    }
+
+    const previousTags = tags;
+    const previousEvents = events;
+    const previousVisibleTags = visibleTags;
+    const affectedEvents = events.filter(event => event.category === sourceTagId);
+    const mergedEvents = affectedEvents.map(event => ({
+      ...event,
+      category: targetTagId,
+      title: replaceMergedTagPrefix(event.title, sourceTag, targetTag),
+    }));
+    const mergedById = new Map(mergedEvents.map(event => [event.id, event]));
+
+    setEvents(prev => prev.map(event => mergedById.get(event.id) || event));
+    setTags(prev => prev.filter(tag => tag.id !== sourceTagId));
+    setVisibleTags(prev => {
+      const withoutSource = prev.filter(id => id !== sourceTagId);
+      return withoutSource.includes(targetTagId) ? withoutSource : [...withoutSource, targetTagId];
+    });
+
+    if (!currentUser || !supabase) {
+      setEvents(previousEvents);
+      setTags(previousTags);
+      setVisibleTags(previousVisibleTags);
+      throw new Error('请登录后合并标签');
+    }
+
+    const cloudUpdatedEvents: CalendarEvent[] = [];
+    try {
+      for (const event of mergedEvents) {
+        const saved = await updateEventDB(currentUser.id, event);
+        if (!saved) throw new Error('事件更新失败');
+        cloudUpdatedEvents.push(event);
+      }
+      await deleteTagDB(currentUser.id, sourceTagId);
+      setSyncStatus('synced');
+      showToast({
+        tone: 'success',
+        message: `已将“${sourceTag.label}”合并到“${targetTag.label}”`,
+        detail: `${affectedEvents.length} 条事项已更新。`
+      });
+    } catch (e) {
+      setEvents(previousEvents);
+      setTags(previousTags);
+      setVisibleTags(previousVisibleTags);
+      setSyncStatus('sync-error');
+      if (cloudUpdatedEvents.length > 0) {
+        const previousById = new Map<string, CalendarEvent>(affectedEvents.map(event => [event.id, event]));
+        await Promise.allSettled(
+          cloudUpdatedEvents.map(event => {
+            const previousEvent = previousById.get(event.id);
+            return previousEvent ? updateEventDB(currentUser.id, previousEvent) : Promise.resolve(null);
+          })
+        );
+      }
+      const msg = e instanceof Error ? e.message : '标签合并失败，请稍后重试。';
+      showToast({ tone: 'error', message: '标签合并失败，已回滚。', detail: msg });
+      throw new Error(msg);
+    }
+  }, [currentUser, supabase, tags, events, visibleTags, showToast]);
+
   const handleToggleTagVisibility = useCallback((tagId: string) => {
     setVisibleTags(prev =>
       prev.includes(tagId) ? prev.filter(id => id !== tagId) : [...prev, tagId]
@@ -779,7 +1191,7 @@ const App: React.FC = () => {
     if (!currentUser) return;
 
     let mounted = true;
-    const { startDate, endDate } = getVisibleDateRange(currentDate, viewMode, selectedDate);
+    const { startDate, endDate } = getEventFetchRange(currentDate, viewMode, selectedDate);
 
     const loadData = async () => {
       try {
@@ -933,7 +1345,7 @@ const App: React.FC = () => {
         title: evt.title || '无标题日程',
         startTime: evt.startTime || '09:00',
         endTime: evt.endTime || '10:00',
-        date: evt.date || new Date(),
+        date: evt.date || getChinaWallDate(new Date()),
         category: category,
       };
     });
@@ -1047,19 +1459,36 @@ const App: React.FC = () => {
           </div>
         )}
 
-        {/* Sidebar Navigation */}
-        <Sidebar
-          activeModule={activeModule}
-          onSwitch={setActiveModule}
-          onOpenSettings={() => setIsSettingsOpen(true)}
-          onOpenAuth={() => setIsAuthOpen(true)}
-          onOpenAccount={() => setIsAccountOpen(true)}
-          onAddEvent={handleSmartAddEvent}
-          isLoggedIn={!!currentUser}
-          colorMode={colorMode}
-          onToggleColorMode={handleToggleColorMode}
-          isCollapsed={isSidebarCollapsed}
-        />
+        {/* Sidebar Navigation / Review Board */}
+        <div className={`relative flex-shrink-0 w-full md:h-[85vh] z-20 transition-all duration-300 ${isSidebarCollapsed ? 'md:w-0 md:min-w-0 md:max-w-0' : 'md:w-24'}`}>
+          <Sidebar
+            activeModule={activeModule}
+            onSwitch={setActiveModule}
+            onOpenSettings={() => setIsSettingsOpen(true)}
+            onOpenAuth={() => setIsAuthOpen(true)}
+            onOpenAccount={() => setIsAccountOpen(true)}
+            onAddEvent={handleSmartAddEvent}
+            isLoggedIn={!!currentUser}
+            colorMode={colorMode}
+            onToggleColorMode={handleToggleColorMode}
+            isCollapsed={isSidebarCollapsed}
+          />
+          {isReviewBoardOpen && activeModule === 'calendar' && (
+            <ReviewBoard
+              onClose={() => setIsReviewBoardOpen(false)}
+              onGenerate={generateDayJourney}
+              onSave={saveCurrentDayJourney}
+              status={dayJourneyStatus}
+              loadStatus={dayJourneyLoadStatus}
+              saveStatus={dayJourneySaveStatus}
+              markdown={dayJourneyMarkdown}
+              errorMessage={dayJourneyError}
+              saveMessage={dayJourneySaveMessage}
+              warnings={dayJourneyWarnings}
+              isDirty={dayJourneyIsDirty}
+            />
+          )}
+        </div>
 
         {/* Module Content */}
         <div className="flex-1 min-w-0 relative flex flex-col h-full">
@@ -1082,6 +1511,8 @@ const App: React.FC = () => {
               setViewMode={setViewMode}
               isSidebarCollapsed={isSidebarCollapsed}
               onToggleSidebarCollapsed={() => setIsSidebarCollapsed(prev => !prev)}
+              isReviewBoardOpen={isReviewBoardOpen}
+              onToggleReviewBoard={handleToggleReviewBoard}
             />
               {!currentUser && events.length === 0 && (
                 <div className="absolute inset-0 flex items-center justify中心">
@@ -1109,6 +1540,7 @@ const App: React.FC = () => {
               onAddTag={handleAddTag}
               onUpdateTag={handleUpdateTag}
               onDeleteTag={handleDeleteTag}
+              onMergeTag={handleMergeTag}
               onReorderTags={handleReorderTags}
               onSaveOrder={handleSaveTagOrder}
             />

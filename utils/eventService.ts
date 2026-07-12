@@ -1,38 +1,55 @@
 import { supabase } from './supabaseClient';
 import { CalendarEvent } from '../types';
+import {
+  chinaWallDateToISOString,
+  chinaWallTimeToISOString,
+  endOfChinaDayISOString,
+  formatChinaWallTime,
+  getChinaWallDate,
+  startOfChinaDayISOString
+} from './timezoneUtils';
 
-const toTime = (date: Date, time: string) => {
-  const [h, m] = time.split(':').map(Number);
-  const d = new Date(date);
-  d.setHours(h, m, 0, 0);
-  return d.toISOString();
+const getMinutesFromHHMM = (time: string) => {
+  const [hours, minutes] = time.split(':').map(Number);
+  return hours * 60 + minutes;
 };
 
-const pad = (n: number) => (n < 10 ? `0${n}` : `${n}`);
-const toHHMM = (date: Date) => `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+const addDays = (date: Date, days: number) => {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
+};
+
+const getEventEndDate = (event: Pick<CalendarEvent, 'date' | 'startTime' | 'endTime'>) => {
+  return getMinutesFromHHMM(event.endTime) < getMinutesFromHHMM(event.startTime)
+    ? addDays(event.date, 1)
+    : event.date;
+};
+
+const toTime = (date: Date, time: string) => {
+  return chinaWallTimeToISOString(date, time);
+};
+
+const fromCachedEvent = (e: any): CalendarEvent => ({
+  id: e.id,
+  title: e.title,
+  startTime: e.startTime,
+  endTime: e.endTime,
+  category: e.category,
+  date: getChinaWallDate(new Date(e.dateISO))
+});
 
 const fromDB = (row: any): CalendarEvent => {
   const start = new Date(row.start_time);
   const end = new Date(row.end_time);
   
-  // 统一时区处理：确保事件日期与本地时区一致
-  // 将UTC时间转换为本地时间，避免时区偏移导致的日期判断错误
-  const normalizeToLocalDate = (date: Date): Date => {
-    const localDate = new Date(date);
-    // 确保日期部分正确，避免UTC转换导致的日期偏移
-    const year = localDate.getFullYear();
-    const month = localDate.getMonth();
-    const day = localDate.getDate();
-    return new Date(year, month, day);
-  };
-  
   return {
     id: row.id,
     title: row.title,
-    startTime: toHHMM(start),
-    endTime: toHHMM(end),
+    startTime: formatChinaWallTime(start),
+    endTime: formatChinaWallTime(end),
     category: row.category ?? '',
-    date: normalizeToLocalDate(start), // 使用标准化后的本地日期
+    date: getChinaWallDate(start),
   };
 };
 
@@ -49,8 +66,8 @@ export const fetchEvents = async (
   }
 
   try {
-    const startISO = startDate.toISOString();
-    const endISO = endDate.toISOString();
+    const startISO = startOfChinaDayISOString(startDate);
+    const endISO = endOfChinaDayISOString(endDate);
     const ignoreRange = options?.ignoreRange === true;
     const loadAll = options?.loadAll === true;
 
@@ -132,7 +149,7 @@ export const fetchEvents = async (
         startTime: e.startTime,
         endTime: e.endTime,
         category: e.category,
-        dateISO: e.date.toISOString()
+        dateISO: chinaWallDateToISOString(e.date)
       }));
       localStorage.setItem(`events_cache_${userId}`, JSON.stringify(payload));
     } catch {}
@@ -145,14 +162,7 @@ export const fetchEvents = async (
         const raw = localStorage.getItem(`events_cache_${userId}`);
         if (!raw) return [];
         const arr = JSON.parse(raw);
-        return Array.isArray(arr) ? arr.map((e: any) => ({
-          id: e.id,
-          title: e.title,
-          startTime: e.startTime,
-          endTime: e.endTime,
-          category: e.category,
-          date: new Date(e.dateISO)
-        })) : [];
+        return Array.isArray(arr) ? arr.map(fromCachedEvent) : [];
       } catch { return []; }
     }
     // Handle network errors gracefully
@@ -167,14 +177,7 @@ export const fetchEvents = async (
         const raw = localStorage.getItem(`events_cache_${userId}`);
         if (!raw) return [];
         const arr = JSON.parse(raw);
-        return Array.isArray(arr) ? arr.map((e: any) => ({
-          id: e.id,
-          title: e.title,
-          startTime: e.startTime,
-          endTime: e.endTime,
-          category: e.category,
-          date: new Date(e.dateISO)
-        })) : [];
+        return Array.isArray(arr) ? arr.map(fromCachedEvent) : [];
       } catch { return []; }
     }
     console.error('Exception in fetchEvents:', error);
@@ -184,14 +187,17 @@ export const fetchEvents = async (
 
 export const createEvents = async (userId: string, items: Omit<CalendarEvent, 'id'>[]): Promise<CalendarEvent[]> => {
   if (!supabase) throw new Error('未配置 Supabase');
-  const rows = items.map((e) => ({
-    id: crypto.randomUUID(),
-    user_id: userId,
-    title: e.title,
-    start_time: toTime(e.date, e.startTime),
-    end_time: toTime(e.date, e.endTime),
-    category: e.category || null,
-  }));
+  const rows = items.map((e) => {
+    const endDate = getEventEndDate(e);
+    return {
+      id: crypto.randomUUID(),
+      user_id: userId,
+      title: e.title,
+      start_time: toTime(e.date, e.startTime),
+      end_time: toTime(endDate, e.endTime),
+      category: e.category || null,
+    };
+  });
   
   try {
     const { data, error } = await supabase.from('events').insert(rows).select('*');
@@ -214,10 +220,11 @@ export const createEvents = async (userId: string, items: Omit<CalendarEvent, 'i
 
 export const updateEvent = async (userId: string, e: CalendarEvent): Promise<CalendarEvent | null> => {
   if (!supabase) throw new Error('未配置 Supabase');
+  const endDate = getEventEndDate(e);
   const row = {
     title: e.title,
     start_time: toTime(e.date, e.startTime),
-    end_time: toTime(e.date, e.endTime),
+    end_time: toTime(endDate, e.endTime),
     category: e.category || null,
   };
   
@@ -339,14 +346,17 @@ export const replaceAllEvents = async (userId: string, items: Omit<CalendarEvent
       throw new Error(delError.message);
     }
     
-    const rows = items.map((e) => ({
-      id: crypto.randomUUID(),
-      user_id: userId,
-      title: e.title,
-      start_time: toTime(e.date, e.startTime),
-      end_time: toTime(e.date, e.endTime),
-      category: e.category || null,
-    }));
+    const rows = items.map((e) => {
+      const endDate = getEventEndDate(e);
+      return {
+        id: crypto.randomUUID(),
+        user_id: userId,
+        title: e.title,
+        start_time: toTime(e.date, e.startTime),
+        end_time: toTime(endDate, e.endTime),
+        category: e.category || null,
+      };
+    });
     
     const { data, error } = await supabase.from('events').insert(rows).select('*');
     if (error || !data) {

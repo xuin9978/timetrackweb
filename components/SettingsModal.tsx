@@ -1,9 +1,11 @@
 import React, { useMemo, useState } from 'react';
-import { endOfMonth, endOfWeek, format, isValid, isWithinInterval, parseISO, startOfMonth, startOfWeek } from 'date-fns';
+import { endOfMonth, endOfWeek, format, isWithinInterval, startOfMonth, startOfWeek } from 'date-fns';
 import { Icons } from './Icons';
 import { CalendarEvent, Tag } from '../types';
 import ImportTagSelectionModal from './ImportTagSelectionModal';
 import GlassCard from './GlassCard';
+import { exportToICS } from '../utils/dateUtils';
+import { formatChinaDateKey, getChinaWallDate } from '../utils/timezoneUtils';
 
 interface SettingsModalProps {
     isOpen: boolean;
@@ -16,7 +18,7 @@ interface SettingsModalProps {
 
 type SyncRangeMode = 'all' | 'day' | 'week' | 'month' | 'custom';
 
-const formatDateInput = (date: Date) => format(date, 'yyyy-MM-dd');
+const formatDateInput = (date: Date) => formatChinaDateKey(date);
 const formatMonthInput = (date: Date) => format(date, 'yyyy-MM');
 
 const toDateOnly = (date: Date) => {
@@ -24,8 +26,10 @@ const toDateOnly = (date: Date) => {
 };
 
 const parseInputDate = (value: string, fallback = new Date()) => {
-    const parsed = parseISO(value);
-    return isValid(parsed) ? parsed : fallback;
+    const match = value.match(/^(\d{4})-(\d{2})(?:-(\d{2}))?$/);
+    if (!match) return fallback;
+    const [, year, month, day = '01'] = match;
+    return new Date(Number(year), Number(month) - 1, Number(day));
 };
 
 const safeFilenamePart = (value: string) => {
@@ -34,12 +38,12 @@ const safeFilenamePart = (value: string) => {
 
 const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, events, tags, onRestoreData, onImportEvents }) => {
     const [pendingImportEvents, setPendingImportEvents] = useState<Partial<CalendarEvent>[] | null>(null);
-    const [resultSummary, setResultSummary] = useState<{ tone: 'success' | 'error' | 'info'; title: string; detail: string } | null>(null);
+    const [resultSummary, setResultSummary] = useState<{ tone: 'success' | 'error' | 'info'; title: string; detail: string; downloadUrl?: string; downloadFilename?: string } | null>(null);
     const [syncRangeMode, setSyncRangeMode] = useState<SyncRangeMode>('all');
-    const [syncDate, setSyncDate] = useState(formatDateInput(new Date()));
-    const [syncMonth, setSyncMonth] = useState(formatMonthInput(new Date()));
-    const [syncStartDate, setSyncStartDate] = useState(formatDateInput(new Date()));
-    const [syncEndDate, setSyncEndDate] = useState(formatDateInput(new Date()));
+    const [syncDate, setSyncDate] = useState(formatDateInput(getChinaWallDate(new Date())));
+    const [syncMonth, setSyncMonth] = useState(formatMonthInput(getChinaWallDate(new Date())));
+    const [syncStartDate, setSyncStartDate] = useState(formatDateInput(getChinaWallDate(new Date())));
+    const [syncEndDate, setSyncEndDate] = useState(formatDateInput(getChinaWallDate(new Date())));
 
     const handleExportJSON = () => {
         const data = {
@@ -52,7 +56,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, events, 
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `liquid_calendar_backup_${new Date().toISOString().split('T')[0]}.json`;
+        link.download = `liquid_calendar_backup_${formatChinaDateKey(getChinaWallDate(new Date()))}.json`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -72,7 +76,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, events, 
                     // Revive dates
                     const revivedEvents = data.events.map((evt: any) => ({
                         ...evt,
-                        date: new Date(evt.date)
+                        date: getChinaWallDate(new Date(evt.date))
                     }));
                     onRestoreData(revivedEvents, data.tags);
                     setResultSummary({ tone: 'success', title: '数据恢复成功', detail: `恢复 ${revivedEvents.length} 个日程、${data.tags.length} 个标签。` });
@@ -200,22 +204,26 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, events, 
     if (!isOpen) return null;
 
     const handleSyncToCalendar = (tag?: Tag) => {
-        import('../utils/dateUtils').then(({ exportToICS }) => {
-            const filteredEvents = getFilteredSyncEvents(tag);
-            const scopeLabel = tag ? `"${tag.label}" 标签` : '全部日程';
+        const filteredEvents = getFilteredSyncEvents(tag);
+        const scopeLabel = tag ? `"${tag.label}" 标签` : '全部日程';
 
-            if (filteredEvents.length === 0) {
-                setResultSummary({ tone: 'info', title: '没有可同步日程', detail: `${scopeLabel}在「${syncRange.label}」范围内暂无日程。` });
-                return;
-            }
+        if (filteredEvents.length === 0) {
+            setResultSummary({ tone: 'info', title: '没有可同步日程', detail: `${scopeLabel}在「${syncRange.label}」范围内暂无日程。` });
+            return;
+        }
 
-            const filenameParts = [tag?.label, syncRangeMode === 'all' ? undefined : syncRange.filename]
-                .filter(Boolean)
-                .map(part => safeFilenamePart(part as string));
-            const filenameSuffix = filenameParts.join('_');
-            const filename = filenameSuffix ? `calendar_export_${filenameSuffix}.ics` : 'calendar_export.ics';
-            exportToICS(filteredEvents, filenameSuffix);
-            setResultSummary({ tone: 'success', title: '日历文件已生成', detail: `文件：${filename}。已导出${scopeLabel} ${filteredEvents.length} 个，范围：${syncRange.label}。` });
+        const filenameParts = [tag?.label, syncRangeMode === 'all' ? undefined : syncRange.filename]
+            .filter(Boolean)
+            .map(part => safeFilenamePart(part as string));
+        const filenameSuffix = filenameParts.join('_');
+        const filename = filenameSuffix ? `calendar_export_${filenameSuffix}.ics` : 'calendar_export.ics';
+        const download = exportToICS(filteredEvents, filenameSuffix);
+        setResultSummary({
+            tone: 'success',
+            title: '日历文件已生成',
+            detail: `文件：${filename}。已导出${scopeLabel} ${filteredEvents.length} 个，范围：${syncRange.label}。如果没有自动下载，请点击下方按钮手动下载。`,
+            downloadUrl: download.url,
+            downloadFilename: download.filename,
         });
     };
 
@@ -239,6 +247,16 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, events, 
                                 <div>
                                     <div className="text-sm font-bold text-gray-900">{resultSummary.title}</div>
                                     <div className="text-xs text-gray-500 mt-1">{resultSummary.detail}</div>
+                                    {resultSummary.downloadUrl && resultSummary.downloadFilename && (
+                                        <a
+                                            href={resultSummary.downloadUrl}
+                                            download={resultSummary.downloadFilename}
+                                            className="mt-3 inline-flex items-center gap-2 rounded-full bg-green-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-green-700 transition-colors"
+                                        >
+                                            <Icons.Download size={14} />
+                                            下载文件
+                                        </a>
+                                    )}
                                 </div>
                                 <button onClick={() => setResultSummary(null)} aria-label="关闭提示" className="text-gray-400 hover:text-gray-700">
                                     <Icons.X size={16} />

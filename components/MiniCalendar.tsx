@@ -13,6 +13,7 @@ import {
 } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 import { Icons } from './Icons';
+import { getChinaWallDate } from '../utils/timezoneUtils';
 
 interface MiniCalendarProps {
   selectedDate: Date;
@@ -22,7 +23,7 @@ interface MiniCalendarProps {
 
 const MiniCalendar: React.FC<MiniCalendarProps> = React.memo(({ selectedDate, onDateSelect, eventDates = [] }) => {
   const [currentMonth, setCurrentMonth] = useState(selectedDate);
-  const today = new Date();
+  const today = getChinaWallDate(new Date());
 
   const calendarDays = useMemo(() => {
     const monthStart = startOfMonth(currentMonth);
