@@ -89,17 +89,8 @@ const extractJsonObject = (value: string) => {
 
 const getProviders = (env: Record<string, string>): LlmProvider[] => {
   const deepseekKey = env.DEEPSEEK_API_KEY;
-  const glmKey = env.GLM_API_KEY;
 
   return [
-    glmKey
-      ? {
-          name: 'glm',
-          url: 'https://open.bigmodel.cn/api/paas/v4/chat/completions',
-          apiKey: glmKey,
-          model: 'glm-4-flash'
-        }
-      : null,
     deepseekKey
       ? {
           name: 'deepseek',
@@ -542,7 +533,7 @@ export default defineConfig(({ mode }) => {
                 const providers = getProviders(env);
 
                 if (providers.length === 0) {
-                  sendJson(res, 500, { error: '未配置 DEEPSEEK_API_KEY 或 GLM_API_KEY' });
+                  sendJson(res, 500, { error: '未配置 DEEPSEEK_API_KEY' });
                   return;
                 }
 
