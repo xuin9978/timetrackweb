@@ -27,6 +27,16 @@ interface DiaryProps {
   onWeeklyModeChange?: (isWeekly: boolean) => void;
 }
 
+const createEmptyEntries = (
+  dates: Array<Pick<DiaryEntry, 'id' | 'day' | 'date' | 'fullDate'>>,
+  options: { future?: boolean } = {}
+): DiaryEntry[] => dates.map(entry => ({
+  ...entry,
+  saved: false,
+  future: options.future,
+  text: ''
+}));
+
 const INITIAL_WEEKS: DiaryWeek[] = [
   {
     id: 'prev',
@@ -34,15 +44,15 @@ const INITIAL_WEEKS: DiaryWeek[] = [
     title: '2026 年 7 月 6 日 - 7 月 12 日',
     helper: '上一周的记录可以完整回看；未写日期保留为补写入口。',
     currentDayIndex: 6,
-    entries: [
-      { id: 'prev-mon', day: '周一', date: '07.06', fullDate: '2026 年 7 月 6 日 · 周一', saved: true, text: '上周一主要在整理日历模块的结构。事情很多，但真正推进的是把入口和状态理清楚。\n\n我发现只要页面能让我快速知道自己在哪里，后面的操作就会轻很多。' },
-      { id: 'prev-tue', day: '周二', date: '07.07', fullDate: '2026 年 7 月 7 日 · 周二', saved: true, text: '今天把一些零碎想法收拢到一起。不是每个功能都要立刻做完整，先把最核心的路径打通更重要。' },
-      { id: 'prev-wed', day: '周三', date: '07.08', fullDate: '2026 年 7 月 8 日 · 周三', saved: false, text: '' },
-      { id: 'prev-thu', day: '周四', date: '07.09', fullDate: '2026 年 7 月 9 日 · 周四', saved: true, text: '今天回看前几天的记录，发现有些判断当时看很小，但连起来就是方向。\n\n日记如果能帮我看到这种连续性，就已经很有价值。' },
-      { id: 'prev-fri', day: '周五', date: '07.10', fullDate: '2026 年 7 月 10 日 · 周五', saved: true, text: '这一周接近尾声，节奏比预想中稳。没有全部做完，但关键的取舍更清楚了。' },
-      { id: 'prev-sat', day: '周六', date: '07.11', fullDate: '2026 年 7 月 11 日 · 周六', saved: false, text: '' },
-      { id: 'prev-sun', day: '周日', date: '07.12', fullDate: '2026 年 7 月 12 日 · 周日', saved: true, text: '周日适合做一次轻复盘。上周的重点不是产出很多，而是把后面要走的路变得更清楚。' }
-    ]
+    entries: createEmptyEntries([
+      { id: 'prev-mon', day: '周一', date: '07.06', fullDate: '2026 年 7 月 6 日 · 周一' },
+      { id: 'prev-tue', day: '周二', date: '07.07', fullDate: '2026 年 7 月 7 日 · 周二' },
+      { id: 'prev-wed', day: '周三', date: '07.08', fullDate: '2026 年 7 月 8 日 · 周三' },
+      { id: 'prev-thu', day: '周四', date: '07.09', fullDate: '2026 年 7 月 9 日 · 周四' },
+      { id: 'prev-fri', day: '周五', date: '07.10', fullDate: '2026 年 7 月 10 日 · 周五' },
+      { id: 'prev-sat', day: '周六', date: '07.11', fullDate: '2026 年 7 月 11 日 · 周六' },
+      { id: 'prev-sun', day: '周日', date: '07.12', fullDate: '2026 年 7 月 12 日 · 周日' }
+    ])
   },
   {
     id: 'current',
@@ -50,15 +60,15 @@ const INITIAL_WEEKS: DiaryWeek[] = [
     title: '2026 年 7 月 13 日 - 7 月 19 日',
     helper: '这一周已经走完，横向浏览七天；没写的日期仍保留为补写入口。',
     currentDayIndex: 6,
-    entries: [
-      { id: 'mon', day: '周一', date: '07.13', fullDate: '2026 年 7 月 13 日 · 周一', saved: true, text: '今天继续整理时间管理项目。上午先把晚上模式清掉，再给侧边栏留出新的日记入口。做这件事的时候，我能感觉到这个产品正在从单纯记录时间，慢慢变成记录生活轨迹的工具。\n\n我希望日记不是另一个沉重的输入框，而是每天收尾时自然打开的地方。它应该能接住当天发生过的事、我对这些事情的判断，以及下一步想改变的小动作。' },
-      { id: 'tue', day: '周二', date: '07.14', fullDate: '2026 年 7 月 14 日 · 周二', saved: true, text: '今天把日记模块重新打开看了一遍。昨天主要是在清理旧功能，今天开始想它真正应该怎么被使用。\n\n我发现这个入口不能太吵。它只需要在我想记录的时候安静地出现，左边让我知道这一周走到哪里，右边给我一个足够大的空间把想法写下来。' },
-      { id: 'wed', day: '周三', date: '07.15', fullDate: '2026 年 7 月 15 日 · 周三', saved: true, text: '今天没有安排特别多任务。下午散步的时候想到，日记功能需要允许“不完整”。不是每天都要写成一篇漂亮文章，有时候一句话、几行片段就够了。\n\n好的记录系统应该降低心理负担，而不是每天提醒我还有一份作业没完成。' },
-      { id: 'thu', day: '周四', date: '07.16', fullDate: '2026 年 7 月 16 日 · 周四', saved: true, text: '今天主要在想日记看板的结构。每日页面应该服务输入，每周页面应该服务观察。\n\n每日是安静的、可写的、能沉下来的；每周是展开的、横向比较的、能看出节奏的。这两个模式如果切换足够顺，日记就不只是存档，而会变成一个帮助我做选择的界面。' },
-      { id: 'fri', day: '周五', date: '07.17', fullDate: '2026 年 7 月 17 日 · 周五', saved: true, text: '今天回看这一周的记录，发现自己其实完成了不少小的推进。以前我容易只看到没做完的部分，但日记把过程留下来了。\n\n如果系统能在周回顾里保留原文预览，我就能重新进入当时的语境，而不是只看到冰冷的统计。这一点很重要。' },
-      { id: 'sat', day: '周六', date: '07.18', fullDate: '2026 年 7 月 18 日 · 周六', saved: true, text: '今天没有急着继续推进功能，而是把这一周的想法重新看了一遍。周一到周五其实一直在围绕同一个问题：怎么让记录变得更自然。\n\n如果把日记和日程放在一起，我希望它不是一个额外负担，而是一个收束动作。周末看这些记录时，能感到这一周不是散的，而是有一条线慢慢连起来。' },
-      { id: 'sun', day: '周日', date: '07.19', fullDate: '2026 年 7 月 19 日 · 周日', saved: true, text: '今天是这一周的最后一天。现在再看七篇日记，会发现每天的重点其实不一样：有推进、有犹豫、有休息，也有重新选择。\n\n我希望每周视图在这个时候才完整展开。不是提前摆出七个空格逼我填满，而是等一周自然发生以后，把已经记录下来的东西铺开，让我看到这一周真实走过的路径。' }
-    ]
+    entries: createEmptyEntries([
+      { id: 'mon', day: '周一', date: '07.13', fullDate: '2026 年 7 月 13 日 · 周一' },
+      { id: 'tue', day: '周二', date: '07.14', fullDate: '2026 年 7 月 14 日 · 周二' },
+      { id: 'wed', day: '周三', date: '07.15', fullDate: '2026 年 7 月 15 日 · 周三' },
+      { id: 'thu', day: '周四', date: '07.16', fullDate: '2026 年 7 月 16 日 · 周四' },
+      { id: 'fri', day: '周五', date: '07.17', fullDate: '2026 年 7 月 17 日 · 周五' },
+      { id: 'sat', day: '周六', date: '07.18', fullDate: '2026 年 7 月 18 日 · 周六' },
+      { id: 'sun', day: '周日', date: '07.19', fullDate: '2026 年 7 月 19 日 · 周日' }
+    ])
   },
   {
     id: 'next',
@@ -66,15 +76,15 @@ const INITIAL_WEEKS: DiaryWeek[] = [
     title: '2026 年 7 月 20 日 - 7 月 26 日',
     helper: '下一周还没有开始，先作为未来周预览；到达日期后会变成可记录状态。',
     currentDayIndex: 6,
-    entries: [
-      { id: 'next-mon', day: '周一', date: '07.20', fullDate: '2026 年 7 月 20 日 · 周一', saved: false, future: true, text: '' },
-      { id: 'next-tue', day: '周二', date: '07.21', fullDate: '2026 年 7 月 21 日 · 周二', saved: false, future: true, text: '' },
-      { id: 'next-wed', day: '周三', date: '07.22', fullDate: '2026 年 7 月 22 日 · 周三', saved: false, future: true, text: '' },
-      { id: 'next-thu', day: '周四', date: '07.23', fullDate: '2026 年 7 月 23 日 · 周四', saved: false, future: true, text: '' },
-      { id: 'next-fri', day: '周五', date: '07.24', fullDate: '2026 年 7 月 24 日 · 周五', saved: false, future: true, text: '' },
-      { id: 'next-sat', day: '周六', date: '07.25', fullDate: '2026 年 7 月 25 日 · 周六', saved: false, future: true, text: '' },
-      { id: 'next-sun', day: '周日', date: '07.26', fullDate: '2026 年 7 月 26 日 · 周日', saved: false, future: true, text: '' }
-    ]
+    entries: createEmptyEntries([
+      { id: 'next-mon', day: '周一', date: '07.20', fullDate: '2026 年 7 月 20 日 · 周一' },
+      { id: 'next-tue', day: '周二', date: '07.21', fullDate: '2026 年 7 月 21 日 · 周二' },
+      { id: 'next-wed', day: '周三', date: '07.22', fullDate: '2026 年 7 月 22 日 · 周三' },
+      { id: 'next-thu', day: '周四', date: '07.23', fullDate: '2026 年 7 月 23 日 · 周四' },
+      { id: 'next-fri', day: '周五', date: '07.24', fullDate: '2026 年 7 月 24 日 · 周五' },
+      { id: 'next-sat', day: '周六', date: '07.25', fullDate: '2026 年 7 月 25 日 · 周六' },
+      { id: 'next-sun', day: '周日', date: '07.26', fullDate: '2026 年 7 月 26 日 · 周日' }
+    ], { future: true })
   }
 ];
 
