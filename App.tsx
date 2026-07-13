@@ -3,6 +3,7 @@ import React, { useState, useMemo, useCallback } from 'react';
 import Calendar from './components/Calendar';
 import Alarm from './components/Alarm';
 import History from './components/History';
+import Diary from './components/Diary';
 import Sidebar from './components/Sidebar';
 import AddEventModal from './components/AddEventModal';
 import LogSessionModal from './components/LogSessionModal';
@@ -47,7 +48,7 @@ const retry = async <T,>(fn: () => Promise<T>, retries = 3, delay = 300): Promis
 };
 
 const App: React.FC = () => {
-  const [activeModule, setActiveModule] = useState<'calendar' | 'alarm' | 'history'>('calendar');
+  const [activeModule, setActiveModule] = useState<'calendar' | 'alarm' | 'history' | 'diary'>('calendar');
   const [toast, setToast] = useState<ToastState | null>(null);
   const toastTimerRef = React.useRef<number | null>(null);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('synced');
@@ -1076,6 +1077,9 @@ const App: React.FC = () => {
               onReorderTags={handleReorderTags}
               onSaveOrder={handleSaveTagOrder}
             />
+          )}
+          {activeModule === 'diary' && (
+            <Diary onWeeklyModeChange={setIsSidebarCollapsed} />
           )}
         </div>
       </div>

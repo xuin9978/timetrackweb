@@ -3,8 +3,8 @@ import GlassCard from './GlassCard';
 import { Icons } from './Icons';
 
 interface SidebarProps {
-  activeModule: 'calendar' | 'alarm' | 'history';
-  onSwitch: (module: 'calendar' | 'alarm' | 'history') => void;
+  activeModule: 'calendar' | 'alarm' | 'history' | 'diary';
+  onSwitch: (module: 'calendar' | 'alarm' | 'history' | 'diary') => void;
   onOpenSettings: () => void;
   onOpenAuth: () => void;
   onOpenAccount: () => void;
@@ -18,6 +18,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeModule, onSwitch, onOpenSetting
     { id: 'alarm', label: '闹钟', icon: Icons.Clock },
     { id: 'history', label: '历史', icon: Icons.History },
     { id: 'calendar', label: '日历', icon: Icons.Calendar },
+    { id: 'diary', label: '日记', icon: Icons.BookOpen },
   ];
 
   return (

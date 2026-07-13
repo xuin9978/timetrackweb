@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>日记看板 Demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;600;700&family=Nunito:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <style>
+    :root {
+      --bg: #eef1f5;
+      --paper: #ffffff;
+      --surface: rgba(255, 255, 255, 0.88);
+      --muted: #727b8a;
+      --faint: #a0a7b4;
+      --text: #171b24;
+      --ink: #171b24;
+      --line: rgba(28, 33, 42, 0.1);
+      --soft-line: rgba(28, 33, 42, 0.065);
+      --accent: #111318;
+      --shadow: 0 22px 60px rgba(30, 35, 44, 0.08);
+      --radius: 26px;
+      --heading: "Nunito", -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", sans-serif;
+      --body: "Nunito", -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--heading);
+      letter-spacing: 0;
+      overflow: hidden;
+    }
+
+    button,
+    textarea,
+    input {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+      cursor: pointer;
+    }
+
+    .demo-shell {
+      width: 100vw;
+      height: 100vh;
+      padding: 24px;
+      display: grid;
+      grid-template-columns: 88px minmax(0, 1fr);
+      gap: 18px;
+      transition: grid-template-columns 220ms ease, gap 220ms ease, padding 220ms ease;
+    }
+
+    .demo-shell.weekly-mode {
+      grid-template-columns: 0 minmax(0, 1fr);
+      gap: 0;
+    }
+
+    .rail {
+      min-width: 0;
+      height: 100%;
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      background: var(--surface);
+      box-shadow: 0 12px 32px rgba(28, 32, 40, 0.05);
+      backdrop-filter: blur(22px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 14px 10px;
+      gap: 12px;
+      transition: opacity 180ms ease, transform 220ms ease, width 220ms ease, padding 220ms ease, border-color 180ms ease;
+    }
+
+    .weekly-mode .rail {
+      width: 0;
+      padding: 0;
+      opacity: 0;
+      transform: translateX(-18px);
+      pointer-events: none;
+      border-color: transparent;
+      overflow: hidden;
+    }
+
+    .rail-button {
+      width: 56px;
+      min-height: 62px;
+      display: grid;
+      place-items: center;
+      gap: 5px;
+      border-radius: 18px;
+      background: transparent;
+      color: var(--faint);
+      transition: transform 180ms ease, background 180ms ease, color 180ms ease;
+    }
+
+    .rail-button svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    .rail-button span {
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .rail-button.active {
+      background: #0f1115;
+      color: white;
+      box-shadow: 0 12px 26px rgba(15, 17, 21, 0.18);
+    }
+
+    .rail-button:hover {
+      transform: translateY(-1px);
+      background: rgba(255, 255, 255, 0.9);
+      color: var(--ink);
+    }
+
+    .rail-button.active:hover {
+      background: #0f1115;
+      color: white;
+    }
+
+    .rail-spacer {
+      flex: 1;
+    }
+
+    .workspace {
+      min-width: 0;
+      height: 100%;
+      border: 1px solid var(--line);
+      border-radius: 30px;
+      background: var(--paper);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+    }
+
+    .toolbar {
+      min-width: 0;
+      padding: 18px 22px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      background: var(--paper);
+    }
+
+    .title-group {
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .title-icon {
+      width: 42px;
+      height: 42px;
+      flex: 0 0 auto;
+      display: grid;
+      place-items: center;
+      border-radius: 16px;
+      background: #ffffff;
+      border: 1px solid var(--soft-line);
+      color: #383d47;
+      box-shadow: 0 5px 14px rgba(31, 38, 51, 0.04);
+    }
+
+    .title-group h1 {
+      margin: 0;
+      font-size: 23px;
+      line-height: 1.1;
+      letter-spacing: 0;
+    }
+
+    .title-group p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .toolbar-actions {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .toolbar-week-actions {
+      display: none;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .weekly-mode .toolbar-week-actions {
+      display: flex;
+    }
+
+    .segmented {
+      display: inline-flex;
+      gap: 3px;
+      padding: 3px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #ffffff;
+    }
+
+    .segmented button {
+      height: 34px;
+      min-width: 68px;
+      padding: 0 14px;
+      border-radius: 999px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 900;
+      transition: background 160ms ease, color 160ms ease, box-shadow 160ms ease;
+    }
+
+    .segmented button.active {
+      background: var(--accent);
+      color: white;
+      box-shadow: none;
+    }
+
+    .primary-button,
+    .ghost-button {
+      height: 38px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border-radius: 999px;
+      padding: 0 15px;
+      font-size: 12px;
+      font-weight: 900;
+      transition: transform 160ms ease, background 160ms ease;
+      white-space: nowrap;
+    }
+
+    .primary-button {
+      background: var(--accent);
+      color: white;
+    }
+
+    .ghost-button {
+      background: white;
+      color: var(--text);
+      border: 1px solid var(--line);
+    }
+
+    .primary-button:hover,
+    .ghost-button:hover {
+      transform: translateY(-1px);
+    }
+
+    .view {
+      display: none;
+      min-height: 0;
+    }
+
+    .view.active {
+      display: grid;
+    }
+
+    .daily-view {
+      grid-template-columns: 306px minmax(0, 1fr);
+    }
+
+    .diary-list {
+      min-height: 0;
+      padding: 18px;
+      border-right: 1px solid var(--line);
+      overflow-y: auto;
+      background: #f7f8fb;
+    }
+
+    .month-strip {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .month-strip h2 {
+      margin: 0;
+      font-size: 16px;
+      letter-spacing: -0.01em;
+    }
+
+    .tiny-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      height: 24px;
+      padding: 0 9px;
+      border-radius: 999px;
+      background: white;
+      color: var(--muted);
+      border: 1px solid var(--line);
+      font-size: 11px;
+      font-weight: 850;
+    }
+
+    .entry-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .entry-card {
+      width: 100%;
+      padding: 14px;
+      border-radius: 18px;
+      border: 1px solid transparent;
+      background: transparent;
+      text-align: left;
+      color: inherit;
+      box-shadow: none;
+      transition: transform 160ms ease, border 160ms ease, background 160ms ease, box-shadow 160ms ease;
+    }
+
+    .entry-card:hover {
+      transform: translateY(-1px);
+      background: white;
+    }
+
+    .entry-card.active {
+      border-color: var(--line);
+      background: var(--paper);
+      box-shadow: 0 10px 24px rgba(28, 33, 42, 0.045);
+    }
+
+    .entry-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .entry-day {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 950;
+    }
+
+    .entry-date {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 850;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      margin-top: 5px;
+      border-radius: 50%;
+      background: #6b7280;
+      box-shadow: none;
+    }
+
+    .status-dot.empty {
+      background: #d5dae2;
+      box-shadow: none;
+    }
+
+    .entry-preview {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-family: var(--body);
+      font-size: 12px;
+      line-height: 1.55;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .editor-panel {
+      min-width: 0;
+      min-height: 0;
+      position: relative;
+      padding: 34px 46px 26px;
+      overflow-y: auto;
+      display: grid;
+      grid-template-rows: auto minmax(360px, 1fr) auto;
+      gap: 16px;
+      background: var(--paper);
+    }
+
+    .editor-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .editor-kicker {
+      margin: 0;
+      color: var(--text);
+      font-size: 21px;
+      font-weight: 900;
+      letter-spacing: -0.01em;
+    }
+
+    .save-state {
+      display: inline-flex;
+      align-items: center;
+      flex: 0 0 auto;
+      height: 28px;
+      padding: 0 10px;
+      border-radius: 999px;
+      background: #fff;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 900;
+      border: 1px solid var(--line);
+    }
+
+    .diary-text {
+      width: 100%;
+      min-height: 0;
+      border: 0;
+      outline: 0;
+      resize: vertical;
+      background: transparent;
+      color: var(--text);
+      font-family: var(--body);
+      font-size: 16px;
+      line-height: 2.05;
+      caret-color: var(--accent);
+      padding: 4px 0 0;
+    }
+
+    .diary-text::placeholder {
+      color: #9aa1ad;
+    }
+
+    .editor-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .weekly-view {
+      grid-template-rows: auto minmax(0, 1fr);
+      padding: 24px;
+      gap: 16px;
+      overflow: hidden;
+      background: var(--paper);
+    }
+
+    .week-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .week-title-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .week-header h2 {
+      margin: 0;
+      font-size: 18px;
+      letter-spacing: 0;
+    }
+
+    .week-header p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 750;
+    }
+
+    .week-nav {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .week-nav-button {
+      width: 36px;
+      height: 36px;
+      display: inline-grid;
+      place-items: center;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--text);
+      transition: transform 160ms ease, background 160ms ease;
+    }
+
+    .week-nav-button:hover {
+      transform: translateY(-1px);
+      background: #f7f8fb;
+    }
+
+    .week-nav-button svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .week-board {
+      min-height: 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      display: grid;
+      grid-template-columns: repeat(var(--visible-days, 7), minmax(190px, 1fr));
+      gap: 12px;
+      padding-bottom: 6px;
+    }
+
+    .weekly-mode .week-board {
+      grid-template-columns: repeat(var(--visible-days, 7), minmax(170px, 1fr));
+    }
+
+    .week-board.is-partial {
+      justify-content: start;
+      grid-template-columns: repeat(var(--visible-days, 1), minmax(220px, 280px));
+    }
+
+    .day-column {
+      min-width: 0;
+      min-height: 0;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: var(--paper);
+      display: grid;
+      grid-template-rows: auto auto minmax(0, 1fr);
+      overflow: hidden;
+      text-align: left;
+      color: inherit;
+      transition: transform 160ms ease, border 160ms ease, background 160ms ease;
+    }
+
+    .day-column:hover {
+      transform: translateY(-2px);
+      background: white;
+    }
+
+    .day-column.today {
+      border-color: var(--line);
+      box-shadow: 0 10px 24px rgba(28, 33, 42, 0.045);
+    }
+
+    .day-column.empty-day {
+      background: #f7f8fb;
+    }
+
+    .day-column-head {
+      padding: 15px 15px 10px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .day-name {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 950;
+    }
+
+    .day-date {
+      margin: 3px 0 0;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 850;
+    }
+
+    .week-body {
+      min-height: 0;
+      overflow-y: auto;
+      padding: 0 15px 16px;
+      color: var(--text);
+      font-family: var(--body);
+      font-size: 13px;
+      line-height: 1.85;
+    }
+
+    .empty-copy {
+      height: 100%;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      color: var(--faint);
+      font-family: var(--heading);
+      font-size: 13px;
+      font-weight: 850;
+      line-height: 1.6;
+      border: 1px dashed rgba(33, 37, 48, 0.13);
+      border-radius: 18px;
+      padding: 18px;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 28px;
+      transform: translateX(-50%) translateY(20px);
+      opacity: 0;
+      pointer-events: none;
+      border-radius: 999px;
+      background: rgba(18, 19, 24, 0.94);
+      color: white;
+      padding: 11px 16px;
+      font-size: 13px;
+      font-weight: 850;
+      box-shadow: 0 18px 44px rgba(18, 19, 24, 0.22);
+      transition: opacity 180ms ease, transform 180ms ease;
+      z-index: 20;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    @media (max-width: 960px) {
+      body {
+        overflow: auto;
+      }
+
+      .demo-shell {
+        height: auto;
+        min-height: 100vh;
+        grid-template-columns: 1fr;
+        padding: 14px;
+      }
+
+      .rail {
+        position: sticky;
+        top: 10px;
+        z-index: 10;
+        height: auto;
+        min-height: 72px;
+        flex-direction: row;
+        justify-content: space-around;
+        border-radius: 24px;
+      }
+
+      .rail-spacer {
+        display: none;
+      }
+
+      .workspace {
+        min-height: calc(100vh - 114px);
+      }
+
+      .toolbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .toolbar-actions {
+        width: 100%;
+        justify-content: space-between;
+        flex-wrap: wrap;
+      }
+
+      .toolbar-week-actions {
+        order: 3;
+        width: 100%;
+        justify-content: space-between;
+      }
+
+      .week-header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .daily-view {
+        grid-template-columns: 1fr;
+      }
+
+      .diary-list {
+        border-right: 0;
+        border-bottom: 1px solid var(--soft-line);
+        max-height: 290px;
+      }
+
+      .week-board {
+        grid-template-columns: repeat(7, minmax(230px, 76vw));
+      }
+
+      .demo-shell.weekly-mode {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+
+      .weekly-mode .rail {
+        display: none;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .demo-shell {
+        padding: 10px;
+        gap: 10px;
+      }
+
+      .rail-button {
+        width: 50px;
+        min-height: 56px;
+      }
+
+      .workspace {
+        border-radius: 24px;
+      }
+
+      .toolbar {
+        padding: 16px;
+      }
+
+      .title-group h1 {
+        font-size: 20px;
+      }
+
+      .segmented {
+        width: 100%;
+      }
+
+      .segmented button {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .primary-button,
+      .ghost-button {
+        flex: 1;
+      }
+
+      .editor-panel {
+        padding: 16px;
+      }
+
+      .editor-footer {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .editor-footer .primary-button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="demo-shell">
+    <aside class="rail" aria-label="模块导航">
+      <button class="rail-button" type="button" aria-label="闹钟"><i data-lucide="clock"></i><span>闹钟</span></button>
+      <button class="rail-button" type="button" aria-label="历史"><i data-lucide="history"></i><span>历史</span></button>
+      <button class="rail-button" type="button" aria-label="日历"><i data-lucide="calendar-days"></i><span>日历</span></button>
+      <button class="rail-button active" type="button" aria-label="日记"><i data-lucide="book-open"></i><span>日记</span></button>
+      <div class="rail-spacer"></div>
+      <button class="rail-button" type="button" aria-label="账户"><i data-lucide="user"></i><span>账户</span></button>
+      <button class="rail-button" type="button" aria-label="设置"><i data-lucide="settings"></i><span>设置</span></button>
+    </aside>
+
+    <main class="workspace">
+      <header class="toolbar">
+        <div class="title-group">
+          <div class="title-icon"><i data-lucide="book-open"></i></div>
+          <div>
+            <h1>日记</h1>
+            <p id="toolbar-subtitle">每日记录，周末回看这一周的完整故事。</p>
+          </div>
+        </div>
+        <div class="toolbar-actions">
+          <div class="segmented" aria-label="日记视图切换">
+            <button class="active" type="button" data-view-button="daily">每日</button>
+            <button type="button" data-view-button="weekly">每周</button>
+          </div>
+          <div class="toolbar-week-actions" aria-label="每周日期切换">
+            <div class="week-nav" aria-label="周切换">
+              <button class="week-nav-button" type="button" id="prev-week" aria-label="查看上一周"><i data-lucide="chevron-left"></i></button>
+              <button class="week-nav-button" type="button" id="next-week" aria-label="查看下一周"><i data-lucide="chevron-right"></i></button>
+            </div>
+            <span class="tiny-pill" id="week-count-pill"><i data-lucide="panel-top-open"></i>1 条日记</span>
+          </div>
+          <button class="ghost-button" type="button" id="new-today"><i data-lucide="plus"></i>新建今日</button>
+        </div>
+      </header>
+
+      <section class="view daily-view active" id="daily-view" aria-label="每日日记看板">
+        <aside class="diary-list">
+          <div class="month-strip">
+            <h2>七月 · 本周</h2>
+            <span class="tiny-pill" id="week-progress-pill"><i data-lucide="check-circle-2"></i>已到 1 天 · 已写 1 天</span>
+          </div>
+          <div class="entry-list" id="entry-list"></div>
+        </aside>
+
+        <section class="editor-panel" aria-label="日记编辑区">
+          <div class="editor-head">
+            <p class="editor-kicker" id="editor-date">2026 年 7 月 13 日 · 周一</p>
+            <span class="save-state" id="save-state"><i data-lucide="cloud-check"></i>已保存</span>
+          </div>
+
+          <textarea class="diary-text" id="diary-text" placeholder="开始记录..." spellcheck="false"></textarea>
+
+          <footer class="editor-footer">
+            <span id="writing-stats">约 428 字 · 上次保存 10:42</span>
+            <button class="primary-button" type="button" id="save-button"><i data-lucide="save"></i>保存日记</button>
+          </footer>
+        </section>
+      </section>
+
+      <section class="view weekly-view" id="weekly-view" aria-label="每周日记回顾">
+        <div class="week-header">
+          <div>
+            <div class="week-title-row">
+              <h2 id="week-title">2026 年 7 月 13 日 - 7 月 19 日</h2>
+            </div>
+            <p id="week-helper">这一周刚开始，只显示已经到达的日期。</p>
+          </div>
+        </div>
+        <div class="week-board" id="week-board"></div>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast" id="toast">已保存当前日记</div>
+
+  <script>
+    const weeks = [
+      {
+        id: 'prev',
+        monthLabel: '七月 · 上周',
+        title: '2026 年 7 月 6 日 - 7 月 12 日',
+        helper: '上一周的记录可以完整回看；未写日期保留为补写入口。',
+        currentDayIndex: 6,
+        entries: [
+          { id: 'prev-mon', day: '周一', date: '07.06', fullDate: '2026 年 7 月 6 日 · 周一', saved: true, text: '上周一主要在整理日历模块的结构。事情很多，但真正推进的是把入口和状态理清楚。\n\n我发现只要页面能让我快速知道自己在哪里，后面的操作就会轻很多。' },
+          { id: 'prev-tue', day: '周二', date: '07.07', fullDate: '2026 年 7 月 7 日 · 周二', saved: true, text: '今天把一些零碎想法收拢到一起。不是每个功能都要立刻做完整，先把最核心的路径打通更重要。' },
+          { id: 'prev-wed', day: '周三', date: '07.08', fullDate: '2026 年 7 月 8 日 · 周三', saved: false, text: '' },
+          { id: 'prev-thu', day: '周四', date: '07.09', fullDate: '2026 年 7 月 9 日 · 周四', saved: true, text: '今天回看前几天的记录，发现有些判断当时看很小，但连起来就是方向。\n\n日记如果能帮我看到这种连续性，就已经很有价值。' },
+          { id: 'prev-fri', day: '周五', date: '07.10', fullDate: '2026 年 7 月 10 日 · 周五', saved: true, text: '这一周接近尾声，节奏比预想中稳。没有全部做完，但关键的取舍更清楚了。' },
+          { id: 'prev-sat', day: '周六', date: '07.11', fullDate: '2026 年 7 月 11 日 · 周六', saved: false, text: '' },
+          { id: 'prev-sun', day: '周日', date: '07.12', fullDate: '2026 年 7 月 12 日 · 周日', saved: true, text: '周日适合做一次轻复盘。上周的重点不是产出很多，而是把后面要走的路变得更清楚。' }
+        ]
+      },
+      {
+        id: 'current',
+        monthLabel: '七月 · 本周',
+        title: '2026 年 7 月 13 日 - 7 月 19 日',
+        helper: '这一周已经走完，横向浏览七天；没写的日期仍保留为补写入口。',
+        currentDayIndex: 6,
+        entries: [
+          { id: 'mon', day: '周一', date: '07.13', fullDate: '2026 年 7 月 13 日 · 周一', saved: true, text: '今天继续整理时间管理项目。上午先把晚上模式清掉，再给侧边栏留出新的日记入口。做这件事的时候，我能感觉到这个产品正在从单纯记录时间，慢慢变成记录生活轨迹的工具。\n\n我希望日记不是另一个沉重的输入框，而是每天收尾时自然打开的地方。它应该能接住当天发生过的事、我对这些事情的判断，以及下一步想改变的小动作。' },
+          { id: 'tue', day: '周二', date: '07.14', fullDate: '2026 年 7 月 14 日 · 周二', saved: true, text: '今天把日记模块重新打开看了一遍。昨天主要是在清理旧功能，今天开始想它真正应该怎么被使用。\n\n我发现这个入口不能太吵。它只需要在我想记录的时候安静地出现，左边让我知道这一周走到哪里，右边给我一个足够大的空间把想法写下来。' },
+          { id: 'wed', day: '周三', date: '07.15', fullDate: '2026 年 7 月 15 日 · 周三', saved: true, text: '今天没有安排特别多任务。下午散步的时候想到，日记功能需要允许“不完整”。不是每天都要写成一篇漂亮文章，有时候一句话、几行片段就够了。\n\n好的记录系统应该降低心理负担，而不是每天提醒我还有一份作业没完成。' },
+          { id: 'thu', day: '周四', date: '07.16', fullDate: '2026 年 7 月 16 日 · 周四', saved: true, text: '今天主要在想日记看板的结构。每日页面应该服务输入，每周页面应该服务观察。\n\n每日是安静的、可写的、能沉下来的；每周是展开的、横向比较的、能看出节奏的。这两个模式如果切换足够顺，日记就不只是存档，而会变成一个帮助我做选择的界面。' },
+          { id: 'fri', day: '周五', date: '07.17', fullDate: '2026 年 7 月 17 日 · 周五', saved: true, text: '今天回看这一周的记录，发现自己其实完成了不少小的推进。以前我容易只看到没做完的部分，但日记把过程留下来了。\n\n如果系统能在周回顾里保留原文预览，我就能重新进入当时的语境，而不是只看到冰冷的统计。这一点很重要。' },
+          { id: 'sat', day: '周六', date: '07.18', fullDate: '2026 年 7 月 18 日 · 周六', saved: true, text: '今天没有急着继续推进功能，而是把这一周的想法重新看了一遍。周一到周五其实一直在围绕同一个问题：怎么让记录变得更自然。\n\n如果把日记和日程放在一起，我希望它不是一个额外负担，而是一个收束动作。周末看这些记录时，能感到这一周不是散的，而是有一条线慢慢连起来。' },
+          { id: 'sun', day: '周日', date: '07.19', fullDate: '2026 年 7 月 19 日 · 周日', saved: true, text: '今天是这一周的最后一天。现在再看七篇日记，会发现每天的重点其实不一样：有推进、有犹豫、有休息，也有重新选择。\n\n我希望每周视图在这个时候才完整展开。不是提前摆出七个空格逼我填满，而是等一周自然发生以后，把已经记录下来的东西铺开，让我看到这一周真实走过的路径。' }
+        ]
+      },
+      {
+        id: 'next',
+        monthLabel: '七月 · 下周',
+        title: '2026 年 7 月 20 日 - 7 月 26 日',
+        helper: '下一周还没有开始，先作为未来周预览；到达日期后会变成可记录状态。',
+        currentDayIndex: 6,
+        entries: [
+          { id: 'next-mon', day: '周一', date: '07.20', fullDate: '2026 年 7 月 20 日 · 周一', saved: false, future: true, text: '' },
+          { id: 'next-tue', day: '周二', date: '07.21', fullDate: '2026 年 7 月 21 日 · 周二', saved: false, future: true, text: '' },
+          { id: 'next-wed', day: '周三', date: '07.22', fullDate: '2026 年 7 月 22 日 · 周三', saved: false, future: true, text: '' },
+          { id: 'next-thu', day: '周四', date: '07.23', fullDate: '2026 年 7 月 23 日 · 周四', saved: false, future: true, text: '' },
+          { id: 'next-fri', day: '周五', date: '07.24', fullDate: '2026 年 7 月 24 日 · 周五', saved: false, future: true, text: '' },
+          { id: 'next-sat', day: '周六', date: '07.25', fullDate: '2026 年 7 月 25 日 · 周六', saved: false, future: true, text: '' },
+          { id: 'next-sun', day: '周日', date: '07.26', fullDate: '2026 年 7 月 26 日 · 周日', saved: false, future: true, text: '' }
+        ]
+      }
+    ];
+
+    let activeWeekIndex = 1;
+    let activeEntryId = 'mon';
+
+    const entryList = document.getElementById('entry-list');
+    const weekBoard = document.getElementById('week-board');
+    const editorDate = document.getElementById('editor-date');
+    const diaryText = document.getElementById('diary-text');
+    const saveState = document.getElementById('save-state');
+    const writingStats = document.getElementById('writing-stats');
+    const toolbarSubtitle = document.getElementById('toolbar-subtitle');
+    const toast = document.getElementById('toast');
+    const demoShell = document.querySelector('.demo-shell');
+    const weekProgressPill = document.getElementById('week-progress-pill');
+    const weekCountPill = document.getElementById('week-count-pill');
+    const weekHelper = document.getElementById('week-helper');
+    const weekTitle = document.getElementById('week-title');
+    const monthTitle = document.querySelector('.month-strip h2');
+
+    function getActiveWeek() {
+      return weeks[activeWeekIndex];
+    }
+
+    function getVisibleEntries() {
+      const week = getActiveWeek();
+      return week.entries.slice(0, week.currentDayIndex + 1);
+    }
+
+    function isToday(entry) {
+      const week = getActiveWeek();
+      return week.id === 'current' && week.entries[week.currentDayIndex]?.id === entry.id;
+    }
+
+    function getActiveEntry() {
+      const visibleEntries = getVisibleEntries();
+      return visibleEntries.find(entry => entry.id === activeEntryId) || visibleEntries[0] || getActiveWeek().entries[0];
+    }
+
+    function renderEntryList() {
+      const week = getActiveWeek();
+      const visibleEntries = getVisibleEntries();
+      const writtenCount = visibleEntries.filter(entry => entry.saved).length;
+      monthTitle.textContent = week.monthLabel;
+      weekProgressPill.innerHTML = `<i data-lucide="check-circle-2"></i>已到 ${visibleEntries.length} 天 · 已写 ${writtenCount} 天`;
+      entryList.innerHTML = visibleEntries.map(entry => `
+        <button class="entry-card ${entry.id === activeEntryId ? 'active' : ''}" type="button" data-entry-id="${entry.id}">
+          <div class="entry-top">
+            <div>
+              <p class="entry-day">${entry.day}${isToday(entry) ? ' · 今天' : ''}</p>
+              <p class="entry-date">${entry.date} · ${entry.future ? '未到' : entry.saved ? '已写' : '未写'}</p>
+            </div>
+            <span class="status-dot ${entry.saved ? '' : 'empty'}"></span>
+          </div>
+          <p class="entry-preview">${entry.saved ? entry.text : entry.future ? '还未到这一天，先作为未来日记占位。' : '还没有写日记，点击后可以从空白页开始。'}</p>
+        </button>
+      `).join('');
+    }
+
+    function renderEditor() {
+      const entry = getActiveEntry();
+      editorDate.textContent = entry.fullDate;
+      diaryText.value = entry.saved ? entry.text : '';
+      saveState.innerHTML = entry.saved
+        ? '<i data-lucide="cloud-check"></i>已保存'
+        : entry.future
+          ? '<i data-lucide="circle-dashed"></i>未到'
+          : '<i data-lucide="circle-dashed"></i>未保存';
+      writingStats.textContent = entry.saved
+        ? `约 ${entry.text.length} 字 · 上次保存 10:42`
+        : entry.future
+          ? '未来日期 · 暂未开始'
+          : '空白日记 · 等待输入';
+      lucide.createIcons();
+    }
+
+    function renderWeekBoard() {
+      const week = getActiveWeek();
+      const visibleEntries = getVisibleEntries();
+      const writtenCount = visibleEntries.filter(entry => entry.saved).length;
+      weekBoard.style.setProperty('--visible-days', visibleEntries.length);
+      weekBoard.classList.toggle('is-partial', visibleEntries.length < 7);
+      weekTitle.textContent = week.title;
+      weekCountPill.innerHTML = `<i data-lucide="panel-top-open"></i>已到 ${visibleEntries.length} 天 · 已写 ${writtenCount} 天`;
+      weekHelper.textContent = week.helper;
+      weekBoard.innerHTML = visibleEntries.map(entry => `
+        <button class="day-column ${isToday(entry) ? 'today' : ''} ${entry.saved ? '' : 'empty-day'}" type="button" data-entry-id="${entry.id}">
+          <div class="day-column-head">
+            <div>
+              <p class="day-name">${entry.day}${isToday(entry) ? ' · 今天' : ''}</p>
+              <p class="day-date">${entry.date} · ${entry.future ? '未到' : entry.saved ? '已写' : '未写'}</p>
+            </div>
+          </div>
+          <div class="week-body">
+            ${entry.saved ? entry.text.replace(/\n/g, '<br>') : entry.future ? '<div class="empty-copy">还未到这一天<br>可以先预览未来周位置</div>' : '<div class="empty-copy">还没有写日记<br>点击回到每日视图开始记录</div>'}
+          </div>
+        </button>
+      `).join('');
+    }
+
+    function renderAll() {
+      renderEntryList();
+      renderEditor();
+      renderWeekBoard();
+      lucide.createIcons();
+    }
+
+    function setView(view) {
+      document.querySelectorAll('[data-view-button]').forEach(button => {
+        button.classList.toggle('active', button.dataset.viewButton === view);
+      });
+      demoShell.classList.toggle('weekly-mode', view === 'weekly');
+      document.getElementById('daily-view').classList.toggle('active', view === 'daily');
+      document.getElementById('weekly-view').classList.toggle('active', view === 'weekly');
+      toolbarSubtitle.textContent = view === 'daily'
+        ? '每日记录，周末回看这一周的完整故事。'
+        : '从周一到周日横向浏览，快速看到这一周的记录脉络。';
+    }
+
+    function selectEntry(entryId) {
+      activeEntryId = entryId;
+      renderAll();
+    }
+
+    function switchWeek(direction) {
+      activeWeekIndex = (activeWeekIndex + direction + weeks.length) % weeks.length;
+      activeEntryId = getVisibleEntries()[0].id;
+      renderAll();
+      showToast(direction > 0 ? '已切换到下一周' : '已切换到上一周');
+    }
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add('show');
+      window.clearTimeout(showToast.timer);
+      showToast.timer = window.setTimeout(() => toast.classList.remove('show'), 1600);
+    }
+
+    document.querySelectorAll('[data-view-button]').forEach(button => {
+      button.addEventListener('click', () => setView(button.dataset.viewButton));
+    });
+
+    entryList.addEventListener('click', event => {
+      const card = event.target.closest('[data-entry-id]');
+      if (!card) return;
+      selectEntry(card.dataset.entryId);
+    });
+
+    weekBoard.addEventListener('click', event => {
+      const card = event.target.closest('[data-entry-id]');
+      if (!card) return;
+      selectEntry(card.dataset.entryId);
+      setView('daily');
+      showToast('已打开对应日期');
+    });
+
+    document.getElementById('new-today').addEventListener('click', () => {
+      activeWeekIndex = 1;
+      selectEntry(getActiveWeek().entries[getActiveWeek().currentDayIndex].id);
+      setView('daily');
+      showToast('已打开今天的日记');
+    });
+
+    document.getElementById('prev-week').addEventListener('click', () => {
+      switchWeek(-1);
+    });
+
+    document.getElementById('next-week').addEventListener('click', () => {
+      switchWeek(1);
+    });
+
+    document.getElementById('save-button').addEventListener('click', () => {
+      showToast('Demo：已显示保存反馈，不写入真实数据');
+    });
+
+    renderAll();
+  </script>
+</body>
+</html>

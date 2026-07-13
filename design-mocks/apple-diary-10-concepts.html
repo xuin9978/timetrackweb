@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>苹果式日记模块 10 版设计</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --font-heading: "Poppins", Arial, sans-serif;
+      --font-body: "Lora", Georgia, serif;
+      --font-mono: "JetBrains Mono", "SF Mono", Menlo, monospace;
+      --ink: #151922;
+      --muted: #6b7280;
+      --line: #e5e7eb;
+      --panel: #ffffff;
+      --page: #f2f3f5;
+      --soft: #f8f9fb;
+      --accent: #111827;
+      --radius-xl: 30px;
+      --radius-lg: 22px;
+      --radius-md: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--page);
+      color: var(--ink);
+      font-family: var(--font-body);
+    }
+
+    button {
+      border: 0;
+      color: inherit;
+      font: inherit;
+      cursor: pointer;
+      background: transparent;
+    }
+
+    .page {
+      min-height: 100vh;
+      padding: 18px;
+    }
+
+    .frame {
+      display: grid;
+      grid-template-columns: 300px minmax(0, 1fr);
+      min-height: calc(100vh - 36px);
+      overflow: hidden;
+      border: 1px solid #d9dde4;
+      border-radius: var(--radius-xl);
+      background: var(--panel);
+      box-shadow: 0 24px 60px rgba(15, 23, 42, 0.08);
+    }
+
+    .catalog {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      padding: 24px;
+      border-right: 1px solid var(--line);
+      background: #f7f8fa;
+    }
+
+    .catalog-header {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .eyebrow,
+    .variant-index,
+    .meta,
+    .pill,
+    .date,
+    .saved,
+    .switch button,
+    .week-card span,
+    .label {
+      font-family: var(--font-mono);
+    }
+
+    .eyebrow {
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    h1,
+    h2,
+    h3 {
+      margin: 0;
+      font-family: var(--font-heading);
+      letter-spacing: -0.04em;
+    }
+
+    h1 {
+      font-size: 25px;
+      line-height: 1.05;
+    }
+
+    .catalog-header p,
+    .preview-title p,
+    .concept-note {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.65;
+    }
+
+    .variant-list {
+      display: grid;
+      gap: 8px;
+      overflow: auto;
+      padding-right: 2px;
+    }
+
+    .variant-button {
+      display: grid;
+      grid-template-columns: 34px 1fr;
+      gap: 10px;
+      width: 100%;
+      padding: 12px;
+      border: 1px solid transparent;
+      border-radius: 18px;
+      text-align: left;
+      transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
+    }
+
+    .variant-button:hover {
+      transform: translateY(-1px);
+      background: #ffffff;
+    }
+
+    .variant-button.active {
+      border-color: #c8ced8;
+      background: #ffffff;
+      box-shadow: 0 12px 28px rgba(15, 23, 42, 0.07);
+    }
+
+    .variant-index {
+      display: grid;
+      place-items: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #eef0f4;
+      color: #4b5563;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .variant-button.active .variant-index {
+      background: var(--ink);
+      color: #ffffff;
+    }
+
+    .variant-button strong {
+      display: block;
+      margin-bottom: 3px;
+      font-family: var(--font-heading);
+      font-size: 14px;
+      letter-spacing: -0.02em;
+    }
+
+    .variant-button span:last-child {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .stage {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      min-width: 0;
+      background: #f4f5f7;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 22px 28px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.86);
+      backdrop-filter: blur(16px);
+    }
+
+    .preview-title {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .app-icon {
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      width: 42px;
+      height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fff;
+      font-family: var(--font-heading);
+      font-size: 22px;
+      line-height: 1;
+    }
+
+    .preview-title h2 {
+      font-size: 22px;
+      line-height: 1.1;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .switch {
+      display: inline-flex;
+      padding: 4px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #f7f8fa;
+    }
+
+    .switch button {
+      padding: 8px 16px;
+      border-radius: 999px;
+      color: #667085;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .switch button.active {
+      color: #ffffff;
+      background: var(--ink);
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+    }
+
+    .new-button,
+    .saved {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 38px;
+      padding: 0 15px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #ffffff;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .preview-wrap {
+      min-width: 0;
+      overflow: auto;
+      padding: 28px;
+    }
+
+    .concept-shell {
+      --concept-page: #f6f7f9;
+      --concept-list: #f7f8fa;
+      --concept-editor: #ffffff;
+      --concept-border: #e5e7eb;
+      --concept-muted: #697386;
+      --concept-chip: #f1f2f5;
+      display: grid;
+      grid-template-columns: 260px minmax(0, 1fr);
+      min-height: 720px;
+      overflow: hidden;
+      border: 1px solid var(--concept-border);
+      border-radius: 28px;
+      background: var(--concept-editor);
+    }
+
+    .concept-shell.variant-02 {
+      --concept-list: #eef1f6;
+      --concept-page: #eef1f6;
+      --concept-editor: #ffffff;
+      grid-template-columns: 236px minmax(0, 1fr);
+    }
+
+    .concept-shell.variant-03 {
+      --concept-list: #f8f6f2;
+      --concept-page: #faf8f4;
+      --concept-chip: #f0ede6;
+      --concept-border: #ded8cf;
+    }
+
+    .concept-shell.variant-04 {
+      --concept-list: #ffffff;
+      --concept-page: #f7f7f8;
+      grid-template-columns: 310px minmax(0, 1fr);
+      border-radius: 20px;
+    }
+
+    .concept-shell.variant-05 {
+      --concept-list: #f5f6f8;
+      --concept-page: #ffffff;
+      grid-template-columns: 220px minmax(0, 1fr);
+    }
+
+    .concept-shell.variant-06 {
+      --concept-list: #f2f4f3;
+      --concept-page: #f8faf8;
+      --concept-chip: #edf2ef;
+    }
+
+    .concept-shell.variant-07 {
+      --concept-list: #f8f8f8;
+      --concept-page: #ffffff;
+      grid-template-columns: 280px minmax(0, 1fr);
+    }
+
+    .concept-shell.variant-08 {
+      --concept-list: #eceff3;
+      --concept-page: #ffffff;
+      grid-template-columns: 220px minmax(0, 1fr);
+    }
+
+    .concept-shell.variant-09 {
+      --concept-list: #fafafa;
+      --concept-page: #f5f5f5;
+    }
+
+    .concept-shell.variant-10 {
+      --concept-list: #f3f5f8;
+      --concept-page: #f8fafc;
+      grid-template-columns: 300px minmax(0, 1fr);
+    }
+
+    .diary-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      padding: 22px;
+      border-right: 1px solid var(--concept-border);
+      background: var(--concept-list);
+    }
+
+    .list-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .list-head h3 {
+      font-size: 16px;
+    }
+
+    .pill {
+      padding: 5px 9px;
+      border: 1px solid var(--concept-border);
+      border-radius: 999px;
+      color: var(--concept-muted);
+      background: rgba(255, 255, 255, 0.64);
+      font-size: 11px;
+    }
+
+    .day-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .day-item {
+      display: grid;
+      gap: 8px;
+      padding: 14px;
+      border: 1px solid transparent;
+      border-radius: 16px;
+      background: transparent;
+    }
+
+    .day-item.active {
+      border-color: var(--concept-border);
+      background: #ffffff;
+      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+    }
+
+    .day-item strong {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      font-family: var(--font-heading);
+      font-size: 14px;
+      letter-spacing: -0.03em;
+    }
+
+    .date,
+    .meta {
+      color: var(--concept-muted);
+      font-size: 11px;
+    }
+
+    .day-item p {
+      margin: 0;
+      color: #4b5563;
+      font-size: 12px;
+      line-height: 1.65;
+    }
+
+    .editor {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      min-width: 0;
+      background: var(--concept-page);
+    }
+
+    .editor-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 28px 32px 18px;
+      border-bottom: 1px solid var(--concept-border);
+      background: var(--concept-editor);
+    }
+
+    .editor-head h3 {
+      margin-top: 4px;
+      font-size: 22px;
+      line-height: 1.15;
+    }
+
+    .writing-area {
+      margin: 0;
+      padding: 28px 32px;
+      background: var(--concept-editor);
+      color: #1f2937;
+      font-size: 16px;
+      line-height: 2.05;
+      white-space: pre-line;
+      outline: none;
+    }
+
+    .footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 18px 32px;
+      border-top: 1px solid var(--concept-border);
+      background: var(--concept-editor);
+    }
+
+    .save-button {
+      min-height: 38px;
+      padding: 0 16px;
+      border-radius: 999px;
+      background: #111827;
+      color: #ffffff;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .week-view {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      min-height: 720px;
+      background: #ffffff;
+    }
+
+    .week-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 28px 32px 18px;
+      border-bottom: 1px solid var(--concept-border);
+    }
+
+    .week-head h3 {
+      font-size: 22px;
+    }
+
+    .week-nav {
+      display: inline-flex;
+      gap: 8px;
+    }
+
+    .circle {
+      display: grid;
+      place-items: center;
+      width: 36px;
+      height: 36px;
+      border: 1px solid var(--concept-border);
+      border-radius: 50%;
+      background: #fff;
+      font-family: var(--font-heading);
+      font-size: 18px;
+    }
+
+    .week-grid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(156px, 1fr));
+      gap: 12px;
+      padding: 22px 32px 30px;
+      overflow-x: auto;
+    }
+
+    .week-card {
+      min-height: 560px;
+      padding: 18px;
+      border: 1px solid var(--concept-border);
+      border-radius: 18px;
+      background: #ffffff;
+    }
+
+    .week-card.today {
+      border-color: #aeb5c0;
+      background: #fbfbfc;
+    }
+
+    .week-card h4 {
+      margin: 0 0 6px;
+      font-family: var(--font-heading);
+      font-size: 15px;
+      letter-spacing: -0.03em;
+    }
+
+    .week-card span {
+      display: block;
+      margin-bottom: 14px;
+      color: var(--concept-muted);
+      font-size: 11px;
+    }
+
+    .week-card p {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.9;
+      color: #1f2937;
+      white-space: pre-line;
+    }
+
+    .concept-note {
+      margin-top: 16px;
+      padding: 14px 16px;
+      border: 1px solid #e5e7eb;
+      border-radius: 18px;
+      background: #ffffff;
+    }
+
+    .variant-03 .writing-area {
+      background-image: linear-gradient(#ffffff 35px, #ece7dd 36px);
+      background-size: 100% 36px;
+    }
+
+    .variant-04 .day-list {
+      gap: 0;
+      border-top: 1px solid var(--concept-border);
+    }
+
+    .variant-04 .day-item {
+      border-radius: 0;
+      border-bottom: 1px solid var(--concept-border);
+    }
+
+    .variant-05 .writing-area {
+      max-width: 860px;
+      width: 100%;
+    }
+
+    .variant-07 .editor-head {
+      border-bottom: 0;
+    }
+
+    .variant-07 .writing-area {
+      margin: 0 32px 24px;
+      border: 1px solid var(--concept-border);
+      border-radius: 24px;
+    }
+
+    .variant-08 .day-item {
+      padding: 16px 10px;
+      border-radius: 0;
+      border-bottom: 1px solid var(--concept-border);
+    }
+
+    .variant-08 .day-item.active {
+      border-color: transparent;
+      border-bottom-color: var(--concept-border);
+      box-shadow: none;
+    }
+
+    .variant-09 .editor {
+      padding: 22px;
+      gap: 16px;
+      background: var(--concept-page);
+    }
+
+    .variant-09 .editor-head,
+    .variant-09 .writing-area,
+    .variant-09 .footer {
+      border: 1px solid var(--concept-border);
+      border-radius: 22px;
+    }
+
+    .variant-09 .footer {
+      border-top: 1px solid var(--concept-border);
+    }
+
+    .variant-10 .writing-area {
+      columns: 2 300px;
+      column-gap: 44px;
+    }
+
+    .is-week .concept-shell {
+      grid-template-columns: 1fr;
+    }
+
+    .is-week .diary-list,
+    .is-week .editor {
+      display: none;
+    }
+
+    .is-day .week-view {
+      display: none;
+    }
+
+    @media (max-width: 980px) {
+      .frame {
+        grid-template-columns: 1fr;
+      }
+
+      .catalog {
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .variant-list {
+        grid-template-columns: repeat(10, minmax(210px, 1fr));
+        grid-auto-flow: column;
+        overflow-x: auto;
+      }
+
+      .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .toolbar {
+        justify-content: flex-start;
+      }
+
+      .concept-shell {
+        grid-template-columns: 1fr;
+      }
+
+      .diary-list {
+        border-right: 0;
+        border-bottom: 1px solid var(--concept-border);
+      }
+
+      .day-list {
+        grid-template-columns: repeat(3, minmax(180px, 1fr));
+        overflow-x: auto;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .page {
+        padding: 10px;
+      }
+
+      .frame {
+        border-radius: 22px;
+      }
+
+      .catalog,
+      .topbar,
+      .preview-wrap {
+        padding: 18px;
+      }
+
+      .preview-title h2 {
+        font-size: 19px;
+      }
+
+      .concept-shell {
+        min-height: 680px;
+        border-radius: 22px;
+      }
+
+      .editor-head,
+      .writing-area,
+      .footer,
+      .week-head {
+        padding-left: 20px;
+        padding-right: 20px;
+      }
+
+      .week-grid {
+        padding-left: 20px;
+        padding-right: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="frame">
+      <aside class="catalog">
+        <div class="catalog-header">
+          <span class="eyebrow">Apple diary directions</span>
+          <h1>日记模块的 10 个安静版本</h1>
+          <p>围绕同一个日记功能，保留“左侧日记、右侧书写、每周横览”的骨架，只调整细节、节奏、密度与质感。</p>
+        </div>
+        <div class="variant-list" id="variant-list"></div>
+      </aside>
+
+      <main class="stage">
+        <header class="topbar">
+          <div class="preview-title">
+            <div class="app-icon">□</div>
+            <div>
+              <h2 id="concept-title">01 · Quiet Sheet</h2>
+              <p id="concept-desc">更接近苹果手记的纯白纸张。</p>
+            </div>
+          </div>
+          <div class="toolbar">
+            <div class="switch" aria-label="视图切换">
+              <button class="active" id="day-button" type="button">每日</button>
+              <button id="week-button" type="button">每周</button>
+            </div>
+            <button class="new-button" type="button">＋ 新建今日</button>
+          </div>
+        </header>
+
+        <section class="preview-wrap is-day" id="preview-wrap"></section>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    const entries = [
+      {
+        day: '周一 · 今天',
+        date: '07.13 · 已写',
+        body: '今天继续整理时间管理项目。上午先把晚上模式清掉，再给侧边栏留出新的日记入口。做这件事的时候，我能感觉到这个产品正在从单纯记录时间，慢慢变成记录生活轨迹的工具。\n\n我希望日记不是另一个沉重的输入框，而是每天收尾时自然打开的地方。它应该能接住当天发生过的事、我对这些事情的判断，以及下一步想改变的小动作。'
+      },
+      {
+        day: '周二',
+        date: '07.14 · 已写',
+        body: '今天把日记模块重新打开看了一遍。昨天主要是在清理旧功能，今天开始想它真正应该怎么被使用。\n\n我发现这个入口不能太吵，它只需要在我想记录的时候安静地出现，左边让我知道这一周走到哪里，右边给我一个足够大的空间把想法写下来。'
+      },
+      {
+        day: '周三',
+        date: '07.15 · 已写',
+        body: '今天没有安排特别多任务。下午散步的时候想到，日记功能需要允许“不完整”。不是每天都要写成一篇漂亮文章，有时候一句话、几行片段就够了。\n\n好的记录系统应该降低心理负担，而不是每天提醒我还有一份作业没完成。'
+      },
+      {
+        day: '周四',
+        date: '07.16 · 已写',
+        body: '今天主要在想日记看板的结构。每日页面应该服务输入，每周页面应该服务观察。\n\n每日是安静的、可写的、能沉下来的；每周是展开的、横向比较的、能看出节奏的。这两个模式如果切换足够顺，日记就不只是存档，而会变成一个帮助我做选择的界面。'
+      },
+      {
+        day: '周五',
+        date: '07.17 · 已写',
+        body: '今天回看这一周的记录，发现自己其实完成了不少小的推进。以前我容易只看到没做完的部分，但日记把过程留下来了。\n\n如果系统能在周回顾里保留原文预览，我就能重新进入当时的语境，而不是只看到冰冷的统计。这一点很重要。'
+      },
+      {
+        day: '周六',
+        date: '07.18 · 已写',
+        body: '今天没有急着继续推进功能，而是把这一周的想法重新看了一遍。周一到周五其实一直在围绕同一个问题：怎么让记录变得更自然。\n\n如果把日记和日程放在一起，我希望它不是一个额外负担，而是一个收束动作。周末看这些记录时，能感到这一周不是散的，而是有一条线慢慢连起来。'
+      },
+      {
+        day: '周日',
+        date: '07.19 · 已写',
+        body: '今天是这一周的最后一天。现在再看七篇日记，会发现每天的重点其实不一样：有推进、有犹豫、有休息，也有重新选择。\n\n我希望每周视图在这个时候才完整展开。不是提前摆出七个空格逼我填满，而是等一周自然发生以后，把已经记录下来的东西铺开，让我看到这一周真实走过的路径。'
+      }
+    ];
+
+    const concepts = [
+      {
+        name: 'Quiet Sheet',
+        cn: '安静纸张',
+        desc: '最接近苹果手记：大面积白纸、少控件、几乎没有装饰。',
+        note: '适合最终落地为默认版本。优势是学习成本低，打开就能写。',
+      },
+      {
+        name: 'Split Notes',
+        cn: '备忘录分栏',
+        desc: '更像苹果备忘录：左侧略冷灰，右侧纯白正文。',
+        note: '适合日记数量多之后浏览，左侧列表更像资料库。',
+      },
+      {
+        name: 'Paper Desk',
+        cn: '纸面书桌',
+        desc: '轻微纸张质感和横线，给长文字一点书写秩序。',
+        note: '适合希望保留“写字感”的版本，但仍然很克制。',
+      },
+      {
+        name: 'Ledger',
+        cn: '周记台账',
+        desc: '左侧列表更密集，像一周记录索引，适合快速扫读。',
+        note: '适合重度记录者，信息密度更高，但不如 01 轻盈。',
+      },
+      {
+        name: 'Focus Canvas',
+        cn: '专注画布',
+        desc: '左栏更窄，正文更宽，把注意力几乎全部给内容。',
+        note: '适合长文日记。对于小屏幕，它会显得非常清爽。',
+      },
+      {
+        name: 'Soft Archive',
+        cn: '柔和档案',
+        desc: '浅灰绿色底色，像个人档案夹，但不引入明显彩色光影。',
+        note: '适合想让日记更温和一点，但仍保持苹果式留白。',
+      },
+      {
+        name: 'Card Writer',
+        cn: '卡片书写',
+        desc: '正文输入区变成独立大卡片，边界更明确。',
+        note: '适合用户需要明确知道“哪里可以写”的场景。',
+      },
+      {
+        name: 'Sidebar Classic',
+        cn: '经典侧栏',
+        desc: '左侧像 macOS 应用侧栏，分割线更强，层级清楚。',
+        note: '适合未来加入搜索、归档、月份切换时扩展。',
+      },
+      {
+        name: 'Floating Sheets',
+        cn: '悬浮纸页',
+        desc: '右侧日期、正文、底部状态分成轻量浮层。',
+        note: '适合需要一点空间层次，但仍不想要颜色装饰的版本。',
+      },
+      {
+        name: 'Review Studio',
+        cn: '回顾工作台',
+        desc: '更偏每周复盘，日记正文支持双栏阅读。',
+        note: '适合周日回顾和长文本阅读，不一定适合作为每日默认。',
+      }
+    ];
+
+    const variantList = document.getElementById('variant-list');
+    const previewWrap = document.getElementById('preview-wrap');
+    const conceptTitle = document.getElementById('concept-title');
+    const conceptDesc = document.getElementById('concept-desc');
+    const dayButton = document.getElementById('day-button');
+    const weekButton = document.getElementById('week-button');
+    let activeConcept = 0;
+    let activeMode = 'day';
+
+    function renderNav() {
+      variantList.innerHTML = concepts.map((concept, index) => `
+        <button class="variant-button ${index === activeConcept ? 'active' : ''}" type="button" data-index="${index}">
+          <span class="variant-index">${String(index + 1).padStart(2, '0')}</span>
+          <span>
+            <strong>${concept.cn}</strong>
+            <span>${concept.desc}</span>
+          </span>
+        </button>
+      `).join('');
+    }
+
+    function renderDayItems() {
+      return entries.slice(0, 3).map((entry, index) => `
+        <article class="day-item ${index === 0 ? 'active' : ''}">
+          <strong>${entry.day}<span>●</span></strong>
+          <span class="date">${entry.date}</span>
+          <p>${entry.body.split('\n')[0]}</p>
+        </article>
+      `).join('');
+    }
+
+    function renderWeekCards() {
+      return entries.map((entry, index) => `
+        <article class="week-card ${index === 0 ? 'today' : ''}">
+          <h4>${entry.day}</h4>
+          <span>${entry.date}</span>
+          <p>${entry.body}</p>
+        </article>
+      `).join('');
+    }
+
+    function renderPreview() {
+      const concept = concepts[activeConcept];
+      conceptTitle.textContent = `${String(activeConcept + 1).padStart(2, '0')} · ${concept.name}`;
+      conceptDesc.textContent = concept.desc;
+      dayButton.classList.toggle('active', activeMode === 'day');
+      weekButton.classList.toggle('active', activeMode === 'week');
+      previewWrap.classList.toggle('is-day', activeMode === 'day');
+      previewWrap.classList.toggle('is-week', activeMode === 'week');
+
+      previewWrap.innerHTML = `
+        <div class="concept-shell variant-${String(activeConcept + 1).padStart(2, '0')}">
+          <aside class="diary-list">
+            <div class="list-head">
+              <h3>七月 · 本周</h3>
+              <span class="pill">已写 7 天</span>
+            </div>
+            <div class="day-list">${renderDayItems()}</div>
+            <p class="concept-note">${concept.note}</p>
+          </aside>
+
+          <section class="editor">
+            <header class="editor-head">
+              <div>
+                <span class="date">2026 年 7 月 13 日 · 周一</span>
+                <h3>今天的日记</h3>
+              </div>
+              <span class="saved">已保存</span>
+            </header>
+            <div class="writing-area" contenteditable="true" aria-label="日记正文">${entries[0].body}</div>
+            <footer class="footer">
+              <span class="meta">约 150 字 · 上次保存 10:42</span>
+              <button class="save-button" type="button">保存日记</button>
+            </footer>
+          </section>
+
+          <section class="week-view">
+            <header class="week-head">
+              <div>
+                <span class="date">2026 年 7 月 13 日 - 7 月 19 日</span>
+                <h3>这一周的完整记录</h3>
+              </div>
+              <div class="week-nav">
+                <button class="circle" type="button" aria-label="上一周">‹</button>
+                <button class="circle" type="button" aria-label="下一周">›</button>
+              </div>
+            </header>
+            <div class="week-grid">${renderWeekCards()}</div>
+          </section>
+        </div>
+      `;
+    }
+
+    variantList.addEventListener('click', (event) => {
+      const button = event.target.closest('.variant-button');
+      if (!button) return;
+      activeConcept = Number(button.dataset.index);
+      renderNav();
+      renderPreview();
+    });
+
+    dayButton.addEventListener('click', () => {
+      activeMode = 'day';
+      renderPreview();
+    });
+
+    weekButton.addEventListener('click', () => {
+      activeMode = 'week';
+      renderPreview();
+    });
+
+    renderNav();
+    renderPreview();
+  </script>
+</body>
+</html>

@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>日记模块 05 + 08 融合版</title>
+  <style>
+    :root {
+      --page: #eef1f5;
+      --shell: #f7f8fa;
+      --panel: #ffffff;
+      --sidebar: #f7f8fb;
+      --text: #171b24;
+      --muted: #727b8a;
+      --faint: #a0a7b4;
+      --line: rgba(28, 33, 42, 0.1);
+      --soft-line: rgba(28, 33, 42, 0.065);
+      --button: #111318;
+      --button-text: #ffffff;
+      --sans: ui-rounded, "SF Pro Rounded", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      --serif: "Songti SC", "Noto Serif SC", STSong, serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 22px;
+      color: var(--text);
+      background: var(--page);
+      font-family: var(--sans);
+    }
+
+    button,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+      cursor: default;
+    }
+
+    .note {
+      max-width: 1660px;
+      margin: 0 auto 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 18px;
+      color: #303745;
+    }
+
+    .note h1 {
+      margin: 0;
+      font-size: 18px;
+      letter-spacing: -0.01em;
+    }
+
+    .note p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 750;
+    }
+
+    .note span {
+      flex: 0 0 auto;
+      padding: 7px 11px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.62);
+      color: #4a5260;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .mock-shell {
+      max-width: 1660px;
+      height: calc(100vh - 118px);
+      min-height: 720px;
+      margin: 0 auto;
+      padding: 16px;
+      border-radius: 32px;
+      background: var(--shell);
+      box-shadow: 0 22px 60px rgba(30, 35, 44, 0.08);
+    }
+
+    .app-frame {
+      height: 100%;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      background: var(--panel);
+    }
+
+    .topbar {
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 18px 22px;
+      border-bottom: 1px solid var(--line);
+      background: var(--panel);
+    }
+
+    .brand {
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      width: 40px;
+      height: 40px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      color: #4b5563;
+      background: #fff;
+      font-size: 18px;
+      font-weight: 900;
+    }
+
+    .brand h2 {
+      margin: 0;
+      font-size: 23px;
+      letter-spacing: -0.02em;
+    }
+
+    .brand p {
+      margin: 3px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 750;
+    }
+
+    .actions {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .seg {
+      display: inline-flex;
+      gap: 3px;
+      padding: 3px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fff;
+    }
+
+    .seg span {
+      height: 32px;
+      min-width: 62px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .seg span:first-child {
+      background: var(--button);
+      color: var(--button-text);
+    }
+
+    .new-btn {
+      height: 38px;
+      padding: 0 14px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fff;
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .content {
+      min-height: 0;
+      display: grid;
+      grid-template-columns: 306px minmax(0, 1fr);
+    }
+
+    .list {
+      min-width: 0;
+      padding: 18px;
+      border-right: 1px solid var(--line);
+      background: var(--sidebar);
+    }
+
+    .list-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .list-head h3 {
+      margin: 0;
+      font-size: 16px;
+      letter-spacing: -0.01em;
+    }
+
+    .count {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .day-list {
+      display: grid;
+      gap: 11px;
+    }
+
+    .day-card {
+      width: 100%;
+      padding: 14px;
+      border: 1px solid transparent;
+      border-radius: 18px;
+      background: transparent;
+      color: var(--text);
+      text-align: left;
+    }
+
+    .day-card.active {
+      border-color: var(--line);
+      background: var(--panel);
+      box-shadow: 0 10px 24px rgba(28, 33, 42, 0.045);
+    }
+
+    .day-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .day-title {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 950;
+    }
+
+    .day-date {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 850;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      margin-top: 5px;
+      border-radius: 50%;
+      background: #6b7280;
+    }
+
+    .empty .dot {
+      background: #d5dae2;
+    }
+
+    .preview {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.55;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .editor {
+      min-width: 0;
+      min-height: 0;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      gap: 16px;
+      padding: 34px 46px 26px;
+      background: var(--panel);
+    }
+
+    .editor-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .date-title {
+      margin: 0;
+      font-size: 21px;
+      letter-spacing: -0.01em;
+    }
+
+    .saved {
+      height: 28px;
+      display: inline-flex;
+      align-items: center;
+      padding: 0 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--muted);
+      background: #fff;
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .paper {
+      width: 100%;
+      min-height: 0;
+      padding: 4px 0 0;
+      border: 0;
+      resize: none;
+      outline: none;
+      color: var(--text);
+      background: transparent;
+      font-family: var(--sans);
+      font-size: 16px;
+      line-height: 2.05;
+    }
+
+    .paper::placeholder {
+      color: var(--faint);
+    }
+
+    .editor-foot {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .save {
+      height: 38px;
+      padding: 0 15px;
+      border-radius: 999px;
+      color: var(--button-text);
+      background: var(--button);
+      font-size: 12px;
+      font-weight: 950;
+    }
+
+    @media (max-width: 900px) {
+      body {
+        padding: 12px;
+      }
+
+      .note {
+        display: block;
+      }
+
+      .note span {
+        display: inline-flex;
+        margin-top: 10px;
+      }
+
+      .mock-shell {
+        height: auto;
+        min-height: 0;
+        padding: 10px;
+      }
+
+      .topbar,
+      .actions {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .list {
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .editor {
+        min-height: 560px;
+        padding: 26px 24px 22px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <section class="note">
+    <div>
+      <h1>05 + 08 融合版 · 桌面效率感 + 专注写作空间</h1>
+      <p>保留 05 的宽左栏和理性工具感，同时采用 08 的大正文区域、强留白和长文友好排版。</p>
+    </div>
+    <span>融合候选版</span>
+  </section>
+
+  <main class="mock-shell">
+    <div class="app-frame">
+      <header class="topbar">
+        <div class="brand">
+          <div class="brand-icon">□</div>
+          <div>
+            <h2>日记</h2>
+            <p>把今天的判断留下来，也给长文留足空间。</p>
+          </div>
+        </div>
+        <div class="actions">
+          <div class="seg" aria-label="视图切换"><span>每日</span><span>每周</span></div>
+          <button class="new-btn">+ 新建今日</button>
+        </div>
+      </header>
+
+      <section class="content">
+        <aside class="list">
+          <div class="list-head">
+            <h3>七月 · 本周</h3>
+            <span class="count">已到 3 天 · 已写 2 天</span>
+          </div>
+          <div class="day-list">
+            <button class="day-card active">
+              <div class="day-row">
+                <div>
+                  <p class="day-title">周一 · 今天</p>
+                  <p class="day-date">07.13 · 已写</p>
+                </div>
+                <span class="dot"></span>
+              </div>
+              <p class="preview">今天继续整理时间管理项目。侧边栏留出新的日记入口。</p>
+            </button>
+
+            <button class="day-card empty">
+              <div class="day-row">
+                <div>
+                  <p class="day-title">周二</p>
+                  <p class="day-date">07.14 · 未写</p>
+                </div>
+                <span class="dot"></span>
+              </div>
+              <p class="preview">还没有写日记，点击后可以从空白页开始。</p>
+            </button>
+
+            <button class="day-card">
+              <div class="day-row">
+                <div>
+                  <p class="day-title">周三</p>
+                  <p class="day-date">07.15 · 已写</p>
+                </div>
+                <span class="dot"></span>
+              </div>
+              <p class="preview">日记功能需要允许不完整，几行片段也可以。</p>
+            </button>
+          </div>
+        </aside>
+
+        <section class="editor" aria-label="日记编辑区">
+          <div class="editor-head">
+            <h3 class="date-title">2026 年 7 月 13 日 · 周一</h3>
+            <span class="saved">已保存</span>
+          </div>
+
+          <textarea class="paper" placeholder="开始记录..." spellcheck="false">今天继续整理时间管理项目。上午先把晚上模式清掉，再给侧边栏留出新的日记入口。做这件事的时候，我能感觉到这个产品正在从单纯记录时间，慢慢变成记录生活轨迹的工具。
+
+我希望日记不是另一个沉重的输入框，而是每天收尾时自然打开的地方。它应该能接住当天发生过的事、我对这些事情的判断，以及下一步想改变的小动作。</textarea>
+
+          <footer class="editor-foot">
+            <span>约 150 字 · 上次保存 10:42</span>
+            <button class="save">保存日记</button>
+          </footer>
+        </section>
+      </section>
+    </div>
+  </main>
+</body>
+</html>
