@@ -48,15 +48,6 @@ const retry = async <T,>(fn: () => Promise<T>, retries = 3, delay = 300): Promis
 
 const App: React.FC = () => {
   const [activeModule, setActiveModule] = useState<'calendar' | 'alarm' | 'history'>('calendar');
-  const [colorMode, setColorMode] = useState<'light' | 'dark'>(() => {
-    try {
-      return localStorage.getItem('calendar-color-mode') === 'dark' ? 'dark' : 'light';
-    } catch {
-      return 'light';
-    }
-  });
-  const [isThemeSwitching, setIsThemeSwitching] = useState(false);
-  const themeSwitchTimerRef = React.useRef<number | null>(null);
   const [toast, setToast] = useState<ToastState | null>(null);
   const toastTimerRef = React.useRef<number | null>(null);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('synced');
@@ -92,19 +83,7 @@ const App: React.FC = () => {
   }, [currentUser]);
 
   React.useEffect(() => {
-    try {
-      localStorage.setItem('calendar-color-mode', colorMode);
-    } catch {
-      // Ignore storage errors so theme switching never blocks the app.
-    }
-    document.body.dataset.colorMode = colorMode;
-  }, [colorMode]);
-
-  React.useEffect(() => {
     return () => {
-      if (themeSwitchTimerRef.current !== null) {
-        window.clearTimeout(themeSwitchTimerRef.current);
-      }
       if (toastTimerRef.current !== null) {
         window.clearTimeout(toastTimerRef.current);
       }
@@ -129,19 +108,6 @@ const App: React.FC = () => {
       toastTimerRef.current = null;
     }
     setToast(null);
-  }, []);
-
-  const handleToggleColorMode = useCallback(() => {
-    if (themeSwitchTimerRef.current !== null) {
-      window.clearTimeout(themeSwitchTimerRef.current);
-    }
-
-    setIsThemeSwitching(true);
-    setColorMode(mode => mode === 'dark' ? 'light' : 'dark');
-    themeSwitchTimerRef.current = window.setTimeout(() => {
-      setIsThemeSwitching(false);
-      themeSwitchTimerRef.current = null;
-    }, 620);
   }, []);
 
   // Set default view mode to Day when in PWA mode
@@ -1032,7 +998,7 @@ const App: React.FC = () => {
   }[syncStatus];
 
   return (
-    <div className={`App ${colorMode === 'dark' ? 'dark-mode' : ''} ${isThemeSwitching ? 'theme-switching' : ''} ${isSidebarCollapsed ? 'sidebar-is-collapsed' : ''} relative min-h-screen w-full flex items-stretch md:items-center justify-center bg-[#F2F2F7] overflow-x-auto p-4 md:p-6`}>
+    <div className={`App ${isSidebarCollapsed ? 'sidebar-is-collapsed' : ''} relative min-h-screen w-full flex items-stretch md:items-center justify-center bg-[#F2F2F7] overflow-x-auto p-4 md:p-6`}>
 
       {/* Main Layout */}
       <div className={`main-layout relative z-10 w-full flex flex-col md:flex-row h-full md:h-auto transition-[gap,max-width] duration-300 ${isSidebarCollapsed ? 'max-w-none md:gap-0' : 'max-w-7xl md:gap-6'}`}>
@@ -1056,8 +1022,6 @@ const App: React.FC = () => {
           onOpenAccount={() => setIsAccountOpen(true)}
           onAddEvent={handleSmartAddEvent}
           isLoggedIn={!!currentUser}
-          colorMode={colorMode}
-          onToggleColorMode={handleToggleColorMode}
           isCollapsed={isSidebarCollapsed}
         />
 
