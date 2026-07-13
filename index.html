@@ -26,20 +26,11 @@
         transition: background-color 520ms cubic-bezier(0.22, 1, 0.36, 1), color 520ms cubic-bezier(0.22, 1, 0.36, 1);
       }
 
-      body[data-color-mode="dark"] {
-        background-color: #05070A;
-      }
-      
       /* UI Animations */
       @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
       @keyframes slideInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
       @keyframes scaleIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
       @keyframes modalEnter { 0% { opacity: 0; transform: scale(0.95) translateY(10px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
-      @keyframes themeBreath {
-        0% { opacity: 0; transform: scale(0.96); }
-        42% { opacity: 0.22; transform: scale(1.02); }
-        100% { opacity: 0; transform: scale(1.08); }
-      }
       
       .hide-scrollbar::-webkit-scrollbar { display: none; }
       .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -58,17 +49,6 @@
         --toast-bg: rgba(255, 255, 255, 0.96);
       }
 
-      body[data-color-mode="dark"] {
-        --app-bg: #090D14;
-        --app-surface: rgba(19, 24, 34, 0.88);
-        --app-surface-muted: rgba(37, 45, 61, 0.82);
-        --app-border: rgba(148, 163, 184, 0.18);
-        --app-text: #F8FAFC;
-        --app-text-muted: #94A3B8;
-        --app-shadow: 0 24px 60px rgba(0, 0, 0, 0.38);
-        --toast-bg: rgba(18, 22, 30, 0.96);
-      }
-
       .pwa-mode {
         padding-top: var(--safe-top);
       }
@@ -82,38 +62,6 @@
           filter 560ms cubic-bezier(0.22, 1, 0.36, 1);
       }
 
-      .App::before {
-        content: "";
-        position: fixed;
-        inset: 0;
-        z-index: 0;
-        pointer-events: none;
-        opacity: 0;
-        background:
-          radial-gradient(circle at 22% 10%, rgba(56, 90, 160, 0.20), transparent 34%),
-          radial-gradient(circle at 88% 82%, rgba(46, 120, 110, 0.14), transparent 30%),
-          #090D14;
-        transition: opacity 620ms cubic-bezier(0.22, 1, 0.36, 1);
-      }
-
-      .App::after {
-        content: "";
-        position: fixed;
-        inset: -12%;
-        z-index: 0;
-        pointer-events: none;
-        opacity: 0;
-        background:
-          radial-gradient(circle at 16% 28%, rgba(255, 255, 255, 0.40), transparent 26%),
-          radial-gradient(circle at 78% 72%, rgba(120, 150, 255, 0.22), transparent 32%);
-        filter: blur(28px);
-        transform: scale(0.98);
-      }
-
-      .App.dark-mode::before {
-        opacity: 1;
-      }
-
       .App .main-layout {
         position: relative;
         z-index: 1;
@@ -121,14 +69,6 @@
         transition:
           transform 620ms cubic-bezier(0.22, 1, 0.36, 1),
           opacity 360ms ease;
-      }
-
-      .App.theme-switching::after {
-        animation: themeBreath 620ms cubic-bezier(0.22, 1, 0.36, 1);
-      }
-
-      .App.theme-switching .main-layout {
-        transform: scale(0.992);
       }
 
       .App,
@@ -221,72 +161,6 @@
       .App .text-gray-400,
       .App .text-gray-300 {
         transition: color 360ms ease;
-      }
-
-      .sidebar-theme-toggle > div {
-        position: relative;
-        overflow: hidden;
-        transition:
-          transform 560ms cubic-bezier(0.16, 1, 0.3, 1),
-          background-color 520ms cubic-bezier(0.22, 1, 0.36, 1),
-          color 380ms ease,
-          box-shadow 520ms cubic-bezier(0.22, 1, 0.36, 1);
-      }
-
-      .sidebar-theme-toggle > div::after {
-        content: "";
-        position: absolute;
-        inset: -35%;
-        opacity: 0;
-        background: radial-gradient(circle, rgba(255, 255, 255, 0.72), transparent 58%);
-        transform: scale(0.45);
-        transition:
-          opacity 520ms ease,
-          transform 620ms cubic-bezier(0.22, 1, 0.36, 1);
-      }
-
-      .sidebar-theme-toggle svg {
-        position: relative;
-        z-index: 1;
-        transition:
-          transform 620ms cubic-bezier(0.16, 1, 0.3, 1),
-          opacity 300ms ease;
-      }
-
-      .sidebar-theme-toggle:hover > div {
-        transform: translateY(-1px) scale(1.04);
-        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.10);
-      }
-
-      .sidebar-theme-toggle:active > div {
-        transform: scale(0.94);
-      }
-
-      .App.dark-mode .sidebar-theme-toggle > div {
-        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
-      }
-
-      .App.dark-mode .sidebar-theme-toggle > div::after {
-        opacity: 0.16;
-        transform: scale(1);
-      }
-
-      .App.dark-mode .sidebar-theme-toggle svg {
-        transform: rotate(180deg) scale(1.04);
-      }
-
-      .App.theme-switching .sidebar-theme-toggle > div {
-        transform: scale(0.92);
-      }
-
-      .App.theme-switching .sidebar-theme-toggle > div::after {
-        opacity: 0.34;
-        transform: scale(1.18);
-      }
-
-      .App.theme-switching .sidebar-theme-toggle svg {
-        opacity: 0.72;
-        transform: rotate(90deg) scale(0.9);
       }
 
       .App.dark-mode {
@@ -393,7 +267,7 @@
       }
 
       /* Unified compact Apple Calendar layout */
-      body:not([data-color-mode="dark"]) {
+      body {
         --app-bg: #f0f1f4;
         --app-surface: #fbfbfc;
         --app-surface-muted: #f4f5f7;
@@ -409,40 +283,13 @@
         --toast-bg: rgba(255, 255, 255, 0.96);
       }
 
-      body[data-color-mode="dark"] {
-        --app-bg: #1d1f1d;
-        --app-surface: #202220;
-        --app-surface-muted: #262826;
-        --app-surface-raised: #2c2e2c;
-        --app-border: rgba(255, 255, 255, 0.095);
-        --app-border-soft: rgba(255, 255, 255, 0.055);
-        --app-text: rgba(245, 245, 247, 0.92);
-        --app-text-muted: rgba(235, 235, 245, 0.56);
-        --app-text-faint: rgba(235, 235, 245, 0.36);
-        --app-red: #ff453a;
-        --app-blue: #0a84ff;
-        --app-shadow: none;
-        --toast-bg: rgba(44, 46, 44, 0.96);
-      }
-
-      body[data-color-mode="dark"],
-      body:not([data-color-mode="dark"]) {
+      body {
         background-color: var(--app-bg);
       }
 
       .App {
         background: var(--app-bg) !important;
         color: var(--app-text);
-      }
-
-      .App::before,
-      .App::after {
-        opacity: 0 !important;
-        animation: none !important;
-      }
-
-      .App.theme-switching .main-layout {
-        transform: none;
       }
 
       .App .main-layout {
@@ -1119,24 +966,12 @@
         color: var(--app-text-faint) !important;
       }
 
-      .App .sidebar-theme-toggle > div {
-        box-shadow: none !important;
-      }
-
-      .App .sidebar-theme-toggle > div::after {
-        opacity: 0 !important;
-      }
-
-      .App .sidebar-theme-toggle svg {
-        transform: none !important;
-      }
-
       .App .sidebar-actions {
         border-color: var(--app-border) !important;
       }
 
       /* Restore light-mode clarity while keeping the shared compact layout. */
-      body:not([data-color-mode="dark"]) {
+      body {
         --app-bg: #F2F2F7;
         --app-surface: #FAFAFA;
         --app-surface-muted: #ffffff;
@@ -1570,10 +1405,7 @@
         .App,
         .App::before,
         .App::after,
-        .App *,
-        .sidebar-theme-toggle > div,
-        .sidebar-theme-toggle > div::after,
-        .sidebar-theme-toggle svg {
+        .App * {
           transition-duration: 0.01ms !important;
           animation-duration: 0.01ms !important;
           animation-iteration-count: 1 !important;
@@ -1692,8 +1524,7 @@
           margin: 0 12px;
         }
         .sidebar-nav-calendar { order: 4 !important; }
-        .sidebar-theme-toggle { order: 5 !important; }
-        .sidebar-actions { order: 6 !important; }
+        .sidebar-actions { order: 5 !important; }
 
         /* Show User Profile button (First child) */
         .sidebar-container > div:last-child > button:first-child {

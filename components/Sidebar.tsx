@@ -10,18 +10,15 @@ interface SidebarProps {
   onOpenAccount: () => void;
   onAddEvent?: () => void;
   isLoggedIn?: boolean;
-  colorMode: 'light' | 'dark';
-  onToggleColorMode: () => void;
   isCollapsed?: boolean;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ activeModule, onSwitch, onOpenSettings, onOpenAuth, onOpenAccount, onAddEvent, isLoggedIn, colorMode, onToggleColorMode, isCollapsed = false }) => {
+const Sidebar: React.FC<SidebarProps> = ({ activeModule, onSwitch, onOpenSettings, onOpenAuth, onOpenAccount, onAddEvent, isLoggedIn, isCollapsed = false }) => {
   const navItems = [
     { id: 'alarm', label: '闹钟', icon: Icons.Clock },
     { id: 'history', label: '历史', icon: Icons.History },
     { id: 'calendar', label: '日历', icon: Icons.Calendar },
   ];
-  const ModeIcon = colorMode === 'dark' ? Icons.Sun : Icons.Moon;
 
   return (
     <GlassCard
@@ -57,29 +54,6 @@ const Sidebar: React.FC<SidebarProps> = ({ activeModule, onSwitch, onOpenSetting
           </button>
         );
       })}
-
-      <button
-        onClick={onToggleColorMode}
-        aria-label={colorMode === 'dark' ? '切换到白天模式' : '切换到晚上模式'}
-        className={`sidebar-theme-toggle group flex flex-col items-center gap-2 relative transition-all duration-200 ${isCollapsed ? 'md:gap-1.5' : ''}`}
-      >
-        <div className={`
-          w-12 h-12 flex items-center justify-center rounded-xl transition-all duration-300 active:scale-95
-          ${colorMode === 'dark'
-            ? 'bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-gray-300'
-            : 'bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-gray-600'
-          }
-        `}>
-          <ModeIcon size={21} strokeWidth={2.2} />
-        </div>
-        <span className={`
-          text-[10px] font-medium tracking-wide transition-all duration-300 whitespace-nowrap
-          ${isCollapsed ? 'md:max-h-0 md:opacity-0 md:translate-y-1 md:pointer-events-none' : 'md:max-h-4 md:opacity-100'}
-          ${colorMode === 'dark' ? 'text-gray-400 group-hover:text-gray-300' : 'text-gray-400 group-hover:text-gray-600'}
-        `}>
-          {colorMode === 'dark' ? '白天' : '晚上'}
-        </span>
-      </button>
 
       {/* Add Event Button - Visible in PWA/Mobile via CSS ordering, or Desktop as extra action */}
       {onAddEvent && (
