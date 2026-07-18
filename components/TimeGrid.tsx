@@ -22,6 +22,7 @@ interface InteractionState {
   currentStartTime: string;
   currentEndTime: string;
   dayDate: Date;
+  hasChanged: boolean;
 }
 
 const getDurationLabel = (startTime: string, endTime: string) => {
@@ -240,6 +241,7 @@ const EventBlock = React.memo(({
   onClick: (event: CalendarEvent) => void;
   justFinishedDragRef: React.MutableRefObject<boolean>;
 }) => {
+  const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
   const isInteracting = interaction?.eventId === event.id;
   const startTime = isInteracting ? interaction.currentStartTime : event.startTime;
   const endTime = isInteracting ? interaction.currentEndTime : event.endTime;
@@ -305,7 +307,26 @@ const EventBlock = React.memo(({
         className="absolute inset-0 cursor-grab active:cursor-grabbing z-10"
         onPointerDown={(e) => {
           if (e.altKey || e.shiftKey) return; // 允许按住修饰键在事件上方开始创建新时间段
+          pointerStartRef.current = { x: e.clientX, y: e.clientY };
           onInteractionStart('move', event, e);
+        }}
+        onPointerUp={(e) => {
+          const startPoint = pointerStartRef.current;
+          pointerStartRef.current = null;
+          if (!startPoint) return;
+
+          const dx = e.clientX - startPoint.x;
+          const dy = e.clientY - startPoint.y;
+          if (Math.hypot(dx, dy) <= 4 && !justFinishedDragRef.current) {
+            onClick(event);
+            justFinishedDragRef.current = true;
+            window.setTimeout(() => {
+              justFinishedDragRef.current = false;
+            }, 100);
+          }
+        }}
+        onPointerCancel={() => {
+          pointerStartRef.current = null;
         }}
         onClick={() => {
           if (isInteracting || justFinishedDragRef.current) return;
@@ -643,7 +664,7 @@ const TimeGrid = React.memo<TimeGridProps>(({ days, tags, onDateClick, onAddEven
           const newEndTime = getTimeFromPosition(((newStartMins + duration) / 1440) * 100);
 
           if (newStartTime !== currentInteraction.currentStartTime || newEndTime !== currentInteraction.currentEndTime) {
-            const newInteraction = { ...currentInteraction, currentStartTime: newStartTime, currentEndTime: newEndTime };
+            const newInteraction = { ...currentInteraction, currentStartTime: newStartTime, currentEndTime: newEndTime, hasChanged: true };
             interactionRef.current = newInteraction;
             setInteraction(newInteraction);
           }
@@ -654,7 +675,7 @@ const TimeGrid = React.memo<TimeGridProps>(({ days, tags, onDateClick, onAddEven
           const newStartTime = getTimeFromPosition((newStartMins / 1440) * 100);
 
           if (newStartTime !== currentInteraction.currentStartTime) {
-            const newInteraction = { ...currentInteraction, currentStartTime: newStartTime };
+            const newInteraction = { ...currentInteraction, currentStartTime: newStartTime, hasChanged: true };
             interactionRef.current = newInteraction;
             setInteraction(newInteraction);
           }
@@ -665,7 +686,7 @@ const TimeGrid = React.memo<TimeGridProps>(({ days, tags, onDateClick, onAddEven
           const newEndTime = getTimeFromPosition((newEndMins / 1440) * 100);
 
           if (newEndTime !== currentInteraction.currentEndTime) {
-            const newInteraction = { ...currentInteraction, currentEndTime: newEndTime };
+            const newInteraction = { ...currentInteraction, currentEndTime: newEndTime, hasChanged: true };
             interactionRef.current = newInteraction;
             setInteraction(newInteraction);
           }
@@ -769,12 +790,15 @@ const TimeGrid = React.memo<TimeGridProps>(({ days, tags, onDateClick, onAddEven
       }, 100);
     }
 
-    if (currentInteraction) {
+    if (currentInteraction?.hasChanged) {
       onUpdateEvent({
         ...currentInteraction.originalEvent,
         startTime: currentInteraction.currentStartTime,
         endTime: currentInteraction.currentEndTime
       });
+    }
+
+    if (currentInteraction) {
       setInteraction(null);
       interactionRef.current = null;
     }
@@ -808,7 +832,8 @@ const TimeGrid = React.memo<TimeGridProps>(({ days, tags, onDateClick, onAddEven
       startY: e.clientY,
       currentStartTime: event.startTime,
       currentEndTime: event.endTime,
-      dayDate: event.date
+      dayDate: event.date,
+      hasChanged: false
     });
   };
 

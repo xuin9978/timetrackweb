@@ -105,6 +105,11 @@
         display: none;
       }
 
+      .mobile-details-backdrop,
+      .mobile-details-drawer {
+        display: none;
+      }
+
       .sync-status-bar,
       .toast-card,
       .settings-result {
@@ -294,6 +299,100 @@
 
       .App .main-layout {
         gap: 8px !important;
+      }
+
+      /* Desktop board migration shell: fixed navigation, elastic workspace. */
+      @media (min-width: 769px) {
+        .App.board-app-shell {
+          min-height: 100dvh;
+          padding: 24px !important;
+        }
+
+        .App .board-main-layout {
+          width: min(100%, 1720px) !important;
+          max-width: none !important;
+          height: min(900px, calc(100dvh - 48px)) !important;
+          min-height: 680px;
+          gap: 10px !important;
+        }
+
+        .App .board-sidebar {
+          width: 92px !important;
+          min-width: 92px !important;
+          max-width: 92px !important;
+          height: 100% !important;
+          flex: 0 0 92px !important;
+        }
+
+        .App .board-main-layout > div:last-child {
+          min-width: 0;
+          height: 100%;
+        }
+
+        .App .board-module-content,
+        .App .board-module-content > .flex-1 {
+          min-height: 0 !important;
+        }
+
+        .App .board-main-layout .calendar-workspace {
+          height: 100% !important;
+        }
+
+        .App .board-event-panel-shell {
+          flex: 0 0 clamp(300px, 29%, 440px) !important;
+          width: auto !important;
+          margin-left: 10px !important;
+          min-width: 300px;
+        }
+
+        .App .board-event-panel-content,
+        .App .board-event-panel-content .event-panel {
+          width: 100% !important;
+          min-width: 0;
+        }
+
+        .App .board-event-panel-content .event-panel {
+          height: 100% !important;
+        }
+
+        .App .board-alarm-card,
+        .App .board-history-card,
+        .App .board-diary-card {
+          width: 100% !important;
+          max-width: none !important;
+          height: 100% !important;
+          min-height: 0 !important;
+        }
+
+        /* Keep the desktop board visually flat like the source calendar UI. */
+        .App.board-app-shell .apple-calendar-card,
+        .App.board-app-shell .time-grid,
+        .App.board-app-shell .event-panel,
+        .App.board-app-shell .sidebar-container,
+        .App.board-app-shell .calendar-segment,
+        .App.board-app-shell .calendar-nav-button,
+        .App.board-app-shell .calendar-panel-toggle,
+        .App.board-app-shell .event-panel-add,
+        .App.board-app-shell .event-panel-card,
+        .App.board-app-shell .event-panel-stat-row,
+        .App.board-app-shell .event-panel-insight {
+          box-shadow: none !important;
+        }
+
+        .App.board-app-shell .calendar-nav-button,
+        .App.board-app-shell .calendar-panel-toggle {
+          background: transparent !important;
+          border-color: transparent !important;
+        }
+
+        .App.board-app-shell .calendar-nav-button:hover,
+        .App.board-app-shell .calendar-panel-toggle:hover {
+          background: color-mix(in srgb, var(--app-text) 7%, transparent) !important;
+        }
+
+        .App.board-app-shell .calendar-segment.bg-white {
+          background: color-mix(in srgb, var(--app-text) 9%, transparent) !important;
+        }
       }
 
       .App.sidebar-is-collapsed .main-layout {
@@ -1372,6 +1471,27 @@
         color: #ff453a !important;
       }
 
+      @media (min-width: 769px) {
+        .App.board-app-shell .calendar-nav-button,
+        .App.board-app-shell .calendar-panel-toggle,
+        .App.board-app-shell .event-panel-add,
+        .App.board-app-shell .calendar-segment {
+          background: transparent !important;
+          border-color: transparent !important;
+          box-shadow: none !important;
+        }
+
+        .App.board-app-shell .calendar-segment.bg-white {
+          background: color-mix(in srgb, var(--app-text) 9%, transparent) !important;
+        }
+
+        .App.board-app-shell .calendar-nav-button:hover,
+        .App.board-app-shell .calendar-panel-toggle:hover,
+        .App.board-app-shell .event-panel-add:hover {
+          background: color-mix(in srgb, var(--app-text) 7%, transparent) !important;
+        }
+      }
+
       @media (prefers-reduced-motion: reduce) {
         body,
         .App,
@@ -1386,18 +1506,33 @@
 
       /* Mobile Layout Adaptation (Applies to both Mobile Browser and PWA) */
       @media (max-width: 768px) {
+        :root {
+          --mobile-nav-height: 68px;
+          --mobile-safe-bottom-fallback: 12px;
+          --mobile-safe-bottom: max(env(safe-area-inset-bottom, 0px), var(--mobile-safe-bottom-fallback));
+          --mobile-nav-total-height: calc(var(--mobile-nav-height) + var(--mobile-safe-bottom));
+          --mobile-content-bottom: var(--mobile-nav-total-height);
+          --mobile-drawer-bottom: var(--mobile-nav-total-height);
+          --mobile-sheet-bottom-padding: calc(14px + var(--mobile-safe-bottom));
+        }
+
         html, body {
           height: 100%;
           font-size: 16px; /* Base font size to prevent iOS zoom */
           line-height: 1.6;
+          overflow: hidden;
         }
 
         /* App Container */
         .App {
           padding: 0 !important;
           align-items: flex-start !important;
+          justify-content: flex-start !important;
           min-height: 100vh;
           min-height: 100dvh; /* Use dvh for mobile browsers */
+          height: 100dvh;
+          width: 100% !important;
+          overflow: hidden !important;
         }
 
         /* Main Layout Container */
@@ -1405,12 +1540,113 @@
           flex-direction: column !important;
           gap: 0 !important;
           /* Base padding for mobile browser */
-          padding-bottom: 80px;
+          padding-bottom: var(--mobile-content-bottom);
+          width: 100% !important;
+          max-width: none !important;
+          height: 100dvh !important;
+          min-height: 0 !important;
+          overflow: hidden !important;
         }
 
         /* PWA Mode specific bottom padding */
         .pwa-mode .main-layout {
-          padding-bottom: calc(80px + env(safe-area-inset-bottom));
+          padding-bottom: var(--mobile-content-bottom);
+        }
+
+        .main-layout > div:last-child {
+          width: 100% !important;
+          min-height: 0 !important;
+          height: calc(100dvh - var(--mobile-content-bottom)) !important;
+          overflow: hidden !important;
+        }
+
+        .calendar-workspace {
+          display: flex !important;
+          flex-direction: column !important;
+          width: 100% !important;
+          height: calc(100dvh - var(--mobile-content-bottom)) !important;
+          min-height: 0 !important;
+          gap: 0 !important;
+          padding: 0 !important;
+          overflow: hidden !important;
+        }
+
+        .apple-calendar-card {
+          width: 100% !important;
+          height: 100% !important;
+          min-height: 0 !important;
+          flex: 1 1 auto !important;
+          padding: 14px 0 0 !important;
+          border-left-width: 0 !important;
+          border-right-width: 0 !important;
+        }
+
+        .calendar-toolbar {
+          min-height: 112px !important;
+          padding: 14px 16px 10px !important;
+          align-items: flex-start !important;
+          background: var(--app-surface) !important;
+        }
+
+        .calendar-toolbar-actions {
+          width: 100% !important;
+          margin-left: 0 !important;
+          justify-content: space-between !important;
+          gap: 10px !important;
+        }
+
+        .calendar-title {
+          font-size: 18px !important;
+          line-height: 1.15 !important;
+          letter-spacing: 0 !important;
+        }
+
+        .calendar-subtitle {
+          font-size: 13px !important;
+          line-height: 1.3 !important;
+        }
+
+        .calendar-segment {
+          min-width: 36px !important;
+          padding: 5px 11px !important;
+        }
+
+        .calendar-sidebar-toggle,
+        .calendar-panel-toggle,
+        .calendar-toolbar-divider {
+          display: none !important;
+        }
+
+        .calendar-content {
+          min-height: 0 !important;
+          height: auto !important;
+          flex: 1 1 auto !important;
+          overflow: hidden !important;
+        }
+
+        .time-grid {
+          height: 100% !important;
+          min-height: 0 !important;
+        }
+
+        .time-grid-body {
+          overscroll-behavior: contain;
+          -webkit-overflow-scrolling: touch;
+          touch-action: pan-y;
+        }
+
+        .calendar-footer {
+          height: 36px !important;
+          padding: 0 16px !important;
+          flex-shrink: 0 !important;
+        }
+
+        .calendar-side-panel {
+          display: none !important;
+        }
+
+        .App > .fixed.bottom-6 {
+          bottom: calc(var(--mobile-content-bottom) + 12px) !important;
         }
 
         /* Sidebar Container (Bottom Navigation) */
@@ -1420,13 +1656,13 @@
           left: 0;
           right: 0;
           width: 100% !important;
-          height: auto !important;
-          min-height: 64px;
+          height: var(--mobile-nav-total-height) !important;
+          min-height: var(--mobile-nav-total-height);
           flex-direction: row !important;
           justify-content: space-around !important;
           align-items: center !important;
           gap: 0 !important;
-          padding: 8px 16px !important;
+          padding: 8px 14px calc(8px + var(--mobile-safe-bottom)) !important;
           
           /* Visual Style */
           background: rgba(255, 255, 255, 0.95) !important;
@@ -1447,7 +1683,7 @@
 
         /* PWA specific sidebar padding for Home Indicator */
         .pwa-mode .sidebar-container {
-          padding-bottom: calc(8px + env(safe-area-inset-bottom)) !important;
+          padding-bottom: calc(8px + var(--mobile-safe-bottom)) !important;
         }
 
         /* Hide Text Labels */
@@ -1458,6 +1694,17 @@
         /* Adjust Icons */
         .sidebar-container button > div {
           transform: scale(0.9); /* Slightly smaller icons to fit */
+          width: 46px !important;
+          height: 46px !important;
+        }
+
+        .sidebar-container button:focus {
+          outline: none !important;
+        }
+
+        .sidebar-container button:focus-visible > div {
+          border-color: rgba(17, 24, 39, 0.18) !important;
+          box-shadow: 0 0 0 4px rgba(17, 24, 39, 0.06) !important;
         }
 
         /* Flex Ordering Configuration */
@@ -1499,6 +1746,139 @@
         .sidebar-nav-diary { order: 5 !important; }
         .sidebar-actions { order: 6 !important; }
 
+        .mobile-details-backdrop {
+          position: fixed;
+          inset: 0 0 var(--mobile-drawer-bottom) 0;
+          display: block;
+          background: rgba(15, 23, 42, 0.18);
+          opacity: 0;
+          pointer-events: none;
+          transition: opacity 220ms ease;
+          z-index: 1100;
+        }
+
+        .mobile-details-backdrop.is-open {
+          opacity: 1;
+          pointer-events: auto;
+        }
+
+        .mobile-details-drawer {
+          position: fixed;
+          left: 0;
+          right: 0;
+          bottom: var(--mobile-drawer-bottom);
+          display: flex;
+          flex-direction: column;
+          height: min(70dvh, calc(100dvh - var(--mobile-drawer-bottom) - var(--safe-top, 0px) - 16px));
+          padding: 8px 14px var(--mobile-sheet-bottom-padding);
+          border-radius: 26px 26px 0 0;
+          background: rgba(255, 255, 255, 0.96);
+          border: 1px solid rgba(229, 231, 235, 0.95);
+          box-shadow: 0 -20px 48px rgba(15, 23, 42, 0.18);
+          backdrop-filter: blur(22px);
+          -webkit-backdrop-filter: blur(22px);
+          transform: translateY(105%);
+          transition: transform 280ms cubic-bezier(0.22, 1, 0.36, 1);
+          z-index: 1200;
+        }
+
+        .mobile-details-drawer.is-open {
+          transform: translateY(0);
+        }
+
+        .mobile-details-drawer-handle {
+          width: 42px;
+          height: 5px;
+          margin: 2px auto 10px;
+          border-radius: 999px;
+          background: rgba(156, 163, 175, 0.45);
+          flex-shrink: 0;
+        }
+
+        .mobile-details-drawer-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+          padding: 0 2px 10px;
+          flex-shrink: 0;
+        }
+
+        .mobile-details-drawer-kicker {
+          color: #8b95a7;
+          font-size: 10px;
+          font-weight: 800;
+          letter-spacing: 0.12em;
+          line-height: 1;
+        }
+
+        .mobile-details-drawer-header h2 {
+          margin: 3px 0 0;
+          color: #111827;
+          font-size: 18px;
+          line-height: 1.15;
+          font-weight: 800;
+          letter-spacing: 0;
+        }
+
+        .mobile-details-close {
+          width: 38px;
+          height: 38px;
+          display: grid;
+          place-items: center;
+          border: 1px solid rgba(229, 231, 235, 0.95);
+          border-radius: 50%;
+          background: rgba(249, 250, 251, 0.92);
+          color: #6b7280;
+          box-shadow: 0 1px 0 rgba(255, 255, 255, 0.9);
+        }
+
+        .mobile-details-drawer-body {
+          min-height: 0;
+          flex: 1 1 auto;
+          overflow: hidden;
+        }
+
+        .mobile-details-drawer-body .event-panel {
+          width: 100% !important;
+          height: 100% !important;
+          border-radius: 18px !important;
+          box-shadow: none !important;
+        }
+
+        .App.dark-mode .mobile-details-backdrop {
+          background: rgba(0, 0, 0, 0.42);
+        }
+
+        .App.dark-mode .mobile-details-drawer {
+          background: rgba(18, 22, 30, 0.98);
+          border-color: rgba(148, 163, 184, 0.18);
+          box-shadow: 0 -22px 54px rgba(0, 0, 0, 0.38);
+        }
+
+        .App.dark-mode .mobile-details-drawer-header h2 {
+          color: rgba(248, 250, 252, 0.94);
+        }
+
+        .App.dark-mode .mobile-details-close {
+          background: rgba(30, 41, 59, 0.92);
+          border-color: rgba(148, 163, 184, 0.18);
+          color: rgba(203, 213, 225, 0.86);
+        }
+
+        .App.mobile-nav-hidden,
+        .App.nav-hidden {
+          --mobile-content-bottom: var(--mobile-safe-bottom);
+          --mobile-drawer-bottom: var(--mobile-safe-bottom);
+        }
+
+        .App.mobile-nav-hidden .sidebar-container,
+        .App.nav-hidden .sidebar-container {
+          transform: translateY(calc(100% + var(--mobile-safe-bottom) + 12px));
+          opacity: 0;
+          pointer-events: none;
+        }
+
         /* Show User Profile button (First child) */
         .sidebar-container > div:last-child > button:first-child {
           display: flex !important;
@@ -1509,11 +1889,6 @@
           display: none !important;
         }
 
-        /* Content Area Adjustments */
-        .main-layout > div:last-child {
-          width: 100% !important;
-        }
-        
         /* Hide Top User Email Button in Mobile */
         .App > button.absolute {
           display: none !important;

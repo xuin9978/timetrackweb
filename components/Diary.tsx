@@ -1,92 +1,72 @@
 import React from 'react';
+import { addDays, addWeeks, format, isAfter, isSameDay, startOfWeek } from 'date-fns';
 import GlassCard from './GlassCard';
 import { Icons } from './Icons';
+import { fetchDiaryEntries, saveDiaryEntry } from '../utils/diaryService';
 
 type DiaryView = 'daily' | 'weekly';
+type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 
 interface DiaryEntry {
   id: string;
   day: string;
   date: string;
   fullDate: string;
+  isoDate: string;
   saved: boolean;
-  future?: boolean;
+  future: boolean;
   text: string;
 }
 
 interface DiaryWeek {
-  id: string;
   monthLabel: string;
   title: string;
   helper: string;
-  currentDayIndex: number;
   entries: DiaryEntry[];
 }
 
 interface DiaryProps {
+  userId?: string;
   onWeeklyModeChange?: (isWeekly: boolean) => void;
 }
 
-const createEmptyEntries = (
-  dates: Array<Pick<DiaryEntry, 'id' | 'day' | 'date' | 'fullDate'>>,
-  options: { future?: boolean } = {}
-): DiaryEntry[] => dates.map(entry => ({
-  ...entry,
-  saved: false,
-  future: options.future,
-  text: ''
-}));
+const WEEK_DAYS = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
 
-const INITIAL_WEEKS: DiaryWeek[] = [
-  {
-    id: 'prev',
-    monthLabel: '七月 · 上周',
-    title: '2026 年 7 月 6 日 - 7 月 12 日',
-    helper: '上一周的记录可以完整回看；未写日期保留为补写入口。',
-    currentDayIndex: 6,
-    entries: createEmptyEntries([
-      { id: 'prev-mon', day: '周一', date: '07.06', fullDate: '2026 年 7 月 6 日 · 周一' },
-      { id: 'prev-tue', day: '周二', date: '07.07', fullDate: '2026 年 7 月 7 日 · 周二' },
-      { id: 'prev-wed', day: '周三', date: '07.08', fullDate: '2026 年 7 月 8 日 · 周三' },
-      { id: 'prev-thu', day: '周四', date: '07.09', fullDate: '2026 年 7 月 9 日 · 周四' },
-      { id: 'prev-fri', day: '周五', date: '07.10', fullDate: '2026 年 7 月 10 日 · 周五' },
-      { id: 'prev-sat', day: '周六', date: '07.11', fullDate: '2026 年 7 月 11 日 · 周六' },
-      { id: 'prev-sun', day: '周日', date: '07.12', fullDate: '2026 年 7 月 12 日 · 周日' }
-    ])
-  },
-  {
-    id: 'current',
-    monthLabel: '七月 · 本周',
-    title: '2026 年 7 月 13 日 - 7 月 19 日',
-    helper: '这一周已经走完，横向浏览七天；没写的日期仍保留为补写入口。',
-    currentDayIndex: 6,
-    entries: createEmptyEntries([
-      { id: 'mon', day: '周一', date: '07.13', fullDate: '2026 年 7 月 13 日 · 周一' },
-      { id: 'tue', day: '周二', date: '07.14', fullDate: '2026 年 7 月 14 日 · 周二' },
-      { id: 'wed', day: '周三', date: '07.15', fullDate: '2026 年 7 月 15 日 · 周三' },
-      { id: 'thu', day: '周四', date: '07.16', fullDate: '2026 年 7 月 16 日 · 周四' },
-      { id: 'fri', day: '周五', date: '07.17', fullDate: '2026 年 7 月 17 日 · 周五' },
-      { id: 'sat', day: '周六', date: '07.18', fullDate: '2026 年 7 月 18 日 · 周六' },
-      { id: 'sun', day: '周日', date: '07.19', fullDate: '2026 年 7 月 19 日 · 周日' }
-    ])
-  },
-  {
-    id: 'next',
-    monthLabel: '七月 · 下周',
-    title: '2026 年 7 月 20 日 - 7 月 26 日',
-    helper: '下一周还没有开始，先作为未来周预览；到达日期后会变成可记录状态。',
-    currentDayIndex: 6,
-    entries: createEmptyEntries([
-      { id: 'next-mon', day: '周一', date: '07.20', fullDate: '2026 年 7 月 20 日 · 周一' },
-      { id: 'next-tue', day: '周二', date: '07.21', fullDate: '2026 年 7 月 21 日 · 周二' },
-      { id: 'next-wed', day: '周三', date: '07.22', fullDate: '2026 年 7 月 22 日 · 周三' },
-      { id: 'next-thu', day: '周四', date: '07.23', fullDate: '2026 年 7 月 23 日 · 周四' },
-      { id: 'next-fri', day: '周五', date: '07.24', fullDate: '2026 年 7 月 24 日 · 周五' },
-      { id: 'next-sat', day: '周六', date: '07.25', fullDate: '2026 年 7 月 25 日 · 周六' },
-      { id: 'next-sun', day: '周日', date: '07.26', fullDate: '2026 年 7 月 26 日 · 周日' }
-    ], { future: true })
-  }
-];
+const formatFullDate = (date: Date, day: string) => `${format(date, 'yyyy 年 M 月 d 日')} · ${day}`;
+
+const buildWeek = (anchorDate: Date, entriesByDate: Map<string, string>): DiaryWeek => {
+  const today = new Date();
+  const weekStart = startOfWeek(anchorDate, { weekStartsOn: 1 });
+  const weekEnd = addDays(weekStart, 6);
+  const todayWeekStart = startOfWeek(today, { weekStartsOn: 1 });
+  const weekLabel = weekStart.getTime() < todayWeekStart.getTime()
+    ? '上周'
+    : weekStart.getTime() > todayWeekStart.getTime()
+      ? '下周'
+      : '本周';
+  const entries = WEEK_DAYS.map((day, index) => {
+    const date = addDays(weekStart, index);
+    const isoDate = format(date, 'yyyy-MM-dd');
+    const text = entriesByDate.get(isoDate) ?? '';
+    return {
+      id: isoDate,
+      day,
+      date: format(date, 'MM.dd'),
+      fullDate: formatFullDate(date, day),
+      isoDate,
+      saved: text.trim().length > 0,
+      future: isAfter(date, today),
+      text,
+    };
+  });
+
+  return {
+    monthLabel: `${format(weekStart, 'M 月')} · ${weekLabel}`,
+    title: `${format(weekStart, 'yyyy 年 M 月 d 日')} - ${format(weekEnd, 'M 月 d 日')}`,
+    helper: '横向浏览这一周的日记；已到日期可以记录，未来日期暂不提前显示内容。',
+    entries,
+  };
+};
 
 const getEntryStatus = (entry: DiaryEntry) => {
   if (entry.future) return '未到';
@@ -95,22 +75,38 @@ const getEntryStatus = (entry: DiaryEntry) => {
 
 const getEntryPreview = (entry: DiaryEntry) => {
   if (entry.text.trim()) return entry.text;
-  if (entry.future) return '还未到这一天，先作为未来日记占位。';
+  if (entry.future) return '还未到这一天。';
   return '还没有写日记，点击后可以从空白页开始。';
 };
 
-const Diary: React.FC<DiaryProps> = ({ onWeeklyModeChange }) => {
+const getWeekBounds = (date: Date) => {
+  const start = startOfWeek(date, { weekStartsOn: 1 });
+  return {
+    start,
+    end: addDays(start, 6),
+    startISO: format(start, 'yyyy-MM-dd'),
+    endISO: format(addDays(start, 6), 'yyyy-MM-dd'),
+  };
+};
+
+const Diary: React.FC<DiaryProps> = ({ userId, onWeeklyModeChange }) => {
+  const today = React.useMemo(() => new Date(), []);
   const [view, setView] = React.useState<DiaryView>('daily');
-  const [weeks, setWeeks] = React.useState<DiaryWeek[]>(INITIAL_WEEKS);
-  const [activeWeekIndex, setActiveWeekIndex] = React.useState(1);
-  const [activeEntryId, setActiveEntryId] = React.useState('mon');
+  const [activeDate, setActiveDate] = React.useState(today);
+  const [entriesByDate, setEntriesByDate] = React.useState<Map<string, string>>(() => new Map());
+  const [draftsByDate, setDraftsByDate] = React.useState<Map<string, string>>(() => new Map());
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [saveState, setSaveState] = React.useState<SaveState>('idle');
   const [toast, setToast] = React.useState('');
 
-  const activeWeek = weeks[activeWeekIndex];
-  const visibleEntries = activeWeek.entries.slice(0, activeWeek.currentDayIndex + 1);
-  const activeEntry = visibleEntries.find(entry => entry.id === activeEntryId) ?? visibleEntries[0] ?? activeWeek.entries[0];
-  const writtenCount = visibleEntries.filter(entry => entry.saved).length;
   const isWeekly = view === 'weekly';
+  const activeISODate = format(activeDate, 'yyyy-MM-dd');
+  const activeWeekStartISO = format(startOfWeek(activeDate, { weekStartsOn: 1 }), 'yyyy-MM-dd');
+  const week = React.useMemo(() => buildWeek(activeDate, draftsByDate), [activeDate, draftsByDate]);
+  const isFutureWeek = week.entries.every(entry => entry.future);
+  const visibleEntries = week.entries.filter(entry => isFutureWeek || !entry.future || entry.saved || isSameDay(new Date(`${entry.isoDate}T00:00:00`), today));
+  const activeEntry = visibleEntries.find(entry => entry.isoDate === activeISODate) ?? visibleEntries[0] ?? week.entries[0];
+  const writtenCount = visibleEntries.filter(entry => entry.saved).length;
 
   React.useEffect(() => {
     onWeeklyModeChange?.(isWeekly);
@@ -123,64 +119,118 @@ const Diary: React.FC<DiaryProps> = ({ onWeeklyModeChange }) => {
     return () => window.clearTimeout(timer);
   }, [toast]);
 
-  const isToday = (entry: DiaryEntry) => {
-    return activeWeek.id === 'current' && activeWeek.entries[activeWeek.currentDayIndex]?.id === entry.id;
-  };
+  React.useEffect(() => {
+    if (!userId) {
+      setEntriesByDate(new Map());
+      setDraftsByDate(new Map());
+      return;
+    }
 
-  const openDailyEntry = (entryId: string) => {
-    setActiveEntryId(entryId);
+    const controller = new AbortController();
+    const { startISO, endISO } = getWeekBounds(activeDate);
+    setIsLoading(true);
+
+    fetchDiaryEntries(userId, startISO, endISO, controller.signal)
+      .then(records => {
+        if (controller.signal.aborted) return;
+        const nextEntries = new Map<string, string>();
+        records.forEach(record => nextEntries.set(record.entryDate, record.content));
+        setEntriesByDate(nextEntries);
+        setDraftsByDate(nextEntries);
+        setSaveState('idle');
+      })
+      .catch(error => {
+        if (controller.signal.aborted) return;
+        console.error('日记读取失败:', error);
+        setToast('日记读取失败，请稍后重试');
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setIsLoading(false);
+      });
+
+    return () => controller.abort();
+  }, [userId, activeWeekStartISO]);
+
+  const isToday = (entry: DiaryEntry) => isSameDay(new Date(`${entry.isoDate}T00:00:00`), today);
+
+  const openDailyEntry = (isoDate: string) => {
+    setActiveDate(new Date(`${isoDate}T00:00:00`));
     setView('daily');
   };
 
   const switchWeek = (direction: 1 | -1) => {
-    const nextIndex = (activeWeekIndex + direction + weeks.length) % weeks.length;
-    const nextWeek = weeks[nextIndex];
-    const nextEntry = nextWeek.entries.slice(0, nextWeek.currentDayIndex + 1)[0] ?? nextWeek.entries[0];
-    setActiveWeekIndex(nextIndex);
-    setActiveEntryId(nextEntry.id);
+    const nextDate = addWeeks(activeDate, direction);
+    setActiveDate(nextDate);
+    setView('weekly');
     setToast(direction > 0 ? '已切换到下一周' : '已切换到上一周');
   };
 
   const updateActiveEntryText = (text: string) => {
-    setWeeks(prevWeeks => prevWeeks.map((week, weekIndex) => {
-      if (weekIndex !== activeWeekIndex) return week;
-      return {
-        ...week,
-        entries: week.entries.map(entry => (
-          entry.id === activeEntry.id
-            ? { ...entry, text, saved: false, future: false }
-            : entry
-        ))
-      };
-    }));
+    setDraftsByDate(prev => {
+      const next = new Map(prev);
+      next.set(activeEntry.isoDate, text);
+      return next;
+    });
+    setSaveState('idle');
   };
 
-  const saveActiveEntry = () => {
-    setWeeks(prevWeeks => prevWeeks.map((week, weekIndex) => {
-      if (weekIndex !== activeWeekIndex) return week;
-      return {
-        ...week,
-        entries: week.entries.map(entry => (
-          entry.id === activeEntry.id
-            ? { ...entry, saved: entry.text.trim().length > 0, future: false }
-            : entry
-        ))
-      };
-    }));
-    setToast('已保存当前日记');
+  const saveActiveEntry = async () => {
+    if (!userId) {
+      setToast('请先登录后再保存日记');
+      return;
+    }
+
+    const content = draftsByDate.get(activeEntry.isoDate) ?? '';
+    setSaveState('saving');
+
+    try {
+      const saved = await saveDiaryEntry(userId, activeEntry.isoDate, content);
+      setEntriesByDate(prev => {
+        const next = new Map(prev);
+        if (saved) {
+          next.set(saved.entryDate, saved.content);
+        } else {
+          next.delete(activeEntry.isoDate);
+        }
+        return next;
+      });
+      setDraftsByDate(prev => {
+        const next = new Map(prev);
+        if (saved) {
+          next.set(saved.entryDate, saved.content);
+        } else {
+          next.delete(activeEntry.isoDate);
+        }
+        return next;
+      });
+      setSaveState('saved');
+      setToast(saved ? '已同步到 Supabase' : '已清空当天日记');
+    } catch (error) {
+      console.error('日记保存失败:', error);
+      setSaveState('error');
+      setToast('保存失败，请检查网络或数据库表');
+    }
   };
 
   const createTodayEntry = () => {
-    setActiveWeekIndex(1);
-    setActiveEntryId('mon');
+    setActiveDate(today);
     setView('daily');
     setToast('已打开今日');
   };
 
+  const statusLabel = (() => {
+    if (isLoading) return '读取中';
+    if (saveState === 'saving') return '同步中';
+    if (saveState === 'saved') return '已同步';
+    if (saveState === 'error') return '同步失败';
+    if (entriesByDate.has(activeEntry.isoDate)) return '已保存';
+    return activeEntry.future ? '未到' : '未保存';
+  })();
+
   return (
     <GlassCard
       intensity="medium"
-      className={`w-full h-[85vh] flex flex-col bg-white overflow-hidden animate-[fadeIn_0.2s_ease-out] ${isWeekly ? 'md:h-[88vh]' : ''}`}
+      className={`board-diary-card w-full h-[85vh] flex flex-col bg-white overflow-hidden animate-[fadeIn_0.2s_ease-out] ${isWeekly ? 'md:h-[88vh]' : ''}`}
     >
       <header className="flex flex-col gap-4 border-b border-gray-100 bg-white px-5 py-4 md:flex-row md:items-center md:justify-between md:px-6">
         <div className="flex min-w-0 items-center gap-3">
@@ -251,7 +301,7 @@ const Diary: React.FC<DiaryProps> = ({ onWeeklyModeChange }) => {
         <section className="grid min-h-0 flex-1 grid-cols-1 md:grid-cols-[306px_minmax(0,1fr)]">
           <aside className="min-h-0 overflow-y-auto border-b border-gray-100 bg-gray-50/80 p-4 md:border-b-0 md:border-r md:p-[18px]">
             <div className="mb-3 flex items-center justify-between gap-3">
-              <h3 className="text-base font-extrabold tracking-tight text-gray-950">{activeWeek.monthLabel}</h3>
+              <h3 className="text-base font-extrabold tracking-tight text-gray-950">{week.monthLabel}</h3>
               <span className="inline-flex h-6 items-center gap-1.5 rounded-full border border-gray-200 bg-white px-2.5 text-[11px] font-bold text-gray-500">
                 <Icons.Check size={13} />已到 {visibleEntries.length} 天 · 已写 {writtenCount} 天
               </span>
@@ -262,8 +312,8 @@ const Diary: React.FC<DiaryProps> = ({ onWeeklyModeChange }) => {
                 <button
                   key={entry.id}
                   type="button"
-                  onClick={() => setActiveEntryId(entry.id)}
-                  className={`w-full rounded-[18px] border p-3.5 text-left transition hover:-translate-y-0.5 hover:bg-white ${entry.id === activeEntry.id ? 'border-gray-200 bg-white shadow-[0_10px_24px_rgba(28,33,42,0.045)]' : 'border-transparent bg-transparent'}`}
+                  onClick={() => setActiveDate(new Date(`${entry.isoDate}T00:00:00`))}
+                  className={`w-full rounded-[18px] border p-3.5 text-left transition hover:-translate-y-0.5 hover:bg-white ${entry.isoDate === activeEntry.isoDate ? 'border-gray-200 bg-white shadow-[0_10px_24px_rgba(28,33,42,0.045)]' : 'border-transparent bg-transparent'}`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
@@ -284,35 +334,39 @@ const Diary: React.FC<DiaryProps> = ({ onWeeklyModeChange }) => {
             <div className="flex items-center justify-between gap-3 border-b border-gray-100 pb-3">
               <h3 className="text-lg font-extrabold tracking-tight text-gray-950 md:text-[21px]">{activeEntry.fullDate}</h3>
               <span className="inline-flex h-7 shrink-0 items-center rounded-full border border-gray-200 bg-white px-3 text-[11px] font-bold text-gray-500">
-                {activeEntry.saved ? '已保存' : activeEntry.future ? '未到' : '未保存'}
+                {statusLabel}
               </span>
             </div>
 
             <textarea
-              className="min-h-0 w-full resize-none border-0 bg-transparent pt-5 text-base font-medium leading-8 text-gray-900 outline-none placeholder:text-gray-400"
-              value={activeEntry.text}
+              className="min-h-0 w-full resize-none border-0 bg-transparent pt-5 text-base font-medium leading-8 text-gray-900 outline-none placeholder:text-gray-400 disabled:text-gray-400"
+              value={draftsByDate.get(activeEntry.isoDate) ?? ''}
               onChange={(event) => updateActiveEntryText(event.target.value)}
               placeholder="开始记录..."
               spellCheck={false}
+              disabled={activeEntry.future}
             />
 
             <footer className="flex items-center justify-between gap-4 pt-4 text-xs font-bold text-gray-500">
-              <span>{activeEntry.text.trim() ? `约 ${activeEntry.text.length} 字 · 静态演示` : '空白日记 · 等待输入'}</span>
+              <span>{(draftsByDate.get(activeEntry.isoDate) ?? '').trim() ? `约 ${(draftsByDate.get(activeEntry.isoDate) ?? '').length} 字 · Supabase 同步` : '空白日记 · 等待输入'}</span>
               <button
                 type="button"
                 onClick={saveActiveEntry}
-                className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-gray-950 px-5 text-xs font-black text-white transition hover:-translate-y-0.5"
+                disabled={saveState === 'saving' || activeEntry.future}
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-gray-950 px-5 text-xs font-black text-white transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:hover:translate-y-0"
               >
-                <Icons.Check size={16} />保存日记
+                <Icons.Check size={16} />{saveState === 'saving' ? '同步中' : '保存日记'}
               </button>
             </footer>
           </section>
         </section>
       ) : (
         <section className="grid min-h-0 flex-1 grid-rows-[auto_minmax(0,1fr)] gap-4 overflow-hidden bg-white p-5 md:p-6">
-          <div>
-            <h3 className="text-lg font-extrabold tracking-tight text-gray-950">{activeWeek.title}</h3>
-            <p className="mt-1 text-sm font-semibold text-gray-500">{activeWeek.helper}</p>
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h3 className="text-lg font-extrabold tracking-tight text-gray-950">{week.title}</h3>
+              <p className="mt-1 text-sm font-semibold text-gray-500">{week.helper}</p>
+            </div>
           </div>
 
           <div
@@ -323,7 +377,7 @@ const Diary: React.FC<DiaryProps> = ({ onWeeklyModeChange }) => {
               <button
                 key={entry.id}
                 type="button"
-                onClick={() => openDailyEntry(entry.id)}
+                onClick={() => openDailyEntry(entry.isoDate)}
                 className={`grid min-h-[520px] grid-rows-[auto_minmax(0,1fr)] overflow-hidden rounded-[20px] border bg-white text-left transition hover:-translate-y-0.5 ${isToday(entry) ? 'border-gray-200 shadow-[0_10px_24px_rgba(28,33,42,0.045)]' : 'border-gray-200'} ${entry.saved ? '' : 'bg-gray-50'}`}
               >
                 <div className="flex items-start justify-between gap-3 px-4 pb-2 pt-4">
@@ -333,7 +387,7 @@ const Diary: React.FC<DiaryProps> = ({ onWeeklyModeChange }) => {
                   </div>
                   <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${entry.saved ? 'bg-gray-700' : 'bg-gray-300'}`} />
                 </div>
-                <div className="min-h-0 overflow-y-auto px-4 pb-4 text-[13px] font-medium leading-6 text-gray-800 whitespace-pre-line">
+                <div className="min-h-0 overflow-y-auto whitespace-pre-line px-4 pb-4 text-[13px] font-medium leading-6 text-gray-800">
                   {getEntryPreview(entry)}
                 </div>
               </button>

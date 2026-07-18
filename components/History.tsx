@@ -113,7 +113,7 @@ const History: React.FC<HistoryProps> = ({ events, tags, onOpenModal, onAddTag, 
 
     return (
         <>
-            <GlassCard intensity="medium" className="history-card w-full h-full md:h-[85vh] max-w-4xl mx-auto flex flex-col relative overflow-hidden bg-[#FAFAFA]">
+            <GlassCard intensity="medium" className="history-card board-history-card w-full h-full md:h-[85vh] max-w-4xl mx-auto flex flex-col relative overflow-hidden bg-[#FAFAFA]">
                 <div className="history-toolbar flex items-center justify-between p-6 md:p-8 border-b border-gray-100 z-10 relative gap-4">
                     <div className="relative">
                         <button

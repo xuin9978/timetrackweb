@@ -171,7 +171,7 @@ const Alarm: React.FC<AlarmProps> = ({
 
   return (
     <>
-        <div className="alarm-card alarm-card-mobile w-full h-full md:hidden bg-white rounded-[32px] flex flex-col items-center justify-center shadow-sm">
+        <div className="alarm-card board-alarm-card alarm-card-mobile w-full h-full md:hidden bg-white rounded-[32px] flex flex-col items-center justify-center shadow-sm">
              {/* Mobile / PWA Layout */}
             <div className="flex-1 flex flex-col items-center justify-center p-8 w-full">
                  {/* Time Display */}
@@ -232,7 +232,7 @@ const Alarm: React.FC<AlarmProps> = ({
 
         {/* Desktop Layout (Original GlassCard) */}
         <div className="hidden md:flex w-full h-full">
-            <GlassCard intensity="medium" className="alarm-card alarm-card-desktop w-full h-[85vh] max-w-2xl mx-auto flex flex-col relative overflow-hidden bg-white">
+            <GlassCard intensity="medium" className="alarm-card board-alarm-card alarm-card-desktop w-full h-[85vh] max-w-2xl mx-auto flex flex-col relative overflow-hidden bg-white">
             <div className="flex-1 flex flex-col items-center justify-center p-8 pb-20">
                 {/* Time Display */}
                 <div 

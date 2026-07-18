@@ -49,6 +49,7 @@ const retry = async <T,>(fn: () => Promise<T>, retries = 3, delay = 300): Promis
 
 const App: React.FC = () => {
   const [activeModule, setActiveModule] = useState<'calendar' | 'alarm' | 'history' | 'diary'>('calendar');
+  const [isMobileCalendarDetailsOpen, setIsMobileCalendarDetailsOpen] = useState(false);
   const [toast, setToast] = useState<ToastState | null>(null);
   const toastTimerRef = React.useRef<number | null>(null);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('synced');
@@ -109,6 +110,13 @@ const App: React.FC = () => {
       toastTimerRef.current = null;
     }
     setToast(null);
+  }, []);
+
+  const handleModuleSwitch = useCallback((module: 'calendar' | 'alarm' | 'history' | 'diary') => {
+    setActiveModule(module);
+    if (module !== 'calendar') {
+      setIsMobileCalendarDetailsOpen(false);
+    }
   }, []);
 
   // Set default view mode to Day when in PWA mode
@@ -999,10 +1007,10 @@ const App: React.FC = () => {
   }[syncStatus];
 
   return (
-    <div className={`App ${isSidebarCollapsed ? 'sidebar-is-collapsed' : ''} relative min-h-screen w-full flex items-stretch md:items-center justify-center bg-[#F2F2F7] overflow-x-auto p-4 md:p-6`}>
+    <div className={`App board-app-shell ${isSidebarCollapsed ? 'sidebar-is-collapsed' : ''} relative min-h-screen w-full flex items-stretch md:items-center justify-center bg-[#F2F2F7] overflow-x-auto p-4 md:p-6`}>
 
       {/* Main Layout */}
-      <div className={`main-layout relative z-10 w-full flex flex-col md:flex-row h-full md:h-auto transition-[gap,max-width] duration-300 ${isSidebarCollapsed ? 'max-w-none md:gap-0' : 'max-w-7xl md:gap-6'}`}>
+      <div className={`main-layout board-main-layout relative z-10 w-full flex flex-col md:flex-row h-full md:h-auto transition-[gap,max-width] duration-300 ${isSidebarCollapsed ? 'max-w-none md:gap-0' : 'max-w-7xl md:gap-6'}`}>
         {syncStatus !== 'synced' && (
           <div className="absolute -top-10 left-0 right-0 flex justify-center z-30">
             <div className={`sync-status-bar sync-status-${syncStatusCopy.tone} px-3 py-1.5 rounded-full bg-white border border-gray-200 shadow-sm text-xs text-gray-600 flex items-center gap-2`}>
@@ -1017,17 +1025,18 @@ const App: React.FC = () => {
         {/* Sidebar Navigation */}
         <Sidebar
           activeModule={activeModule}
-          onSwitch={setActiveModule}
+          onSwitch={handleModuleSwitch}
           onOpenSettings={() => setIsSettingsOpen(true)}
           onOpenAuth={() => setIsAuthOpen(true)}
           onOpenAccount={() => setIsAccountOpen(true)}
           onAddEvent={handleSmartAddEvent}
+          onCalendarDetailsOpen={() => setIsMobileCalendarDetailsOpen(true)}
           isLoggedIn={!!currentUser}
           isCollapsed={isSidebarCollapsed}
         />
 
         {/* Module Content */}
-        <div className="flex-1 min-w-0 relative flex flex-col h-full">
+        <div className="board-module-content flex-1 min-w-0 min-h-0 relative flex flex-col h-full">
           {activeModule === 'calendar' && (
             <div className={`flex-1 ${!currentUser && events.length === 0 ? 'pointer-events-none opacity-60' : ''}`}>
               <Calendar
@@ -1047,9 +1056,11 @@ const App: React.FC = () => {
               setViewMode={setViewMode}
               isSidebarCollapsed={isSidebarCollapsed}
               onToggleSidebarCollapsed={() => setIsSidebarCollapsed(prev => !prev)}
+              isMobileDetailsOpen={isMobileCalendarDetailsOpen}
+              onCloseMobileDetails={() => setIsMobileCalendarDetailsOpen(false)}
             />
               {!currentUser && events.length === 0 && (
-                <div className="absolute inset-0 flex items-center justify-center">
+                <div className="absolute inset-0 z-30 flex items-center justify-center">
                   <div className="px-4 py-2 rounded-xl bg-white border border-gray-200 shadow-sm text-gray-600 text-sm">请先登录以查看日程</div>
                 </div>
               )}
@@ -1067,7 +1078,7 @@ const App: React.FC = () => {
                 onOpenLogSessionModal={openLogSessionModal}
               />
               {!currentUser && (
-                <div className="absolute inset-0 flex items-center justify-center">
+                <div className="absolute inset-0 z-30 flex items-center justify-center">
                   <div className="px-4 py-2 rounded-xl bg-white border border-gray-200 shadow-sm text-gray-600 text-sm">请先登录以使用闹钟</div>
                 </div>
               )}
@@ -1086,7 +1097,7 @@ const App: React.FC = () => {
                 onSaveOrder={handleSaveTagOrder}
               />
               {!currentUser && (
-                <div className="absolute inset-0 flex items-center justify-center">
+                <div className="absolute inset-0 z-30 flex items-center justify-center">
                   <div className="px-4 py-2 rounded-xl bg-white border border-gray-200 shadow-sm text-gray-600 text-sm">请先登录以查看历史</div>
                 </div>
               )}
@@ -1094,9 +1105,9 @@ const App: React.FC = () => {
           )}
           {activeModule === 'diary' && (
             <div className={`flex-1 ${!currentUser ? 'pointer-events-none opacity-60' : ''}`}>
-              <Diary onWeeklyModeChange={setIsSidebarCollapsed} />
+              <Diary userId={currentUser?.id} onWeeklyModeChange={setIsSidebarCollapsed} />
               {!currentUser && (
-                <div className="absolute inset-0 flex items-center justify-center">
+                <div className="absolute inset-0 z-30 flex items-center justify-center">
                   <div className="px-4 py-2 rounded-xl bg-white border border-gray-200 shadow-sm text-gray-600 text-sm">请先登录以查看日记</div>
                 </div>
               )}

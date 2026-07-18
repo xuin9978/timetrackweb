@@ -34,9 +34,11 @@ interface CalendarProps {
   hasHiddenAllTags?: boolean;
   isSidebarCollapsed?: boolean;
   onToggleSidebarCollapsed?: () => void;
+  isMobileDetailsOpen?: boolean;
+  onCloseMobileDetails?: () => void;
 }
 
-const Calendar: React.FC<CalendarProps> = ({ events, tags, visibleTags, onToggleTagVisibility, onSmartAddEvent, onUpdateEvent, onOpenModal, currentDate: cdProp, setCurrentDate: setCdProp, selectedDate: sdProp, setSelectedDate: setSdProp, viewMode: vmProp, setViewMode: setVmProp, hasHiddenAllTags = false, isSidebarCollapsed = false, onToggleSidebarCollapsed }) => {
+const Calendar: React.FC<CalendarProps> = ({ events, tags, visibleTags, onToggleTagVisibility, onSmartAddEvent, onUpdateEvent, onOpenModal, currentDate: cdProp, setCurrentDate: setCdProp, selectedDate: sdProp, setSelectedDate: setSdProp, viewMode: vmProp, setViewMode: setVmProp, hasHiddenAllTags = false, isSidebarCollapsed = false, onToggleSidebarCollapsed, isMobileDetailsOpen = false, onCloseMobileDetails }) => {
   const [currentDateState, setCurrentDateState] = useState(new Date());
   const [selectedDateState, setSelectedDateState] = useState(new Date());
   const [viewModeState, setViewModeState] = useState<ViewMode>(ViewMode.Day);
@@ -310,8 +312,8 @@ const Calendar: React.FC<CalendarProps> = ({ events, tags, visibleTags, onToggle
 
       {/* Right Side: Event Detail Panel - Independent Card Side-by-Side */}
       {isPanelVisible && (
-        <div className="flex-shrink-0 h-full w-80 ml-6 animate-[fadeIn_0.2s_ease-out]">
-          <div className="w-80 h-full">
+        <div className="calendar-side-panel board-event-panel-shell flex-shrink-0 h-full w-80 ml-6 animate-[fadeIn_0.2s_ease-out]">
+          <div className="board-event-panel-content w-80 h-full">
             <EventPanel
               panelTitle={panelTitle}
               panelContext={panelContext}
@@ -326,6 +328,46 @@ const Calendar: React.FC<CalendarProps> = ({ events, tags, visibleTags, onToggle
           </div>
         </div>
       )}
+
+      <div
+        className={`mobile-details-backdrop ${isMobileDetailsOpen ? 'is-open' : ''}`}
+        aria-hidden="true"
+        onClick={onCloseMobileDetails}
+      />
+      <aside
+        className={`mobile-details-drawer ${isMobileDetailsOpen ? 'is-open' : ''}`}
+        aria-hidden={!isMobileDetailsOpen}
+        aria-label="日程详情"
+      >
+        <div className="mobile-details-drawer-handle" />
+        <div className="mobile-details-drawer-header">
+          <div>
+            <div className="mobile-details-drawer-kicker">DETAILS</div>
+            <h2>日程详情</h2>
+          </div>
+          <button
+            type="button"
+            onClick={onCloseMobileDetails}
+            className="mobile-details-close"
+            aria-label="关闭日程详情"
+          >
+            <Icons.X size={18} />
+          </button>
+        </div>
+        <div className="mobile-details-drawer-body">
+          <EventPanel
+            panelTitle={panelTitle}
+            panelContext={panelContext}
+            events={panelEvents}
+            tags={tags}
+            visibleTags={visibleTags}
+            onToggleTagVisibility={onToggleTagVisibility}
+            onAddEvent={onSmartAddEvent}
+            onEventClick={handleEventClick}
+            hasHiddenAllTags={hasHiddenAllTags}
+          />
+        </div>
+      </aside>
     </div>
   );
 };

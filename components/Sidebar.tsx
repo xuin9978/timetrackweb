@@ -9,11 +9,12 @@ interface SidebarProps {
   onOpenAuth: () => void;
   onOpenAccount: () => void;
   onAddEvent?: () => void;
+  onCalendarDetailsOpen?: () => void;
   isLoggedIn?: boolean;
   isCollapsed?: boolean;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ activeModule, onSwitch, onOpenSettings, onOpenAuth, onOpenAccount, onAddEvent, isLoggedIn, isCollapsed = false }) => {
+const Sidebar: React.FC<SidebarProps> = ({ activeModule, onSwitch, onOpenSettings, onOpenAuth, onOpenAccount, onAddEvent, onCalendarDetailsOpen, isLoggedIn, isCollapsed = false }) => {
   const navItems = [
     { id: 'alarm', label: '闹钟', icon: Icons.Clock },
     { id: 'history', label: '历史', icon: Icons.History },
@@ -21,17 +22,28 @@ const Sidebar: React.FC<SidebarProps> = ({ activeModule, onSwitch, onOpenSetting
     { id: 'diary', label: '日记', icon: Icons.BookOpen },
   ];
 
+  const handleNavClick = (module: 'calendar' | 'alarm' | 'history' | 'diary') => {
+    onSwitch(module);
+
+    if (module !== 'calendar' || !onCalendarDetailsOpen) return;
+
+    const isMobile = typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches;
+    if (isMobile) {
+      onCalendarDetailsOpen();
+    }
+  };
+
   return (
     <GlassCard
       intensity="medium"
-      className={`sidebar-container flex-shrink-0 w-full md:h-[85vh] flex flex-row md:flex-col items-center justify-center md:justify-start gap-8 p-4 md:pt-12 z-20 bg-white transition-all duration-300 ease-out overflow-hidden ${isCollapsed ? 'md:w-0 md:min-w-0 md:max-w-0 md:p-0 md:gap-0 md:opacity-0 md:-translate-x-6 md:pointer-events-none sidebar-container-collapsed' : 'md:w-24 md:opacity-100 md:translate-x-0 sidebar-container-expanded'}`}
+      className={`sidebar-container board-sidebar flex-shrink-0 w-full md:h-[85vh] flex flex-row md:flex-col items-center justify-center md:justify-start gap-8 p-4 md:pt-12 z-20 bg-white transition-all duration-300 ease-out overflow-hidden ${isCollapsed ? 'md:w-0 md:min-w-0 md:max-w-0 md:p-0 md:gap-0 md:opacity-0 md:-translate-x-6 md:pointer-events-none sidebar-container-collapsed' : 'md:w-24 md:opacity-100 md:translate-x-0 sidebar-container-expanded'}`}
     >
       {navItems.map((item) => {
         const isActive = activeModule === item.id;
         return (
           <button
             key={item.id}
-            onClick={() => onSwitch(item.id as any)}
+            onClick={() => handleNavClick(item.id as 'calendar' | 'alarm' | 'history' | 'diary')}
             aria-label={item.label}
             title={item.label}
             className={`sidebar-nav-${item.id} group flex flex-col items-center gap-2 relative transition-all duration-200 ${isCollapsed ? 'md:gap-1.5' : ''}`}
