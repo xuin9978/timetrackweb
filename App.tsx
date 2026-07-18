@@ -1049,7 +1049,7 @@ const App: React.FC = () => {
               onToggleSidebarCollapsed={() => setIsSidebarCollapsed(prev => !prev)}
             />
               {!currentUser && events.length === 0 && (
-                <div className="absolute inset-0 flex items-center justify中心">
+                <div className="absolute inset-0 flex items-center justify-center">
                   <div className="px-4 py-2 rounded-xl bg-white border border-gray-200 shadow-sm text-gray-600 text-sm">请先登录以查看日程</div>
                 </div>
               )}
@@ -1079,7 +1079,14 @@ const App: React.FC = () => {
             />
           )}
           {activeModule === 'diary' && (
-            <Diary onWeeklyModeChange={setIsSidebarCollapsed} />
+            <div className={`flex-1 ${!currentUser ? 'pointer-events-none opacity-60' : ''}`}>
+              <Diary onWeeklyModeChange={setIsSidebarCollapsed} />
+              {!currentUser && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="px-4 py-2 rounded-xl bg-white border border-gray-200 shadow-sm text-gray-600 text-sm">请先登录以查看日记</div>
+                </div>
+              )}
+            </div>
           )}
         </div>
       </div>
