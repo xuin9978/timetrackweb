@@ -1056,27 +1056,41 @@ const App: React.FC = () => {
             </div>
           )}
           {activeModule === 'alarm' && (
-            <Alarm
-              alarmState={alarmState}
-              onStart={handleAlarmStart}
-              onPause={handleAlarmPause}
-              onReset={handleAlarmReset}
-              onSetMode={handleSetAlarmMode}
-              onSetDuration={handleSetTimerDuration}
-              onOpenLogSessionModal={openLogSessionModal}
-            />
+            <div className={`flex-1 ${!currentUser ? 'pointer-events-none opacity-60' : ''}`}>
+              <Alarm
+                alarmState={alarmState}
+                onStart={handleAlarmStart}
+                onPause={handleAlarmPause}
+                onReset={handleAlarmReset}
+                onSetMode={handleSetAlarmMode}
+                onSetDuration={handleSetTimerDuration}
+                onOpenLogSessionModal={openLogSessionModal}
+              />
+              {!currentUser && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="px-4 py-2 rounded-xl bg-white border border-gray-200 shadow-sm text-gray-600 text-sm">请先登录以使用闹钟</div>
+                </div>
+              )}
+            </div>
           )}
           {activeModule === 'history' && (
-            <History
-              events={events}
-              tags={tags}
-              onOpenModal={openModal}
-              onAddTag={handleAddTag}
-              onUpdateTag={handleUpdateTag}
-              onDeleteTag={handleDeleteTag}
-              onReorderTags={handleReorderTags}
-              onSaveOrder={handleSaveTagOrder}
-            />
+            <div className={`flex-1 ${!currentUser ? 'pointer-events-none opacity-60' : ''}`}>
+              <History
+                events={events}
+                tags={tags}
+                onOpenModal={openModal}
+                onAddTag={handleAddTag}
+                onUpdateTag={handleUpdateTag}
+                onDeleteTag={handleDeleteTag}
+                onReorderTags={handleReorderTags}
+                onSaveOrder={handleSaveTagOrder}
+              />
+              {!currentUser && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="px-4 py-2 rounded-xl bg-white border border-gray-200 shadow-sm text-gray-600 text-sm">请先登录以查看历史</div>
+                </div>
+              )}
+            </div>
           )}
           {activeModule === 'diary' && (
             <div className={`flex-1 ${!currentUser ? 'pointer-events-none opacity-60' : ''}`}>
