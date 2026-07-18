@@ -1,0 +1,1807 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Liquid Calendar 手机端动态原型</title>
+  <style>
+    :root {
+      --bg: #eef0f5;
+      --surface: #fbfbfd;
+      --raised: #ffffff;
+      --muted-surface: #f5f7fb;
+      --text: #4f5868;
+      --strong: #111827;
+      --muted: #8d96a8;
+      --faint: #c6ccd8;
+      --line: rgba(93, 104, 122, 0.13);
+      --line-strong: rgba(93, 104, 122, 0.2);
+      --active: #050506;
+      --accent: #8d98ff;
+      --red: #ff6f7f;
+      --blue: #2787ff;
+      --green: #1fc77e;
+      --status-height: 60px;
+      --nav-height: 102px;
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --shadow: 0 18px 42px rgba(28, 36, 55, 0.12);
+      --soft-shadow: 0 8px 20px rgba(43, 53, 75, 0.06);
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html,
+    body {
+      margin: 0;
+      width: 100%;
+      min-height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", sans-serif;
+      letter-spacing: 0;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+      color: inherit;
+    }
+
+    button {
+      border: 0;
+      cursor: pointer;
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+
+    .phone-app {
+      position: relative;
+      width: 100vw;
+      max-width: 430px;
+      height: 100vh;
+      height: 100dvh;
+      margin: 0;
+      overflow: hidden;
+      background: var(--bg);
+      border-left: 1px solid rgba(129, 140, 158, 0.12);
+      border-right: 1px solid rgba(129, 140, 158, 0.12);
+    }
+
+    .screen {
+      position: absolute;
+      inset: var(--status-height) 0 calc(var(--nav-height) + var(--safe-bottom)) 0;
+      display: none;
+      overflow: hidden;
+      background: var(--bg);
+      transition: inset 220ms ease;
+    }
+
+    .phone-app.nav-hidden .screen {
+      inset: var(--status-height) 0 var(--safe-bottom) 0;
+    }
+
+    .status-bar {
+      position: absolute;
+      inset: 0 0 auto 0;
+      height: var(--status-height);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 48px 0;
+      color: #050506;
+      font-size: 20px;
+      font-weight: 800;
+      line-height: 1;
+      z-index: 35;
+      pointer-events: none;
+    }
+
+    .status-left,
+    .status-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-moon {
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      background: #050506;
+      box-shadow: 5px 0 0 #eef0f5;
+    }
+
+    .signal {
+      display: grid;
+      grid-template-columns: repeat(4, 4px);
+      align-items: end;
+      gap: 3px;
+      height: 18px;
+    }
+
+    .signal span {
+      width: 4px;
+      border-radius: 999px;
+      background: #050506;
+    }
+
+    .signal span:nth-child(1) { height: 5px; }
+    .signal span:nth-child(2) { height: 8px; }
+    .signal span:nth-child(3) { height: 12px; opacity: 0.55; }
+    .signal span:nth-child(4) { height: 16px; opacity: 0.28; }
+
+    .wifi {
+      width: 22px;
+      height: 15px;
+      position: relative;
+    }
+
+    .wifi::before,
+    .wifi::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      border: 3px solid #050506;
+      border-bottom: 0;
+      border-radius: 22px 22px 0 0;
+      transform: translateX(-50%);
+    }
+
+    .wifi::before {
+      top: 0;
+      width: 22px;
+      height: 12px;
+    }
+
+    .wifi::after {
+      top: 7px;
+      width: 11px;
+      height: 6px;
+    }
+
+    .battery {
+      min-width: 33px;
+      height: 18px;
+      display: grid;
+      place-items: center;
+      border-radius: 6px;
+      background: #050506;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+    }
+
+    .screen.active {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .calendar-screen {
+      background: var(--surface);
+    }
+
+    .topbar {
+      flex-shrink: 0;
+      padding: 16px 14px 10px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(251, 251, 253, 0.96);
+      overflow: hidden;
+    }
+
+    .title-row,
+    .action-row,
+    .nav,
+    .modal-actions,
+    .drawer-header,
+    .panel-title-row {
+      display: flex;
+      align-items: center;
+    }
+
+    .title-row {
+      justify-content: space-between;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .month-title {
+      margin: 0;
+      color: #596171;
+      font-size: 25px;
+      line-height: 1.05;
+      font-weight: 800;
+    }
+
+    .year-label {
+      margin: 2px 0 0;
+      color: #949dae;
+      font-size: 13px;
+      line-height: 1.2;
+      font-weight: 600;
+    }
+
+    .session-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 28px;
+      padding: 0 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.78);
+      color: #727b8d;
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+      box-shadow: var(--soft-shadow);
+    }
+
+    .session-avatar {
+      width: 18px;
+      height: 18px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: #111827;
+      color: #fff;
+      font-size: 10px;
+      font-weight: 900;
+    }
+
+    .icon-btn,
+    .pill-btn,
+    .nav-btn,
+    .close-btn {
+      display: grid;
+      place-items: center;
+      background: rgba(255, 255, 255, 0.72);
+      border: 1px solid var(--line);
+      color: #99a2b3;
+      box-shadow: 0 1px 0 rgba(255, 255, 255, 0.85);
+    }
+
+    .icon-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+    }
+
+    .pill-btn {
+      min-width: 44px;
+      height: 30px;
+      padding: 0 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .action-row {
+      justify-content: flex-start;
+      gap: 10px;
+      margin-top: 17px;
+    }
+
+    .action-row .detail-inline {
+      margin-left: auto;
+    }
+
+    .icon-btn.is-active {
+      background: #111827;
+      border-color: #111827;
+      color: #fff;
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
+    }
+
+    .quick-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .calendar-body {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow: hidden;
+      background: var(--surface);
+    }
+
+    #calendarContent {
+      height: 100%;
+      min-height: 0;
+    }
+
+    .day-dashboard {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      padding: 0 14px 14px;
+      overflow: hidden;
+      background: var(--surface);
+    }
+
+    .day-summary-card {
+      flex: 1 1 auto;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      border-left: 1px solid var(--line);
+      border-right: 1px solid var(--line);
+      background: rgba(251, 251, 253, 0.92);
+    }
+
+    .day-content {
+      position: relative;
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-y: auto;
+      padding: 0;
+      scrollbar-width: none;
+    }
+
+    .day-content::-webkit-scrollbar {
+      display: none;
+    }
+
+    .day-empty {
+      min-height: 390px;
+      display: grid;
+      place-items: center;
+      color: #99a2b3;
+      text-align: center;
+    }
+
+    .day-empty-icon {
+      width: 58px;
+      height: 58px;
+      display: grid;
+      place-items: center;
+      margin: 0 auto;
+      border-radius: 50%;
+      background: radial-gradient(circle at 45% 35%, rgba(255, 255, 255, 0.95), rgba(247, 248, 251, 0.48));
+      color: #d5dae5;
+    }
+
+    .signin-bubble {
+      display: inline-grid;
+      place-items: center;
+      height: 39px;
+      margin-top: -10px;
+      padding: 0 16px;
+      border: 1px solid var(--line-strong);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.94);
+      box-shadow: var(--soft-shadow);
+      color: #8d95a5;
+      font-size: 14px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .day-empty p {
+      margin: 6px 0 0;
+      color: #949cab;
+      font-size: 15px;
+      font-weight: 800;
+    }
+
+    .day-event-list {
+      display: grid;
+      gap: 10px;
+      padding-bottom: 12px;
+    }
+
+    .day-event-card {
+      display: grid;
+      grid-template-columns: 4px 1fr;
+      gap: 11px;
+      align-items: center;
+      min-height: 64px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: linear-gradient(145deg, #fff, #f7f8fb);
+      box-shadow: var(--soft-shadow);
+      text-align: left;
+    }
+
+    .day-event-card .bar {
+      width: 4px;
+      height: 40px;
+      border-radius: 999px;
+      background: var(--blue);
+    }
+
+    .day-event-card strong {
+      display: block;
+      color: #596171;
+      font-size: 14px;
+      line-height: 1.25;
+    }
+
+    .day-event-card small {
+      display: block;
+      margin-top: 3px;
+      color: #8c95a7;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .day-timeline {
+      position: relative;
+      min-height: 1440px;
+      padding: 0 10px 0 0;
+      background: transparent;
+    }
+
+    .hour-row {
+      position: relative;
+      display: grid;
+      grid-template-columns: 48px 1fr;
+      height: 60px;
+    }
+
+    .hour-label {
+      position: relative;
+      top: -8px;
+      padding-right: 8px;
+      color: #aeb5c3;
+      font-size: 10px;
+      font-weight: 500;
+      text-align: right;
+    }
+
+    .hour-line {
+      border-top: 1px solid rgba(112, 123, 143, 0.12);
+    }
+
+    .timeline-events {
+      position: absolute;
+      inset: 0 10px 0 48px;
+      pointer-events: none;
+    }
+
+    .apple-event-block {
+      position: absolute;
+      left: 4px;
+      right: 4px;
+      min-height: 18px;
+      padding: 4px 6px;
+      border-left: 3px solid var(--event-border);
+      border-radius: 3px;
+      background: color-mix(in srgb, var(--event-border) 14%, transparent);
+      box-shadow: none;
+      text-align: left;
+      overflow: hidden;
+      pointer-events: auto;
+      transition: filter 100ms ease-out;
+    }
+
+    .apple-event-block:hover {
+      filter: brightness(1.06) saturate(1.05);
+    }
+
+    .apple-event-block strong {
+      display: block;
+      color: var(--event-text);
+      font-size: 12px;
+      font-weight: 500;
+      line-height: 1.15;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      overflow-wrap: anywhere;
+    }
+
+    .apple-event-block small {
+      display: block;
+      margin-top: 2px;
+      color: var(--event-subtle);
+      font-size: 10px;
+      font-weight: 400;
+      line-height: 1.1;
+      white-space: nowrap;
+    }
+
+    .timeline-now {
+      position: absolute;
+      left: 48px;
+      right: 10px;
+      top: calc((9 * 60px) + 21px);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      color: #ff6f7f;
+      font-size: 10px;
+      font-weight: 900;
+      pointer-events: none;
+      z-index: 20;
+    }
+
+    .timeline-now::before {
+      content: "";
+      height: 18px;
+      min-width: 34px;
+      display: block;
+      border-radius: 4px;
+      background: #ff6f7f;
+    }
+
+    .timeline-now::after {
+      content: "";
+      height: 1px;
+      flex: 1;
+      background: rgba(255, 111, 127, 0.82);
+    }
+
+    .timeline-now span {
+      position: absolute;
+      left: 5px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .home-insights {
+      flex-shrink: 0;
+      padding: 14px 12px 0;
+      border-top: 1px solid var(--line-strong);
+      background: rgba(251, 251, 253, 0.92);
+    }
+
+    .panel-screen {
+      padding: 8px 0 0;
+      background: var(--bg);
+    }
+
+    .module-card {
+      width: 100%;
+      height: 100%;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 30px;
+      background: var(--surface);
+      overflow-y: auto;
+    }
+
+    .module-card h1 {
+      margin: 0;
+      color: #596171;
+      font-size: 22px;
+      line-height: 1.2;
+    }
+
+    .module-card p {
+      color: #929bab;
+    }
+
+    .nav {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: calc(var(--nav-height) + var(--safe-bottom));
+      justify-content: space-around;
+      gap: 16px;
+      padding: 14px 28px calc(18px + var(--safe-bottom));
+      border: 1px solid var(--line);
+      border-bottom: 0;
+      border-radius: 28px 28px 0 0;
+      background: rgba(255, 255, 255, 0.96);
+      box-shadow: 0 -14px 34px rgba(32, 42, 60, 0.08);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      z-index: 30;
+      transition: transform 240ms cubic-bezier(0.22, 1, 0.36, 1), opacity 180ms ease;
+      will-change: transform;
+    }
+
+    .phone-app.nav-hidden .nav {
+      transform: translateY(calc(100% + var(--safe-bottom) + 12px));
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .nav-btn {
+      width: 52px;
+      height: 52px;
+      border-radius: 16px;
+    }
+
+    .nav-btn.add {
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+    }
+
+    .nav-btn.active {
+      background: var(--active);
+      border-color: var(--active);
+      color: #fff;
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.22);
+    }
+
+    .drawer-backdrop,
+    .sheet-backdrop,
+    .modal-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(20, 28, 42, 0.2);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 210ms ease;
+      z-index: 40;
+    }
+
+    .drawer-backdrop {
+      bottom: calc(var(--nav-height) + var(--safe-bottom));
+    }
+
+    .phone-app.nav-hidden .drawer-backdrop {
+      bottom: var(--safe-bottom);
+    }
+
+    .drawer-backdrop.open,
+    .sheet-backdrop.open,
+    .modal-backdrop.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .drawer,
+    .sheet,
+    .modal {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: calc(var(--nav-height) + var(--safe-bottom));
+      transform: translateY(calc(100% + var(--nav-height) + var(--safe-bottom) + 12px));
+      transition: transform 280ms cubic-bezier(0.22, 1, 0.36, 1);
+      z-index: 50;
+    }
+
+    .phone-app.nav-hidden .drawer,
+    .phone-app.nav-hidden .sheet,
+    .phone-app.nav-hidden .modal {
+      bottom: var(--safe-bottom);
+    }
+
+    .drawer.open,
+    .sheet.open,
+    .modal.open {
+      transform: translateY(0);
+    }
+
+    .drawer {
+      height: min(70vh, calc(100dvh - var(--nav-height) - 24px));
+      display: flex;
+      flex-direction: column;
+      padding: 8px 14px 14px;
+      border: 1px solid var(--line);
+      border-bottom: 0;
+      border-radius: 27px 27px 0 0;
+      background: rgba(255, 255, 255, 0.97);
+      box-shadow: 0 -20px 48px rgba(20, 28, 42, 0.18);
+      backdrop-filter: blur(22px);
+      -webkit-backdrop-filter: blur(22px);
+    }
+
+    .handle {
+      width: 42px;
+      height: 5px;
+      margin: 2px auto 10px;
+      border-radius: 999px;
+      background: rgba(151, 160, 174, 0.38);
+      flex-shrink: 0;
+    }
+
+    .drawer-header,
+    .panel-title-row {
+      justify-content: space-between;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+
+    .kicker {
+      color: #a0a7b5;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 0.12em;
+    }
+
+    .drawer h2,
+    .sheet h2,
+    .modal h2 {
+      margin: 2px 0 0;
+      color: var(--strong);
+      font-size: 18px;
+      line-height: 1.2;
+    }
+
+    .drawer-content {
+      min-height: 0;
+      flex: 1;
+      overflow-y: auto;
+      padding-top: 10px;
+      scrollbar-width: none;
+    }
+
+    .drawer-content::-webkit-scrollbar {
+      display: none;
+    }
+
+    .event-panel {
+      min-height: 100%;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.82);
+    }
+
+    .panel-title-row h3 {
+      margin: 0;
+      color: #596171;
+      font-size: 17px;
+      line-height: 1.2;
+    }
+
+    .panel-title-row p {
+      margin: 4px 0 0;
+      color: #969dad;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .event-list {
+      margin-top: 18px;
+      min-height: 220px;
+    }
+
+    .panel-empty {
+      height: 220px;
+      display: grid;
+      place-items: center;
+      color: #9aa3b3;
+      text-align: center;
+    }
+
+    .panel-empty strong {
+      display: block;
+      margin-top: 8px;
+      font-size: 15px;
+    }
+
+    .panel-event {
+      display: grid;
+      grid-template-columns: 4px 1fr auto;
+      gap: 10px;
+      align-items: center;
+      padding: 12px;
+      margin-bottom: 10px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--muted-surface);
+    }
+
+    .panel-event .bar {
+      width: 4px;
+      height: 38px;
+      border-radius: 999px;
+      background: var(--blue);
+    }
+
+    .panel-event h4 {
+      margin: 0;
+      color: #475061;
+      font-size: 14px;
+    }
+
+    .panel-event p {
+      margin: 2px 0 0;
+      color: #8d96a8;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .delete-event {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #fff;
+      color: #a0a8b7;
+      border: 1px solid var(--line);
+    }
+
+    .insights {
+      margin-top: 16px;
+      padding-top: 12px;
+      border-top: 1px solid var(--line);
+    }
+
+    .insight-title {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 10px;
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .stat {
+      min-height: 58px;
+      padding: 11px;
+      border-radius: 13px;
+      background: linear-gradient(145deg, #fff, #f7f8fb);
+      box-shadow: var(--soft-shadow);
+    }
+
+    .stat span {
+      display: block;
+      color: #aab2c0;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .stat strong {
+      display: block;
+      margin-top: 4px;
+      color: #6f7889;
+      font-size: 12px;
+    }
+
+    .sheet,
+    .modal {
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-bottom: 0;
+      border-radius: 26px 26px 0 0;
+      background: rgba(255, 255, 255, 0.98);
+      box-shadow: 0 -18px 42px rgba(20, 28, 42, 0.16);
+    }
+
+    .sheet {
+      min-height: 260px;
+    }
+
+    .modal {
+      min-height: 440px;
+    }
+
+    .close-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+    }
+
+    .field label {
+      color: #8d96a8;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .field input,
+    .field select,
+    .field textarea {
+      width: 100%;
+      min-height: 45px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: #f8f9fc;
+      outline: none;
+      color: #4e5869;
+      font-size: 15px;
+    }
+
+    .field textarea {
+      resize: none;
+      min-height: 82px;
+    }
+
+    .modal-actions {
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary {
+      height: 42px;
+      padding: 0 16px;
+      border-radius: 13px;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .primary {
+      background: #111827;
+      color: #fff;
+    }
+
+    .secondary {
+      background: #f2f4f8;
+      color: #7c8698;
+      border: 1px solid var(--line);
+    }
+
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .chip {
+      height: 36px;
+      padding: 0 13px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #f8f9fc;
+      color: #7b8495;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .chip.active {
+      background: #111827;
+      color: #fff;
+      border-color: #111827;
+    }
+
+    .toast {
+      position: absolute;
+      left: 18px;
+      right: 18px;
+      bottom: calc(var(--nav-height) + var(--safe-bottom) + 12px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 10px 14px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: rgba(17, 24, 39, 0.92);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      box-shadow: var(--shadow);
+      opacity: 0;
+      transform: translateY(12px);
+      pointer-events: none;
+      transition: opacity 180ms ease, transform 180ms ease;
+      z-index: 80;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .timer-card {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 52px 24px 30px;
+      border-radius: 30px;
+      background: #fff;
+      box-shadow: 0 2px 10px rgba(35, 45, 65, 0.03);
+    }
+
+    .timer-center {
+      flex: 0 0 58%;
+      width: 100%;
+      min-height: 0;
+      display: grid;
+      place-items: center;
+      padding-bottom: 8px;
+    }
+
+    .timer-face {
+      width: 100%;
+      margin: 0;
+      color: #050506;
+      font-size: clamp(64px, 19vw, 86px);
+      font-weight: 500;
+      line-height: 1;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.06em;
+    }
+
+    .timer-start {
+      width: 96px;
+      height: 96px;
+      margin-top: 0;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: #e3f5ec;
+      color: #218a3c;
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .timer-start.is-running {
+      background: #ffe8e8;
+      color: #d14c4c;
+    }
+
+    .timer-mode {
+      display: flex;
+      justify-content: center;
+      gap: 18px;
+      width: 100%;
+      margin-top: 18px;
+    }
+
+    .timer-mode button {
+      min-width: 112px;
+      height: 38px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fff;
+      color: #9aa2af;
+      font-size: 17px;
+      font-weight: 700;
+      box-shadow: 0 1px 8px rgba(35, 45, 65, 0.03);
+    }
+
+    .timer-mode button.active {
+      border-color: rgba(213, 118, 42, 0.24);
+      background: #fffaf2;
+      color: #d75b18;
+    }
+
+    .history-card {
+      height: 100%;
+      padding: 26px 25px 28px;
+      border-radius: 30px;
+      background: #fff;
+      overflow: hidden;
+    }
+
+    .history-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      padding-bottom: 28px;
+      border-bottom: 1px solid rgba(93, 104, 122, 0.08);
+    }
+
+    .history-date {
+      height: 50px;
+      flex: 1 1 auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 16px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fff;
+      color: #050506;
+      font-size: 21px;
+      font-weight: 800;
+      white-space: nowrap;
+      box-shadow: 0 1px 4px rgba(35, 45, 65, 0.03);
+    }
+
+    .history-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+
+    .history-actions button {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      background: #fff;
+      color: #69717f;
+    }
+
+    .history-list {
+      height: calc(100% - 79px);
+      display: grid;
+      align-content: start;
+      gap: 20px;
+      padding-top: 30px;
+      overflow-y: auto;
+      scrollbar-width: none;
+    }
+
+    .history-list::-webkit-scrollbar {
+      display: none;
+    }
+
+    .history-empty {
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      color: #8d96a8;
+      text-align: center;
+      font-weight: 700;
+    }
+
+    .history-item {
+      min-height: 56px;
+      display: grid;
+      grid-template-columns: 36px minmax(0, 1fr);
+      gap: 12px;
+      align-items: center;
+      padding: 9px 13px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      background: #fff;
+      box-shadow: 0 1px 8px rgba(35, 45, 65, 0.03);
+    }
+
+    .history-icon {
+      width: 36px;
+      height: 36px;
+      display: grid;
+      place-items: center;
+      border-radius: 7px;
+      background: #ffe1e8;
+      font-size: 19px;
+    }
+
+    .history-icon.blue {
+      background: #dff5ff;
+    }
+
+    .history-icon.orange {
+      background: #fff0db;
+    }
+
+    .history-item h3 {
+      margin: 0;
+      color: #111;
+      font-size: 15px;
+      line-height: 1.2;
+      font-weight: 800;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .history-meta {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin-top: 4px;
+      color: #a0a4ad;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .history-meta code {
+      padding: 1px 6px;
+      border-radius: 5px;
+      background: #fafafa;
+      font-family: inherit;
+      color: #9499a3;
+    }
+
+    .full-btn {
+      width: 100%;
+      height: 48px;
+      margin-top: 10px;
+      border-radius: 15px;
+      background: #111827;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 800;
+    }
+
+    .list-card {
+      margin-top: 14px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: #fff;
+    }
+
+    svg {
+      width: 19px;
+      height: 19px;
+      stroke: currentColor;
+      stroke-width: 1.9;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+    }
+  </style>
+</head>
+<body>
+  <main class="phone-app">
+    <div class="status-bar" aria-hidden="true">
+      <div class="status-left">
+        <span>17:06</span>
+        <span class="status-moon"></span>
+      </div>
+      <div class="status-right">
+        <span class="signal"><span></span><span></span><span></span><span></span></span>
+        <span class="wifi"></span>
+        <span class="battery">100</span>
+      </div>
+    </div>
+
+    <section class="screen calendar-screen active" data-screen="calendar">
+      <header class="topbar">
+        <div class="title-row">
+          <div>
+            <h1 class="month-title" id="monthTitle">日程</h1>
+            <p class="year-label" id="yearLabel">2026年 07月 18日 星期六</p>
+          </div>
+          <div class="session-pill" id="sessionPill">
+            <span class="session-avatar">A</span>
+            <span>已同步</span>
+          </div>
+          <div class="quick-actions date-nav" hidden>
+            <button class="icon-btn" id="prevBtn" aria-label="上一页"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+            <button class="icon-btn" id="nextBtn" aria-label="下一页"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></button>
+          </div>
+        </div>
+        <div class="action-row">
+          <button class="pill-btn" id="topTimerBtn" aria-label="计时"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M10 2h4"/><path d="M12 14l3-3"/></svg></button>
+          <button class="pill-btn" id="topHistoryBtn" aria-label="历史"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v6h6"/></svg></button>
+          <button class="pill-btn" id="filterBtn" aria-label="筛选"><svg viewBox="0 0 24 24"><path d="M4 5h16l-6.5 7.2V18l-3 1v-6.8L4 5z"/></svg></button>
+          <button class="icon-btn" id="toggleNavBtn" aria-label="隐藏底部导航"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 16h8"/><path d="m9 10 3 3 3-3"/></svg></button>
+          <button class="icon-btn detail-inline" id="topDetailsBtn" aria-label="打开日程详情看板"><svg viewBox="0 0 24 24"><path d="M8 2v4"/><path d="M16 2v4"/><path d="M3 9h18"/><rect x="4" y="5" width="16" height="16" rx="2"/></svg></button>
+          <button class="icon-btn add-inline" id="quickAddBtn" aria-label="新增日程"><svg viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg></button>
+        </div>
+      </header>
+      <div class="calendar-body">
+        <div id="calendarContent"></div>
+      </div>
+    </section>
+
+    <section class="screen panel-screen" data-screen="timer">
+      <div class="module-card timer-card">
+        <div class="timer-center">
+          <div class="timer-face" id="timerFace">00:00:00</div>
+        </div>
+        <button class="timer-start" id="timerToggle">启动</button>
+        <div class="timer-mode" aria-label="计时模式">
+          <button class="active" type="button">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="14" r="7"/><path d="M10 2h4"/><path d="M12 14l3-3"/></svg>
+            秒表
+          </button>
+          <button type="button" id="timerReset">
+            <svg viewBox="0 0 24 24"><path d="M6 2h12"/><path d="M6 22h12"/><path d="M8 2c0 5 8 5 8 10s-8 5-8 10"/><path d="M16 2c0 5-8 5-8 10s8 5 8 10"/></svg>
+            计时器
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen panel-screen" data-screen="history">
+      <div class="module-card history-card">
+        <div class="history-toolbar">
+          <div class="history-date">
+            <svg viewBox="0 0 24 24"><path d="M8 2v4"/><path d="M16 2v4"/><path d="M3 9h18"/><rect x="4" y="5" width="16" height="16" rx="2"/></svg>
+            <span>2026年 7月 18日</span>
+          </div>
+          <div class="history-actions">
+            <button type="button" aria-label="秒表"><svg viewBox="0 0 24 24"><circle cx="12" cy="14" r="7"/><path d="M10 2h4"/><path d="M12 14l3-3"/></svg></button>
+            <button type="button" aria-label="筛选"><svg viewBox="0 0 24 24"><path d="M4 5h16l-6.5 7.2V18l-3 1v-6.8L4 5z"/></svg></button>
+            <button type="button" aria-label="标签"><svg viewBox="0 0 24 24"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><path d="M7 7h.01"/></svg></button>
+          </div>
+        </div>
+        <div class="history-list" id="historyList"></div>
+      </div>
+    </section>
+
+    <nav class="nav" aria-label="手机端导航">
+      <button class="nav-btn" data-nav="timer" aria-label="计时"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v6l3 2"/></svg></button>
+      <button class="nav-btn" data-nav="history" aria-label="历史"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v6h6"/></svg></button>
+      <button class="nav-btn add" id="navAdd" aria-label="新增"><svg viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg></button>
+      <button class="nav-btn active" data-nav="details" aria-label="日程详情"><svg viewBox="0 0 24 24"><path d="M8 2v4"/><path d="M16 2v4"/><path d="M3 9h18"/><rect x="4" y="5" width="16" height="16" rx="2"/></svg></button>
+      <button class="nav-btn" data-nav="account" aria-label="账户"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></button>
+    </nav>
+
+    <div class="drawer-backdrop" id="drawerBackdrop"></div>
+    <aside class="drawer" id="detailsDrawer" aria-label="日程详情抽屉">
+      <div class="handle"></div>
+      <div class="drawer-header">
+        <div>
+          <div class="kicker">DETAILS</div>
+          <h2>日程详情</h2>
+        </div>
+        <button class="close-btn" id="closeDrawer" aria-label="关闭详情"><svg viewBox="0 0 24 24"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg></button>
+      </div>
+      <div class="drawer-content">
+        <div class="event-panel">
+          <div class="panel-title-row">
+            <div>
+              <h3>日程</h3>
+              <p id="panelDate">2026年 07月 18日 星期六</p>
+            </div>
+            <button class="icon-btn" id="drawerAdd" aria-label="新增日程"><svg viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg></button>
+          </div>
+          <div class="event-list" id="drawerEvents"></div>
+          <div class="insights">
+            <div class="insight-title"><span class="dot"></span>智能洞察</div>
+            <div class="stats" id="insights"></div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <div class="sheet-backdrop" id="sheetBackdrop"></div>
+    <section class="sheet" id="filterSheet">
+      <div class="drawer-header">
+        <div>
+          <div class="kicker">FILTER</div>
+          <h2>筛选标签</h2>
+        </div>
+        <button class="close-btn" id="closeSheet" aria-label="关闭筛选"><svg viewBox="0 0 24 24"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg></button>
+      </div>
+      <div class="chip-row" id="tagChips"></div>
+    </section>
+
+    <div class="modal-backdrop" id="modalBackdrop"></div>
+    <section class="modal" id="eventModal">
+      <div class="drawer-header">
+        <div>
+          <div class="kicker">CREATE</div>
+          <h2>新增日程</h2>
+        </div>
+        <button class="close-btn" id="closeModal" aria-label="关闭新增"><svg viewBox="0 0 24 24"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg></button>
+      </div>
+      <form class="form-grid" id="eventForm">
+        <div class="field">
+          <label for="eventTitle">标题</label>
+          <input id="eventTitle" autocomplete="off" placeholder="例如：产品设计讨论" />
+        </div>
+        <div class="field">
+          <label for="eventTag">标签</label>
+          <select id="eventTag"></select>
+        </div>
+        <div class="field">
+          <label for="eventStart">开始时间</label>
+          <input id="eventStart" type="time" value="09:00" />
+        </div>
+        <div class="field">
+          <label for="eventEnd">结束时间</label>
+          <input id="eventEnd" type="time" value="10:00" />
+        </div>
+        <div class="field">
+          <label for="eventNote">备注</label>
+          <textarea id="eventNote" placeholder="可选"></textarea>
+        </div>
+        <div class="modal-actions">
+          <button class="secondary" type="button" id="cancelEvent">取消</button>
+          <button class="primary" type="submit">保存</button>
+        </div>
+      </form>
+    </section>
+
+    <div class="toast" id="toast"></div>
+  </main>
+
+  <script>
+    const weekNames = ['周日','周一','周二','周三','周四','周五','周六'];
+    const tags = [
+      { id: 'work', label: '工作', color: '#2787ff' },
+      { id: 'study', label: '学习', color: '#8d98ff' },
+      { id: 'life', label: '生活', color: '#1fc77e' },
+      { id: 'focus', label: '专注', color: '#ff9f43' }
+    ];
+    const sampleHistory = [
+      { title: '解决网站部署的DNS，搞定国内域名访问的问题', start: '09:10', end: '10:38', icon: '☀️', tone: 'pink', date: new Date(2026, 6, 18) },
+      { title: '复盘面试回顾，整理面试的问题，12点的时候和老妈打了...', start: '10:38', end: '13:18', icon: '☀️', tone: 'pink', date: new Date(2026, 6, 18) },
+      { title: '午休', start: '13:18', end: '14:13', icon: '🌀', tone: 'blue', date: new Date(2026, 6, 18) },
+      { title: '整理Alice的方法论', start: '14:13', end: '15:18', icon: '🌇', tone: 'orange', date: new Date(2026, 6, 18) },
+      { title: '项目 更新时间', start: '15:18', end: '16:17', icon: '🌇', tone: 'orange', date: new Date(2026, 6, 18) }
+    ];
+    const sampleEvents = [
+      { id: 'evt-0910', title: '解决网站部署的DNS，搞定国内域名访问的问题', start: '09:10', end: '10:38', tag: 'work', icon: '☀️', tone: 'pink', date: new Date(2026, 6, 18) },
+      { id: 'evt-1038', title: '复盘面试回顾，整理面试的问题', start: '10:38', end: '13:18', tag: 'study', icon: '☀️', tone: 'pink', date: new Date(2026, 6, 18) },
+      { id: 'evt-1318', title: '午休', start: '13:18', end: '14:13', tag: 'life', icon: '🌀', tone: 'blue', date: new Date(2026, 6, 18) },
+      { id: 'evt-1413', title: '整理Alice的方法论', start: '14:13', end: '15:18', tag: 'focus', icon: '🌇', tone: 'orange', date: new Date(2026, 6, 18) },
+      { id: 'evt-1518', title: '项目更新时间', start: '15:18', end: '16:17', tag: 'work', icon: '🌇', tone: 'orange', date: new Date(2026, 6, 18) }
+    ];
+
+    const state = {
+      user: { name: 'Alice', email: 'alice@example.com', signedIn: true },
+      selectedDate: new Date(2026, 6, 18),
+      activeScreen: 'calendar',
+      activeTags: new Set(tags.map(tag => tag.id)),
+      events: sampleEvents.map(event => ({ ...event, date: new Date(event.date) })),
+      history: sampleHistory.map(item => ({ ...item, date: new Date(item.date) })),
+      timerRunning: false,
+      timerSeconds: 0,
+      timerId: null,
+      dayScrollAnchored: false,
+      navHidden: false
+    };
+
+    const $ = selector => document.querySelector(selector);
+    const $$ = selector => Array.from(document.querySelectorAll(selector));
+    const pad = value => String(value).padStart(2, '0');
+    const isoDate = date => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+    const sameDay = (a, b) => isoDate(a) === isoDate(b);
+    const minutes = time => {
+      const [h, m] = time.split(':').map(Number);
+      return h * 60 + m;
+    };
+
+    function formatDate(date) {
+      return `${date.getFullYear()}年 ${pad(date.getMonth() + 1)}月 ${pad(date.getDate())}日 ${weekNames[date.getDay()]}`;
+    }
+
+    function showToast(text) {
+      const toast = $('#toast');
+      toast.textContent = text;
+      toast.classList.add('show');
+      clearTimeout(showToast.timer);
+      showToast.timer = setTimeout(() => toast.classList.remove('show'), 1800);
+    }
+
+    function setDate(delta) {
+      const next = new Date(state.selectedDate);
+      next.setDate(next.getDate() + delta);
+      state.selectedDate = next;
+      render();
+    }
+
+    function selectedEvents() {
+      return state.events
+        .filter(event => sameDay(event.date, state.selectedDate))
+        .filter(event => state.activeTags.has(event.tag))
+        .sort((a, b) => a.start.localeCompare(b.start));
+    }
+
+    function tagById(id) {
+      return tags.find(tag => tag.id === id) || tags[0];
+    }
+
+    function renderHeader() {
+      $('#monthTitle').textContent = '日程';
+      $('#yearLabel').textContent = formatDate(state.selectedDate);
+      $('#panelDate').textContent = formatDate(state.selectedDate);
+      $('#sessionPill span:last-child').textContent = state.user.signedIn ? '已同步' : '未登录';
+    }
+
+    function renderInsightsHtml(events) {
+      const total = events.reduce((sum, event) => sum + Math.max(0, minutes(event.end) - minutes(event.start)), 0);
+      const topTag = events[0] ? tagById(events[0].tag).label : '暂无';
+      const longest = events.length ? Math.max(...events.map(event => minutes(event.end) - minutes(event.start))) + '分钟' : '暂无';
+      const nextFree = events.length ? '见日程间隔' : '暂无明显空档';
+
+      return `
+        <div class="stat"><span>总时长</span><strong>${total}分钟</strong></div>
+        <div class="stat"><span>最多标签</span><strong>${topTag}</strong></div>
+        <div class="stat"><span>最长连续</span><strong>${longest}</strong></div>
+        <div class="stat"><span>下一段空闲</span><strong>${nextFree}</strong></div>`;
+    }
+
+    function renderDayView() {
+      const list = selectedEvents();
+      const startHour = 0;
+      const endHour = 23;
+      const hourHeight = 60;
+      const hours = Array.from({ length: endHour - startHour + 1 }, (_, index) => startHour + index);
+      const eventsMarkup = list.map(event => {
+        const tag = tagById(event.tag);
+        const duration = minutes(event.end) - minutes(event.start);
+        const top = Math.max(0, minutes(event.start) - startHour * 60) / 60 * hourHeight;
+        const height = Math.max(duration <= 20 ? 14 : 18, duration / 60 * hourHeight - (duration > 20 ? 2 : 0));
+        return `<button class="apple-event-block" data-event-id="${event.id}" style="top:${top}px;height:${height}px;--event-border:${tag.color};--event-text:${tag.color};--event-subtle:color-mix(in srgb, ${tag.color} 82%, #6b7280);background:color-mix(in srgb, ${tag.color} 14%, transparent)">
+          <strong>${event.title}</strong>
+          <small>${event.start}-${event.end}</small>
+        </button>`;
+      }).join('');
+      const hourMarkup = hours.map(hour => `<div class="hour-row">
+        <div class="hour-label">${pad(hour)}:00</div>
+        <div class="hour-line"></div>
+      </div>`).join('');
+      const empty = list.length ? '' : `<div class="day-empty">
+        <div>
+          <div class="day-empty-icon">
+            <svg viewBox="0 0 24 24"><path d="M8 2v4"/><path d="M16 2v4"/><path d="M3 9h18"/><rect x="4" y="5" width="16" height="16" rx="2"/></svg>
+          </div>
+          <div class="signin-bubble">已登录，等待新增日程</div>
+          <p>今日无日程</p>
+        </div>
+      </div>`;
+      return `<div class="day-dashboard">
+        <section class="day-summary-card">
+          <div class="day-content">${list.length ? `<div class="day-timeline">${hourMarkup}<div class="timeline-now"><span>09:21</span></div><div class="timeline-events">${eventsMarkup}</div></div>` : empty}</div>
+        </section>
+      </div>`;
+    }
+
+    function renderCalendar() {
+      const content = $('#calendarContent');
+      content.innerHTML = renderDayView();
+      $$('[data-event-id]').forEach(button => {
+        button.addEventListener('click', openDrawer);
+      });
+      const dayScroller = content.querySelector('.day-content');
+      if (dayScroller && !state.dayScrollAnchored) {
+        requestAnimationFrame(() => {
+          dayScroller.scrollTop = 8 * 60;
+          state.dayScrollAnchored = true;
+        });
+      }
+    }
+
+    function renderDrawer() {
+      const events = selectedEvents();
+      $('#drawerEvents').innerHTML = events.length ? events.map(event => {
+        const tag = tagById(event.tag);
+        return `<article class="panel-event">
+          <span class="bar" style="background:${tag.color}"></span>
+          <div><h4>${event.title}</h4><p>${event.start}-${event.end} · ${tag.label}</p></div>
+          <button class="delete-event" data-delete="${event.id}" aria-label="删除日程">×</button>
+        </article>`;
+      }).join('') : `<div class="panel-empty">
+        <div><svg viewBox="0 0 24 24"><path d="M8 2v4"/><path d="M16 2v4"/><path d="M3 9h18"/><rect x="4" y="5" width="16" height="16" rx="2"/></svg><strong>今日无日程</strong></div>
+      </div>`;
+
+      $('#insights').innerHTML = renderInsightsHtml(events);
+      $$('[data-delete]').forEach(button => {
+        button.addEventListener('click', () => {
+          state.events = state.events.filter(event => event.id !== button.dataset.delete);
+          showToast('已删除日程');
+          render();
+        });
+      });
+    }
+
+    function renderFilters() {
+      $('#tagChips').innerHTML = tags.map(tag => `<button class="chip ${state.activeTags.has(tag.id) ? 'active' : ''}" data-tag="${tag.id}">${tag.label}</button>`).join('');
+      $('#eventTag').innerHTML = tags.map(tag => `<option value="${tag.id}">${tag.label}</option>`).join('');
+      $$('[data-tag]').forEach(button => {
+        button.addEventListener('click', () => {
+          if (state.activeTags.has(button.dataset.tag)) state.activeTags.delete(button.dataset.tag);
+          else state.activeTags.add(button.dataset.tag);
+          render();
+        });
+      });
+    }
+
+    function renderHistory() {
+      const historyItems = state.history.length ? state.history : sampleHistory;
+      $('#historyList').innerHTML = historyItems.length ? historyItems.map(item => {
+        const duration = Math.max(0, minutes(item.end) - minutes(item.start));
+        const hours = Math.floor(duration / 60);
+        const mins = duration % 60;
+        const durationText = hours ? `${hours}小时 ${mins ? mins + '分钟' : ''}` : `${mins}分钟`;
+
+        return `<article class="history-item">
+          <span class="history-icon ${item.tone || 'pink'}">${item.icon || '☀️'}</span>
+          <div>
+            <h3>${item.title}</h3>
+            <div class="history-meta">
+              <code>${item.start} - ${item.end}</code>
+              <span>◷ ${durationText}</span>
+            </div>
+          </div>
+        </article>`;
+      }).join('') : '<div class="history-empty">暂无历史记录</div>';
+    }
+
+    function renderTimer() {
+      const hours = Math.floor(state.timerSeconds / 3600);
+      const mins = Math.floor((state.timerSeconds % 3600) / 60);
+      const secs = state.timerSeconds % 60;
+      $('#timerFace').textContent = `${pad(hours)}:${pad(mins)}:${pad(secs)}`;
+      $('#timerToggle').textContent = state.timerRunning ? '暂停' : '启动';
+      $('#timerToggle').classList.toggle('is-running', state.timerRunning);
+    }
+
+    function applyBottomNavState() {
+      $('.phone-app').classList.toggle('nav-hidden', state.navHidden);
+      $('#toggleNavBtn').classList.toggle('is-active', state.navHidden);
+      $('#toggleNavBtn').setAttribute('aria-label', state.navHidden ? '显示底部导航' : '隐藏底部导航');
+    }
+
+    function toggleBottomNav() {
+      state.navHidden = !state.navHidden;
+      applyBottomNavState();
+      showToast(state.navHidden ? '底部导航已隐藏' : '底部导航已显示');
+    }
+
+    function setScreen(screen) {
+      if (screen === 'details') {
+        setScreen('calendar');
+        openDrawer();
+        return;
+      }
+      if (screen === 'account') {
+        showToast(`${state.user.name} 已登录，日程已同步`);
+        return;
+      }
+      state.activeScreen = screen;
+      $$('.screen').forEach(item => item.classList.toggle('active', item.dataset.screen === screen));
+      $$('.nav-btn[data-nav]').forEach(item => item.classList.toggle('active', item.dataset.nav === screen || (screen === 'calendar' && item.dataset.nav === 'details')));
+      if (['timer', 'history', 'calendar'].includes(screen)) {
+        history.replaceState(null, '', `#${screen}`);
+      }
+      closeDrawer();
+    }
+
+    function openDrawer() {
+      closeModal();
+      closeSheet();
+      $('#detailsDrawer').classList.add('open');
+      $('#drawerBackdrop').classList.add('open');
+      $('.nav-btn[data-nav="details"]').classList.add('active');
+    }
+
+    function closeDrawer() {
+      $('#detailsDrawer').classList.remove('open');
+      $('#drawerBackdrop').classList.remove('open');
+    }
+
+    function openSheet() {
+      closeDrawer();
+      closeModal();
+      $('#filterSheet').classList.add('open');
+      $('#sheetBackdrop').classList.add('open');
+    }
+
+    function closeSheet() {
+      $('#filterSheet').classList.remove('open');
+      $('#sheetBackdrop').classList.remove('open');
+    }
+
+    function openModal(start = '09:00') {
+      closeDrawer();
+      closeSheet();
+      $('#eventTitle').value = '';
+      $('#eventStart').value = start;
+      $('#eventEnd').value = start === '23:00' ? '23:30' : `${pad(Number(start.slice(0, 2)) + 1)}:${start.slice(3)}`;
+      $('#eventNote').value = '';
+      $('#eventModal').classList.add('open');
+      $('#modalBackdrop').classList.add('open');
+      setTimeout(() => $('#eventTitle').focus(), 120);
+    }
+
+    function closeModal() {
+      $('#eventModal').classList.remove('open');
+      $('#modalBackdrop').classList.remove('open');
+    }
+
+    function render() {
+      renderHeader();
+      renderCalendar();
+      renderDrawer();
+      renderFilters();
+      renderHistory();
+      renderTimer();
+      applyBottomNavState();
+    }
+
+    $('#prevBtn')?.addEventListener('click', () => setDate(-1));
+    $('#nextBtn')?.addEventListener('click', () => setDate(1));
+    $('#todayBtn')?.addEventListener('click', () => {
+      state.selectedDate = new Date(2026, 6, 18);
+      render();
+      showToast('已回到今天');
+    });
+    $('#quickAddBtn').addEventListener('click', () => openModal());
+    $('#topDetailsBtn').addEventListener('click', openDrawer);
+    $('#toggleNavBtn').addEventListener('click', toggleBottomNav);
+    $('#topTimerBtn').addEventListener('click', () => setScreen('timer'));
+    $('#topHistoryBtn').addEventListener('click', () => setScreen('history'));
+    $('#navAdd').addEventListener('click', () => openModal());
+    $('#drawerAdd').addEventListener('click', () => openModal());
+    $('#filterBtn').addEventListener('click', openSheet);
+    $('#closeSheet').addEventListener('click', closeSheet);
+    $('#sheetBackdrop').addEventListener('click', closeSheet);
+    $('#closeDrawer').addEventListener('click', closeDrawer);
+    $('#drawerBackdrop').addEventListener('click', closeDrawer);
+    $('#closeModal').addEventListener('click', closeModal);
+    $('#cancelEvent').addEventListener('click', closeModal);
+    $('#modalBackdrop').addEventListener('click', closeModal);
+    $$('.nav-btn[data-nav]').forEach(button => button.addEventListener('click', () => setScreen(button.dataset.nav)));
+
+    $('#eventForm').addEventListener('submit', event => {
+      event.preventDefault();
+      const title = $('#eventTitle').value.trim() || '未命名日程';
+      const start = $('#eventStart').value;
+      const end = $('#eventEnd').value;
+      if (!start || !end || minutes(end) <= minutes(start)) {
+        showToast('结束时间需要晚于开始时间');
+        return;
+      }
+      const next = {
+        id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
+        title,
+        start,
+        end,
+        tag: $('#eventTag').value,
+        icon: '☀️',
+        tone: 'pink',
+        note: $('#eventNote').value.trim(),
+        date: new Date(state.selectedDate)
+      };
+      state.events.push(next);
+      state.history.unshift(next);
+      closeModal();
+      render();
+      openDrawer();
+      showToast('日程已添加到动态原型');
+    });
+
+    $('#timerToggle').addEventListener('click', () => {
+      state.timerRunning = !state.timerRunning;
+      if (state.timerRunning) {
+        state.timerId = setInterval(() => {
+          state.timerSeconds += 1;
+          renderTimer();
+        }, 1000);
+      } else {
+        clearInterval(state.timerId);
+      }
+      renderTimer();
+    });
+
+    $('#timerReset').addEventListener('click', () => {
+      clearInterval(state.timerId);
+      state.timerRunning = false;
+      state.timerSeconds = 0;
+      renderTimer();
+    });
+
+    const initialHash = location.hash.replace('#', '');
+    const initialScreen = initialHash.replace('-nav-hidden', '');
+    if (initialHash.includes('nav-hidden')) state.navHidden = true;
+    if (['timer', 'history', 'calendar', 'details'].includes(initialScreen)) {
+      setScreen(initialScreen);
+    }
+    render();
+  </script>
+</body>
+</html>

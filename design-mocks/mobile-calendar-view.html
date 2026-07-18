@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Liquid Calendar 移动端日程</title>
+  <style>
+    :root {
+      --page: #eef0f5;
+      --surface: #fbfbfd;
+      --surface-raised: #ffffff;
+      --surface-soft: #f8f9fc;
+      --line: rgba(73, 79, 92, 0.1);
+      --line-strong: rgba(73, 79, 92, 0.15);
+      --text: #535a68;
+      --muted: #969eaf;
+      --faint: #c8ceda;
+      --active: #050506;
+      --accent: #8d98ff;
+      --shadow: 0 14px 34px rgba(46, 54, 74, 0.08);
+      --soft-shadow: 0 8px 20px rgba(52, 60, 78, 0.04);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      background: var(--page);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "PingFang SC", sans-serif;
+      letter-spacing: 0;
+    }
+
+    body {
+      display: grid;
+      place-items: start;
+      padding: 14px 0;
+    }
+
+    button {
+      font: inherit;
+      color: inherit;
+    }
+
+    .phone {
+      position: relative;
+      width: min(100vw, 390px);
+      min-height: 844px;
+      overflow: hidden;
+      background: var(--page);
+      border-left: 1px solid rgba(130, 137, 153, 0.1);
+      border-right: 1px solid rgba(130, 137, 153, 0.1);
+    }
+
+    .content {
+      min-height: 730px;
+      margin: 0 23px 112px;
+      padding: 18px 14px 0;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    }
+
+    .title {
+      margin: 0 0 8px;
+      font-size: 17px;
+      line-height: 1.25;
+      font-weight: 700;
+      color: #5b6270;
+    }
+
+    .date {
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.4;
+      font-weight: 600;
+      color: #969dad;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .tool {
+      width: 40px;
+      height: 27px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.55);
+      color: #a7aebd;
+      box-shadow: 0 1px 0 rgba(255, 255, 255, 0.9);
+    }
+
+    .add-inline {
+      width: 28px;
+      height: 28px;
+      display: grid;
+      place-items: center;
+      margin-left: auto;
+      border: 0;
+      background: transparent;
+      color: #a3a9b6;
+    }
+
+    .empty {
+      min-height: 443px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+    }
+
+    .empty-inner {
+      position: relative;
+      transform: translateY(34px);
+    }
+
+    .empty-icon {
+      width: 58px;
+      height: 58px;
+      display: grid;
+      place-items: center;
+      margin: 0 auto;
+      border-radius: 50%;
+      background: radial-gradient(circle at 45% 35%, rgba(255, 255, 255, 0.95), rgba(247, 248, 251, 0.45));
+      color: #d7dce6;
+    }
+
+    .signin-bubble {
+      position: absolute;
+      left: 34px;
+      top: 35px;
+      width: 158px;
+      height: 39px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line-strong);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.92);
+      color: #8d95a5;
+      font-size: 14px;
+      font-weight: 500;
+      box-shadow: var(--soft-shadow);
+      white-space: nowrap;
+    }
+
+    .empty-text {
+      margin: 3px 0 0;
+      color: #949cab;
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .insights {
+      border-top: 1px solid var(--line-strong);
+      padding-top: 15px;
+    }
+
+    .insight-title {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin: 0 0 11px;
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 2px rgba(141, 152, 255, 0.08);
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px 13px;
+    }
+
+    .stat {
+      min-height: 58px;
+      padding: 11px 12px 10px;
+      border-radius: 11px;
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.92), rgba(247, 248, 251, 0.72));
+      box-shadow: var(--soft-shadow);
+    }
+
+    .stat-label {
+      margin: 0 0 4px;
+      color: #b2b8c6;
+      font-size: 11px;
+      line-height: 1.2;
+      font-weight: 600;
+    }
+
+    .stat-value {
+      margin: 0;
+      color: #737b8b;
+      font-size: 12px;
+      line-height: 1.25;
+      font-weight: 800;
+    }
+
+    .bottom-nav {
+      position: fixed;
+      left: 0;
+      bottom: 0;
+      z-index: 2;
+      width: min(100vw, 390px);
+      height: 67px;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      align-items: center;
+      padding: 0 22px 10px;
+      border: 1px solid rgba(82, 89, 104, 0.12);
+      border-bottom: 0;
+      border-radius: 18px 18px 0 0;
+      background: rgba(255, 255, 255, 0.92);
+      box-shadow: 0 -12px 28px rgba(52, 60, 78, 0.08);
+      backdrop-filter: blur(18px);
+    }
+
+    .nav-item {
+      width: 44px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      justify-self: center;
+      border: 1px solid rgba(132, 140, 157, 0.18);
+      border-radius: 11px;
+      background: rgba(255, 255, 255, 0.8);
+      color: #9aa3b4;
+      box-shadow: 0 1px 0 rgba(255, 255, 255, 0.92);
+    }
+
+    .nav-item.add {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.82);
+    }
+
+    .nav-item.active {
+      color: #ffffff;
+      background: var(--active);
+      border-color: rgba(0, 0, 0, 0.78);
+      box-shadow: 0 7px 16px rgba(0, 0, 0, 0.22);
+    }
+
+    svg {
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+    }
+
+    .add-inline svg,
+    .nav-item.add svg {
+      width: 21px;
+      height: 21px;
+      stroke-width: 1.9;
+    }
+
+    @media (min-width: 720px) {
+      body {
+        padding: 32px;
+        place-items: start center;
+      }
+
+      .phone {
+        border-radius: 26px;
+        box-shadow: var(--shadow);
+      }
+
+      .bottom-nav {
+        position: absolute;
+        left: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="phone" aria-label="Liquid Calendar 移动端日程预览">
+    <section class="content">
+      <header>
+        <h1 class="title">日程</h1>
+        <p class="date">2026年 07月 18日 星期六</p>
+      </header>
+
+      <div class="toolbar" aria-label="快捷操作">
+        <button class="tool" type="button" aria-label="计时器">
+          <svg viewBox="0 0 24 24"><path d="M10 2h4"/><path d="M12 14l3-3"/><circle cx="12" cy="14" r="8"/></svg>
+        </button>
+        <button class="tool" type="button" aria-label="历史">
+          <svg viewBox="0 0 24 24"><path d="M12 6v6l4 2"/><circle cx="12" cy="12" r="9"/></svg>
+        </button>
+        <button class="tool" type="button" aria-label="筛选">
+          <svg viewBox="0 0 24 24"><path d="M4 5h16l-6.5 7.2V18l-3 1v-6.8L4 5z"/></svg>
+        </button>
+        <button class="add-inline" type="button" aria-label="新增日程">
+          <svg viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+        </button>
+      </div>
+
+      <section class="empty" aria-label="空日程状态">
+        <div class="empty-inner">
+          <div class="empty-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M8 2v4"/><path d="M16 2v4"/><path d="M3 9h18"/><rect x="4" y="5" width="16" height="16" rx="2"/></svg>
+          </div>
+          <div class="signin-bubble">请先登录以查看日程</div>
+          <p class="empty-text">今日无日程</p>
+        </div>
+      </section>
+
+      <section class="insights" aria-label="智能洞察">
+        <h2 class="insight-title"><span class="dot"></span>智能洞察</h2>
+        <div class="stats">
+          <article class="stat">
+            <p class="stat-label">总时长</p>
+            <p class="stat-value">0分钟</p>
+          </article>
+          <article class="stat">
+            <p class="stat-label">最多标签</p>
+            <p class="stat-value">暂无</p>
+          </article>
+          <article class="stat">
+            <p class="stat-label">最长连续</p>
+            <p class="stat-value">暂无</p>
+          </article>
+          <article class="stat">
+            <p class="stat-label">下一段空闲</p>
+            <p class="stat-value">暂无明显空档</p>
+          </article>
+        </div>
+      </section>
+    </section>
+
+    <nav class="bottom-nav" aria-label="移动端导航">
+      <button class="nav-item" type="button" aria-label="时间">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v6l3.5 2"/></svg>
+      </button>
+      <button class="nav-item" type="button" aria-label="回顾">
+        <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v6h6"/></svg>
+      </button>
+      <button class="nav-item add" type="button" aria-label="新增">
+        <svg viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+      </button>
+      <button class="nav-item active" type="button" aria-label="日历">
+        <svg viewBox="0 0 24 24"><path d="M8 2v4"/><path d="M16 2v4"/><path d="M3 9h18"/><rect x="4" y="5" width="16" height="16" rx="2"/></svg>
+      </button>
+      <button class="nav-item" type="button" aria-label="日记">
+        <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 3H20v18H6.5A2.5 2.5 0 0 1 4 18.5v-13A2.5 2.5 0 0 1 6.5 3z"/></svg>
+      </button>
+    </nav>
+  </main>
+</body>
+</html>

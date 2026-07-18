@@ -22,6 +22,12 @@ import { CalendarEvent, Tag, ModalConfig, AlarmState, AlarmMode, LogSessionModal
 type ToastTone = 'success' | 'error' | 'info';
 type SyncStatus = 'synced' | 'offline-cache' | 'sync-error' | 'session-expired';
 
+interface SidebarProfile {
+  name: string;
+  tagline: string;
+  avatarUrl?: string | null;
+}
+
 interface ToastState {
   id: number;
   tone: ToastTone;
@@ -52,7 +58,7 @@ const App: React.FC = () => {
   const [isMobileCalendarDetailsOpen, setIsMobileCalendarDetailsOpen] = useState(false);
   const [toast, setToast] = useState<ToastState | null>(null);
   const toastTimerRef = React.useRef<number | null>(null);
-  const [syncStatus, setSyncStatus] = useState<SyncStatus>('synced');
+  const [, setSyncStatus] = useState<SyncStatus>('synced');
 
 
 
@@ -119,6 +125,54 @@ const App: React.FC = () => {
     }
   }, []);
 
+  const sidebarProfile = useMemo<SidebarProfile>(() => {
+    const metadata = currentUser?.user_metadata ?? {};
+    const name =
+      typeof metadata.display_name === 'string' && metadata.display_name.trim()
+        ? metadata.display_name.trim()
+        : typeof metadata.full_name === 'string' && metadata.full_name.trim()
+          ? metadata.full_name.trim()
+          : typeof metadata.name === 'string' && metadata.name.trim()
+            ? metadata.name.trim()
+            : '用户';
+    const tagline =
+      typeof metadata.tagline === 'string' && metadata.tagline.trim()
+        ? metadata.tagline.trim()
+        : '添加一句个人签名';
+    const avatarUrl =
+      typeof metadata.avatar_url === 'string' && metadata.avatar_url.trim()
+        ? metadata.avatar_url.trim()
+        : typeof metadata.picture === 'string' && metadata.picture.trim()
+          ? metadata.picture.trim()
+          : null;
+
+    return { name, tagline, avatarUrl };
+  }, [currentUser]);
+
+  const handleSidebarProfileSave = useCallback(async (profile: SidebarProfile) => {
+    if (!supabase || !currentUser) {
+      showToast({ tone: 'info', message: '已在当前页面预览', detail: '登录后可同步到你的账号。' }, 3000);
+      return;
+    }
+
+    const { data, error } = await supabase.auth.updateUser({
+      data: {
+        display_name: profile.name,
+        name: profile.name,
+        tagline: profile.tagline,
+        avatar_url: profile.avatarUrl ?? null,
+      },
+    });
+
+    if (error) {
+      showToast({ tone: 'error', message: '个人资料保存失败', detail: error.message });
+      return;
+    }
+
+    setCurrentUser(data.user ?? currentUser);
+    showToast({ tone: 'success', message: '个人资料已同步', detail: '已保存到当前 Supabase 账号。' }, 3000);
+  }, [currentUser, showToast]);
+
   // Set default view mode to Day when in PWA mode
   React.useEffect(() => {
     const isPwa = () => {
@@ -140,7 +194,7 @@ const App: React.FC = () => {
     }
   }, []);
   const [isAccountOpen, setIsAccountOpen] = useState(false);
-  const [isOnline, setIsOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
+  const [, setIsOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
   const [reloadNonce, setReloadNonce] = useState(0);
 
   // Alarm State
@@ -999,28 +1053,14 @@ const App: React.FC = () => {
     }
   }, [currentUser, events, tags, refreshEvents, showToast]);
 
-  const syncStatusCopy = {
-    synced: { label: '同步正常', detail: isOnline ? '云端数据已连接' : '等待网络恢复', tone: 'ok' },
-    'offline-cache': { label: '离线缓存可用', detail: '正在使用本地备份数据', tone: 'warn' },
-    'sync-error': { label: '同步失败', detail: '部分变更可能需要重试', tone: 'error' },
-    'session-expired': { label: '会话过期', detail: '请重新登录后继续同步', tone: 'error' },
-  }[syncStatus];
-
   return (
     <div className={`App board-app-shell ${isSidebarCollapsed ? 'sidebar-is-collapsed' : ''} relative min-h-screen w-full flex items-stretch md:items-center justify-center bg-[#F2F2F7] overflow-x-auto p-4 md:p-6`}>
 
       {/* Main Layout */}
       <div className={`main-layout board-main-layout relative z-10 w-full flex flex-col md:flex-row h-full md:h-auto transition-[gap,max-width] duration-300 ${isSidebarCollapsed ? 'max-w-none md:gap-0' : 'max-w-7xl md:gap-6'}`}>
-        {syncStatus !== 'synced' && (
-          <div className="absolute -top-10 left-0 right-0 flex justify-center z-30">
-            <div className={`sync-status-bar sync-status-${syncStatusCopy.tone} px-3 py-1.5 rounded-full bg-white border border-gray-200 shadow-sm text-xs text-gray-600 flex items-center gap-2`}>
-              <span className="sync-status-dot h-2 w-2 rounded-full" />
-              <span className="font-semibold text-gray-800">{syncStatusCopy.label}</span>
-              <span className="text-gray-500">{syncStatusCopy.detail}</span>
-              <button onClick={() => setReloadNonce(n => n + 1)} className="px-2 py-0.5 rounded bg-gray-100 text-gray-700">重试</button>
-            </div>
-          </div>
-        )}
+        <div className="board-status-strip absolute flex items-center justify-end z-30">
+          <span className="board-prototype-label">Liquid Calendar Board Mock</span>
+        </div>
 
         {/* Sidebar Navigation */}
         <Sidebar
@@ -1030,9 +1070,11 @@ const App: React.FC = () => {
           onOpenAuth={() => setIsAuthOpen(true)}
           onOpenAccount={() => setIsAccountOpen(true)}
           onAddEvent={handleSmartAddEvent}
-          onCalendarDetailsOpen={() => setIsMobileCalendarDetailsOpen(true)}
+          onCalendarDetailsOpen={() => setIsMobileCalendarDetailsOpen(prev => !prev)}
           isLoggedIn={!!currentUser}
           isCollapsed={isSidebarCollapsed}
+          profile={sidebarProfile}
+          onProfileSave={handleSidebarProfileSave}
         />
 
         {/* Module Content */}
