@@ -15,6 +15,7 @@
 - `IterationLog（迭代记录）.md`：记录 Badcase 到修复再到复测的闭环。
 - `PromptChangeLog（提示词变更记录）.md`：记录 prompt 修改原因、内容和副作用。
 - `PrivacyPolicy（隐私边界）.md`：定义 synthetic 与 real 评估的数据边界。
+- `RealContextExport（真实上下文导出说明）.md`：说明如何从前端手动导出 real `clientContext`。
 - `EvaluationLog.synthetic.latest（合成上下文最新评估）.md`：公开可提交的最新合成上下文评估结果。
 
 ## Eight Modules（8 个机制模块）
@@ -56,3 +57,5 @@ real 模式如需启用 LLM judge，必须显式传入：
 ```bash
 npx tsx 'scripts/run-agent-golden-set（运行Agent金标集评估）.ts' --mode real --allow-real-judge
 ```
+
+real 模式运行前，需要先按 `RealContextExport（真实上下文导出说明）.md` 从聊天页手动导出真实上下文。

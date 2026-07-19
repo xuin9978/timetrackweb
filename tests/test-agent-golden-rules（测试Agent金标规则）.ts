@@ -21,6 +21,7 @@ const requiredFiles = [
   'IterationLog（迭代记录）.md',
   'PromptChangeLog（提示词变更记录）.md',
   'PrivacyPolicy（隐私边界）.md',
+  'RealContextExport（真实上下文导出说明）.md',
   'EvaluationLog.synthetic.latest（合成上下文最新评估）.md',
   'EvaluationLog.flows.synthetic.latest（多轮流程最新评估）.md',
   'synthetic-context（合成上下文）.json',
@@ -97,6 +98,11 @@ for (const keyword of ['20 分及以上为通过', '硬失败', '自然对话', 
 const privacy = readText('PrivacyPolicy（隐私边界）.md');
 for (const keyword of ['synthetic 模式', 'real 模式', 'clientContext.real.local', '--allow-real-judge', '不直接读取 Supabase']) {
   assert(privacy.includes(keyword), `PrivacyPolicy missing ${keyword}`);
+}
+
+const realExport = readText('RealContextExport（真实上下文导出说明）.md');
+for (const keyword of ['导出上下文', 'clientContext.real.local', 'private/clientContext.real.local', '--mode real', '不直接读取 Supabase']) {
+  assert(realExport.includes(keyword), `RealContextExport missing ${keyword}`);
 }
 
 const promptChangeLog = readText('PromptChangeLog（提示词变更记录）.md');
