@@ -227,6 +227,15 @@ export const createLocalChatHistoryStore = (
     },
     async saveMessage(input) {
       const payload = read();
+      const hasSession = payload.sessions.some(session => session.id === input.sessionId);
+      const sessionFallback: ChatSessionRecord = {
+        id: input.sessionId,
+        title: buildChatSessionTitle(input.content),
+        pinned: false,
+        createdAt: nowIso(),
+        updatedAt: nowIso(),
+        storageScope,
+      };
       const message: ChatMessageRecord = {
         id: crypto.randomUUID(),
         sessionId: input.sessionId,
@@ -236,7 +245,8 @@ export const createLocalChatHistoryStore = (
         createdAt: nowIso(),
         storageScope,
       };
-      const sessions = payload.sessions.map(session => (
+      const baseSessions = hasSession ? payload.sessions : [sessionFallback, ...payload.sessions];
+      const sessions = baseSessions.map(session => (
         session.id === input.sessionId ? { ...session, updatedAt: message.createdAt } : session
       ));
       write({ sessions, messages: [...payload.messages, message] });
