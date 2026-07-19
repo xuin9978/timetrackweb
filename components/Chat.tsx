@@ -12,9 +12,9 @@ interface ChatMessage extends ChatServiceMessage {
 }
 
 const quickPrompts = [
-  '帮我安排今天的优先级',
-  '复盘最近状态和长期模式',
-  '看看这周有没有过载',
+  '我今天先做什么比较好？',
+  '帮我看看这周是不是太满了',
+  '最近状态有什么规律吗？',
 ];
 
 interface ChatProps {
@@ -198,17 +198,20 @@ const Chat: React.FC<ChatProps> = ({ events, tags, currentDate, userId }) => {
         placeholder="问问你的时间 Agent"
         disabled={isSending}
       />
-      <label className="flex items-center gap-1 rounded-full px-2 py-1 text-sm font-semibold text-gray-600">
-        <select
-          value={chatMode}
-          onChange={event => setChatMode(event.target.value as ChatMode)}
-          className="bg-transparent text-sm font-semibold outline-none"
-          aria-label="DeepSeek 模式"
-        >
-          <option value="quick">快速回答</option>
-          <option value="deep">深度分析</option>
-        </select>
-      </label>
+      <button
+        type="button"
+        aria-label="开启深度思考"
+        aria-pressed={chatMode === 'deep'}
+        onClick={() => setChatMode(prev => prev === 'deep' ? 'quick' : 'deep')}
+        className={`flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-3 text-[13px] font-semibold transition active:scale-95 ${
+          chatMode === 'deep'
+            ? 'border-[#111111] bg-[#111111] text-white shadow-sm'
+            : 'border-gray-200 bg-white text-[#111111] hover:border-gray-300 hover:bg-gray-50'
+        }`}
+      >
+        <Icons.Atom size={15} strokeWidth={2.2} />
+        <span>深度思考</span>
+      </button>
       <button
         type="submit"
         aria-label="发送消息"

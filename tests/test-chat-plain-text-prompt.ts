@@ -18,7 +18,7 @@ let capturedBody = '';
 
 const result = await createChatCompletion({
   messages: [{ role: 'user', content: '帮我安排今天的优先级' }],
-  quality: 'balanced',
+  chatMode: 'quick',
 }, {
   DEEPSEEK_API_KEY: 'test-key',
 });
@@ -33,5 +33,8 @@ const systemText = payload.messages
 
 assert(systemText.includes('不要使用 Markdown'), 'system prompt should forbid Markdown output');
 assert(systemText.includes('#、-、*、**、```'), 'system prompt should name common Markdown symbols');
+assert(systemText.includes('个人时间伙伴'), 'system prompt should frame the agent as a personal time companion');
+assert(systemText.includes('自然聊天'), 'system prompt should ask for natural conversational replies');
+assert(!systemText.includes('回答时必须区分“上下文事实”“统计趋势”“你的推断”'), 'system prompt should not force report-style sections every time');
 
 console.log('Chat plain text prompt test passed');
