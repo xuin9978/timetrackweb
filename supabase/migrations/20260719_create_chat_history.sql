@@ -26,6 +26,9 @@ create index if not exists idx_chat_messages_session_created
 create index if not exists idx_chat_messages_user_created
   on public.chat_messages(user_id, created_at desc);
 
+revoke all on public.chat_sessions from anon, authenticated;
+revoke all on public.chat_messages from anon, authenticated;
+
 grant select, insert, update, delete on public.chat_sessions to authenticated;
 grant select, insert, delete on public.chat_messages to authenticated;
 

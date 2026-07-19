@@ -81,6 +81,30 @@ export const sortChatSessions = (sessions: ChatSessionRecord[]) => (
   })
 );
 
+const mergeChatSessions = (sessions: ChatSessionRecord[]) => {
+  const byId = new Map<string, ChatSessionRecord>();
+  sessions.forEach(session => {
+    const existing = byId.get(session.id);
+    if (!existing) {
+      byId.set(session.id, session);
+      return;
+    }
+    if (session.storageScope === 'unsynced' || existing.storageScope === 'unsynced') {
+      byId.set(session.id, {
+        ...existing,
+        ...session,
+        title: existing.storageScope === 'cloud' ? existing.title : session.title,
+        pinned: existing.pinned || session.pinned,
+        updatedAt: new Date(existing.updatedAt) > new Date(session.updatedAt) ? existing.updatedAt : session.updatedAt,
+        storageScope: 'unsynced',
+      });
+      return;
+    }
+    byId.set(session.id, new Date(existing.updatedAt) > new Date(session.updatedAt) ? existing : session);
+  });
+  return sortChatSessions(Array.from(byId.values()));
+};
+
 export const getRecentMessagesForPrompt = (
   messages: ChatMessageRecord[],
   limit = CHAT_PROMPT_MESSAGE_LIMIT
@@ -308,7 +332,7 @@ export const createSupabaseChatHistoryStore = (
         .limit(CHAT_CLOUD_LIMIT);
       if (cloud.error) return fallback.listSessions();
       const local = await fallback.listSessions();
-      return sortChatSessions([...(cloud.data ?? []).map(fromSessionRow), ...local]);
+      return mergeChatSessions([...(cloud.data ?? []).map(fromSessionRow), ...local]);
     },
     async searchSessions(query: string) {
       const text = query.trim();
