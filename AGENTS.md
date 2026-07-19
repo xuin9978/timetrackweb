@@ -90,6 +90,7 @@ Never paste real values into code, docs, logs, commits, or PR text. If a future 
 - For behavior changes, add or update the closest available check. If no formal test exists, document the manual or ad hoc validation used.
 - Prefer npm because this repo has `package-lock.json`.
 - Avoid logging secrets. Existing diagnostic scripts should only report whether env vars are configured or masked.
+- When creating commits, write commit subjects and bodies in Chinese by default, and clearly state what changed, why it changed, and what validation was run.
 - Current build warnings about missing `/index.css`, mixed static/dynamic `dateUtils.ts` imports, and bundle size are known non-blocking issues. Do not automatically attribute them to future documentation-only changes.
 - Do not edit `dist/`, `node_modules/`, or `.vercel/`.
 
