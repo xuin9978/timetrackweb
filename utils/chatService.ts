@@ -5,18 +5,18 @@ export interface ChatServiceMessage {
   content: string;
 }
 
-export type ChatQuality = 'fast' | 'balanced' | 'high';
+export type ChatMode = 'quick' | 'deep';
 
 export const streamChatMessage = async (
   messages: ChatServiceMessage[],
-  quality: ChatQuality,
+  chatMode: ChatMode,
   clientContext: AgentClientContext | undefined,
   onDelta: (delta: string) => void
 ) => {
   const response = await fetch('/api/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ messages, quality, clientContext }),
+    body: JSON.stringify({ messages, chatMode, clientContext }),
   });
 
   if (!response.ok) {

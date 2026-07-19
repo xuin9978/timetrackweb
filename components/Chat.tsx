@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { Icons } from './Icons';
-import { ChatQuality, ChatServiceMessage, streamChatMessage } from '../utils/chatService';
+import { ChatMode, ChatServiceMessage, streamChatMessage } from '../utils/chatService';
 import { CalendarEvent, Tag } from '../types';
 import { buildAgentClientContext, ContextSources } from '../utils/agentContext';
 import { DiaryEntryRecord, fetchAllDiaryEntries } from '../utils/diaryService';
@@ -68,7 +68,7 @@ const SourceSummary: React.FC<{ sources?: ContextSources }> = ({ sources }) => {
 const Chat: React.FC<ChatProps> = ({ events, tags, currentDate, userId }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draft, setDraft] = useState('');
-  const [quality, setQuality] = useState<ChatQuality>('high');
+  const [chatMode, setChatMode] = useState<ChatMode>('quick');
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState('');
   const [diaryEntries, setDiaryEntries] = useState<DiaryEntryRecord[]>([]);
@@ -138,7 +138,7 @@ const Chat: React.FC<ChatProps> = ({ events, tags, currentDate, userId }) => {
     try {
       const streamedText = await streamChatMessage(
         nextMessages.map(({ role, content }) => ({ role, content })),
-        quality,
+        chatMode,
         requestContext,
         delta => {
           setMessages(prev => prev.map(message => (
@@ -200,14 +200,13 @@ const Chat: React.FC<ChatProps> = ({ events, tags, currentDate, userId }) => {
       />
       <label className="flex items-center gap-1 rounded-full px-2 py-1 text-sm font-semibold text-gray-600">
         <select
-          value={quality}
-          onChange={event => setQuality(event.target.value as ChatQuality)}
+          value={chatMode}
+          onChange={event => setChatMode(event.target.value as ChatMode)}
           className="bg-transparent text-sm font-semibold outline-none"
-          aria-label="回复质量"
+          aria-label="DeepSeek 模式"
         >
-          <option value="fast">快</option>
-          <option value="balanced">中</option>
-          <option value="high">高</option>
+          <option value="quick">快速回答</option>
+          <option value="deep">深度分析</option>
         </select>
       </label>
       <button

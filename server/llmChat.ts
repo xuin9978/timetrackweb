@@ -5,7 +5,7 @@ export interface ChatMessage {
 
 export interface ChatRequestBody {
   messages?: ChatMessage[];
-  quality?: 'fast' | 'balanced' | 'high';
+  chatMode?: 'quick' | 'deep';
   clientContext?: any;
 }
 
@@ -19,12 +19,20 @@ interface ChatEnv {
 }
 
 const DEFAULT_BASE_URL = 'https://api.deepseek.com';
-const DEFAULT_MODEL = 'deepseek-chat';
+const DEFAULT_MODEL = 'deepseek-v4-flash';
 
-const qualityConfig = {
-  fast: { temperature: 0.4, max_tokens: 700 },
-  balanced: { temperature: 0.6, max_tokens: 1100 },
-  high: { temperature: 0.75, max_tokens: 1600 },
+const chatModeConfig = {
+  quick: {
+    temperature: 0.4,
+    max_tokens: 900,
+    thinking: { type: 'disabled' },
+  },
+  deep: {
+    temperature: 0.6,
+    max_tokens: 1600,
+    thinking: { type: 'enabled' },
+    reasoning_effort: 'high',
+  },
 } as const;
 
 const systemPrompt: ChatMessage = {
@@ -192,8 +200,8 @@ const prepareChatRequest = (body: ChatRequestBody, env: ChatEnv) => {
     };
   }
 
-  const quality = body.quality ?? 'high';
-  const config = qualityConfig[quality] ?? qualityConfig.high;
+  const chatMode = body.chatMode ?? 'quick';
+  const config = chatModeConfig[chatMode] ?? chatModeConfig.quick;
   const baseUrl = (env.DEEPSEEK_API_BASE_URL ?? env.LLM_API_BASE_URL ?? DEFAULT_BASE_URL).replace(/\/$/, '');
   const model = env.DEEPSEEK_MODEL ?? env.LLM_MODEL ?? DEFAULT_MODEL;
   const contextPrompt = buildContextPrompt(body.clientContext);
@@ -228,6 +236,8 @@ export const createChatCompletion = async (body: ChatRequestBody, env: ChatEnv) 
         messages: prepared.messages,
         temperature: prepared.config.temperature,
         max_tokens: prepared.config.max_tokens,
+        thinking: prepared.config.thinking,
+        ...('reasoning_effort' in prepared.config ? { reasoning_effort: prepared.config.reasoning_effort } : {}),
       }),
     });
 
@@ -276,6 +286,8 @@ export const createChatCompletionStream = async (body: ChatRequestBody, env: Cha
         messages: prepared.messages,
         temperature: prepared.config.temperature,
         max_tokens: prepared.config.max_tokens,
+        thinking: prepared.config.thinking,
+        ...('reasoning_effort' in prepared.config ? { reasoning_effort: prepared.config.reasoning_effort } : {}),
         stream: true,
       }),
     });
