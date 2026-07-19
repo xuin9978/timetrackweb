@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Plus, Clock, Bell, MoreHorizontal, X, Timer, History, Settings, Tags, Hourglass, Filter, Check, PanelRight, PanelLeft, PieChart, Download, Trash, User, Lock, GripVertical, Sun, Moon, BookOpen } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Plus, Clock, Bell, MoreHorizontal, X, Timer, History, Settings, Tags, Hourglass, Filter, Check, PanelRight, PanelLeft, PieChart, Download, Trash, User, Lock, GripVertical, Sun, Moon, BookOpen, MessageCircle, Send } from 'lucide-react';
 
 export const Icons = {
   ChevronLeft,
@@ -27,5 +27,7 @@ export const Icons = {
   GripVertical,
   Sun,
   Moon,
-  BookOpen
+  BookOpen,
+  MessageCircle,
+  Send
 };

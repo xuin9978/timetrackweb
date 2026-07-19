@@ -4,6 +4,7 @@ import Calendar from './components/Calendar';
 import Alarm from './components/Alarm';
 import History from './components/History';
 import Diary from './components/Diary';
+import Chat from './components/Chat';
 import Sidebar from './components/Sidebar';
 import AddEventModal from './components/AddEventModal';
 import LogSessionModal from './components/LogSessionModal';
@@ -16,11 +17,13 @@ import { getVisibleDateRange, splitEventAcrossDays, isSameDay, formatTime, getMi
 import { fetchEvents, createEvents, updateEvent as updateEventDB, deleteEvent as deleteEventDB, replaceAllEvents, clearEventCategory, restoreEventCategory } from './utils/eventService';
 import { backupEventsToLocalStorage, restoreEventsFromLocalStorage, cleanOldBackups } from './utils/dataBackupService';
 import { fetchTags as fetchTagsDB, createTag as createTagDB, updateTag as updateTagDB, deleteTag as deleteTagDB, updateTagOrder } from './utils/tagService';
+import { avatarForUserMetadata, isInlineAvatar } from './utils/profileAvatar';
 
 import { CalendarEvent, Tag, ModalConfig, AlarmState, AlarmMode, LogSessionModalConfig, ViewMode } from './types';
 
 type ToastTone = 'success' | 'error' | 'info';
 type SyncStatus = 'synced' | 'offline-cache' | 'sync-error' | 'session-expired';
+type ActiveModule = 'calendar' | 'alarm' | 'history' | 'diary' | 'chat';
 
 interface SidebarProfile {
   name: string;
@@ -53,8 +56,16 @@ const retry = async <T,>(fn: () => Promise<T>, retries = 3, delay = 300): Promis
   }
 };
 
+const getSaveErrorMessage = (error: unknown, fallback: string) => {
+  const msg = error instanceof Error ? error.message : String(error || '');
+  if (/Failed to fetch|NetworkError|ERR_CONNECTION|Network request failed/i.test(msg)) {
+    return '网络连接异常，云端保存没有完成。';
+  }
+  return msg || fallback;
+};
+
 const App: React.FC = () => {
-  const [activeModule, setActiveModule] = useState<'calendar' | 'alarm' | 'history' | 'diary'>('calendar');
+  const [activeModule, setActiveModule] = useState<ActiveModule>('calendar');
   const [isMobileCalendarDetailsOpen, setIsMobileCalendarDetailsOpen] = useState(false);
   const [toast, setToast] = useState<ToastState | null>(null);
   const toastTimerRef = React.useRef<number | null>(null);
@@ -80,6 +91,35 @@ const App: React.FC = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [localProfileAvatar, setLocalProfileAvatar] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (!currentUser?.id) {
+      setLocalProfileAvatar(null);
+      return;
+    }
+
+    const storageKey = `profile_avatar_${currentUser.id}`;
+    const metadataAvatar = currentUser.user_metadata?.avatar_url;
+    if (isInlineAvatar(metadataAvatar)) {
+      try {
+        localStorage.setItem(storageKey, metadataAvatar);
+        setLocalProfileAvatar(metadataAvatar);
+      } catch {
+        setLocalProfileAvatar(null);
+      }
+      supabase?.auth.refreshSession().then(({ data }) => {
+        if (data.session?.user) setCurrentUser(data.session.user);
+      });
+      return;
+    }
+
+    try {
+      setLocalProfileAvatar(localStorage.getItem(storageKey));
+    } catch {
+      setLocalProfileAvatar(null);
+    }
+  }, [currentUser]);
 
   // Load initial mock data when not logged in
   React.useEffect(() => {
@@ -118,7 +158,7 @@ const App: React.FC = () => {
     setToast(null);
   }, []);
 
-  const handleModuleSwitch = useCallback((module: 'calendar' | 'alarm' | 'history' | 'diary') => {
+  const handleModuleSwitch = useCallback((module: ActiveModule) => {
     setActiveModule(module);
     if (module !== 'calendar') {
       setIsMobileCalendarDetailsOpen(false);
@@ -139,15 +179,16 @@ const App: React.FC = () => {
       typeof metadata.tagline === 'string' && metadata.tagline.trim()
         ? metadata.tagline.trim()
         : '添加一句个人签名';
-    const avatarUrl =
+    const remoteAvatarUrl =
       typeof metadata.avatar_url === 'string' && metadata.avatar_url.trim()
         ? metadata.avatar_url.trim()
         : typeof metadata.picture === 'string' && metadata.picture.trim()
           ? metadata.picture.trim()
           : null;
+    const avatarUrl = localProfileAvatar ?? remoteAvatarUrl;
 
     return { name, tagline, avatarUrl };
-  }, [currentUser]);
+  }, [currentUser, localProfileAvatar]);
 
   const handleSidebarProfileSave = useCallback(async (profile: SidebarProfile) => {
     if (!supabase || !currentUser) {
@@ -155,12 +196,21 @@ const App: React.FC = () => {
       return;
     }
 
+    const storageKey = `profile_avatar_${currentUser.id}`;
+    if (isInlineAvatar(profile.avatarUrl)) {
+      localStorage.setItem(storageKey, profile.avatarUrl);
+      setLocalProfileAvatar(profile.avatarUrl);
+    } else if (!profile.avatarUrl) {
+      localStorage.removeItem(storageKey);
+      setLocalProfileAvatar(null);
+    }
+
     const { data, error } = await supabase.auth.updateUser({
       data: {
         display_name: profile.name,
         name: profile.name,
         tagline: profile.tagline,
-        avatar_url: profile.avatarUrl ?? null,
+        avatar_url: avatarForUserMetadata(profile.avatarUrl),
       },
     });
 
@@ -253,7 +303,7 @@ const App: React.FC = () => {
   const refreshEvents = useCallback(async () => {
     if (!currentUser) return;
     const { startDate, endDate } = getVisibleDateRange(currentDate, viewMode, selectedDate);
-    const refreshed = await fetchEvents(currentUser.id, startDate, endDate, undefined, { loadAll: false });
+    const refreshed = await fetchEvents(currentUser.id, startDate, endDate, undefined, { loadAll: true });
     setEvents(refreshed);
 
     // Update visible tags with new categories found in refreshed events
@@ -373,7 +423,7 @@ const App: React.FC = () => {
       
       // 其他错误处理
       setEvents(prev => prev.filter(e => !optimisticEvents.some(oe => oe.id === e.id)));
-      const msg = e.message || '保存失败，请检查网络或账号配置';
+      const msg = getSaveErrorMessage(e, '保存失败，请检查网络或账号配置');
       setSyncStatus('sync-error');
       showToast({ tone: 'error', message: '保存失败，已回滚。', detail: msg });
       console.error(e);
@@ -488,7 +538,7 @@ const App: React.FC = () => {
     } catch (e) {
       // Revert on error
       setEvents(previousEvents);
-      const msg = e instanceof Error ? e.message : '更新失败，请检查网络或账号配置';
+      const msg = getSaveErrorMessage(e, '更新失败，请检查网络或账号配置');
       if (msg.includes('JWT expired')) {
         setSyncStatus('session-expired');
         showToast({ tone: 'error', message: '会话已过期，请重新登录', detail: '本次更新已回滚。' });
@@ -551,7 +601,7 @@ const App: React.FC = () => {
     } catch (e) {
       // Revert on error
       setEvents(previousEvents);
-      const msg = e instanceof Error ? e.message : '删除失败，请检查网络或账号配置';
+      const msg = getSaveErrorMessage(e, '删除失败，请检查网络或账号配置');
       if (msg.includes('JWT expired')) {
         setSyncStatus('session-expired');
         showToast({ tone: 'error', message: '会话已过期，请重新登录', detail: '本次删除已回滚。' });
@@ -814,7 +864,7 @@ const App: React.FC = () => {
       try {
         const [initialTags, fetchedEvents] = await Promise.all([
           retry(() => fetchTagsDB(currentUser.id, 1, 50)),
-          retry(() => fetchEvents(currentUser.id, startDate, endDate, undefined, { loadAll: false }))
+          retry(() => fetchEvents(currentUser.id, startDate, endDate, undefined, { loadAll: true }))
         ]);
 
         if (mounted) {
@@ -1153,6 +1203,16 @@ const App: React.FC = () => {
                   <div className="px-4 py-2 rounded-xl bg-white border border-gray-200 shadow-sm text-gray-600 text-sm">请先登录以查看日记</div>
                 </div>
               )}
+            </div>
+          )}
+          {activeModule === 'chat' && (
+            <div className="flex-1">
+              <Chat
+                events={events}
+                tags={tags}
+                currentDate={currentDate}
+                userId={currentUser?.id}
+              />
             </div>
           )}
         </div>

@@ -1,0 +1,1643 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>历史 · 制图学风格预览</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,700;0,9..144,900;1,9..144,400;1,9..144,500&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #faf9f5;
+    --paper-deep: #f0eee6;
+    --paper-shadow: #d9d4c8;
+    --ink: #1f1e1b;
+    --ink-soft: #4a4845;
+    --ink-faded: #8a857b;
+    --seal: #a8361e;
+    --seal-deep: #7a2511;
+    --water: #2b5575;
+    --gold: #8b6f3a;
+    --grid: rgba(31, 30, 27, 0.07);
+    --grid-strong: rgba(31, 30, 27, 0.18);
+    --highlight: rgba(168, 54, 30, 0.14);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background-color: var(--paper);
+    background-image:
+      radial-gradient(ellipse at 20% 10%, rgba(217, 212, 200, 0.4), transparent 60%),
+      radial-gradient(ellipse at 80% 90%, rgba(217, 212, 200, 0.3), transparent 55%),
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.12  0 0 0 0 0.11  0 0 0 0 0.1  0 0 0 0.14 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    background-size: auto, auto, 240px 240px;
+    background-attachment: fixed;
+    color: var(--ink);
+    font-family: 'Newsreader', Georgia, serif;
+    font-size: 19px;
+    line-height: 1.7;
+    font-weight: 400;
+    font-variation-settings: "opsz" 16;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+    min-height: 100vh;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 80px 80px;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.5;
+  }
+
+  .page {
+    position: relative;
+    z-index: 1;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 40px;
+  }
+
+  /* ========== HERO ========== */
+  .hero {
+    position: relative;
+    padding: 72px 0 56px;
+    border-bottom: 1px solid var(--grid-strong);
+    margin-bottom: 40px;
+  }
+
+  .hero-coords {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--ink-faded);
+    text-transform: uppercase;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 40px;
+    padding-bottom: 12px;
+    border-bottom: 1px dashed var(--grid-strong);
+  }
+
+  .hero-coords span::before {
+    content: '◆';
+    color: var(--seal);
+    margin-right: 8px;
+  }
+
+  .hero-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.3em;
+    color: var(--seal);
+    text-transform: uppercase;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .hero-eyebrow::before,
+  .hero-eyebrow::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--seal);
+    opacity: 0.4;
+  }
+
+  .hero-eyebrow::before { max-width: 40px; }
+  .hero-eyebrow::after { max-width: 200px; }
+
+  .hero-row {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 40px;
+  }
+
+  .hero-text { flex: 1; min-width: 0; }
+
+  .hero h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 300;
+    font-variation-settings: "opsz" 144, "SOFT" 50;
+    font-size: clamp(48px, 7vw, 72px);
+    line-height: 0.98;
+    letter-spacing: -0.03em;
+    color: var(--ink);
+    margin-bottom: 12px;
+  }
+
+  .hero h1 .ampersand {
+    font-style: italic;
+    font-weight: 400;
+    color: var(--seal);
+    font-variation-settings: "opsz" 144, "SOFT" 100;
+    margin: 0 0.15em;
+  }
+
+  .hero-sub {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-weight: 300;
+    font-size: clamp(18px, 2vw, 22px);
+    color: var(--ink-soft);
+    letter-spacing: -0.01em;
+  }
+
+  .compass {
+    width: 110px;
+    height: 110px;
+    opacity: 0.55;
+    pointer-events: none;
+    flex-shrink: 0;
+  }
+
+  .compass svg { width: 100%; height: 100%; }
+
+  .hero-meta {
+    display: flex;
+    gap: 48px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    color: var(--ink-faded);
+    text-transform: uppercase;
+    padding-top: 24px;
+    margin-top: 36px;
+    border-top: 1px solid var(--grid-strong);
+  }
+
+  .hero-meta div span {
+    display: block;
+    color: var(--ink);
+    font-size: 12px;
+    margin-top: 6px;
+    letter-spacing: 0.08em;
+  }
+
+  /* ========== TOOLBAR ========== */
+  .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    margin-bottom: 32px;
+    background: var(--paper-deep);
+    border-left: 3px solid var(--seal);
+    box-shadow: 3px 3px 0 var(--grid-strong);
+  }
+
+  .seg {
+    display: inline-flex;
+    border: 1px solid var(--grid-strong);
+    background: var(--paper);
+  }
+
+  .seg button {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    background: transparent;
+    border: 0;
+    padding: 9px 16px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+
+  .seg button + button { border-left: 1px solid var(--grid-strong); }
+
+  .seg button.active {
+    background: var(--ink);
+    color: var(--paper);
+    font-weight: 700;
+  }
+
+  .seg button:hover:not(.active) {
+    color: var(--seal);
+  }
+
+  .seg-lbl {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    color: var(--ink-faded);
+    text-transform: uppercase;
+    margin-right: 4px;
+  }
+
+  .search {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid var(--grid-strong);
+    background: var(--paper);
+    padding: 0 10px 0 12px;
+    height: 36px;
+  }
+
+  .search::before {
+    content: '⌕';
+    color: var(--ink-faded);
+    font-size: 16px;
+    margin-right: 6px;
+    line-height: 1;
+  }
+
+  .search input {
+    border: 0;
+    background: transparent;
+    outline: none;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    color: var(--ink);
+    width: 160px;
+  }
+
+  .search input::placeholder {
+    color: var(--ink-faded);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-size: 10px;
+  }
+
+  .badge-stat {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    color: var(--ink-soft);
+    text-transform: uppercase;
+    padding: 9px 14px;
+    border: 1px solid var(--grid-strong);
+    background: var(--paper);
+  }
+
+  .badge-stat .num { color: var(--seal); font-weight: 700; }
+  .badge-stat .div { color: var(--ink-faded); margin: 0 6px; }
+
+  .toolbar-spacer { flex: 1; }
+
+  .btn-export {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--paper);
+    background: var(--seal);
+    border: 0;
+    padding: 10px 18px;
+    cursor: pointer;
+    box-shadow: 2px 2px 0 var(--ink);
+    transition: transform 0.12s, box-shadow 0.12s;
+  }
+
+  .btn-export:hover { transform: translate(-1px, -1px); box-shadow: 3px 3px 0 var(--ink); }
+  .btn-export:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 var(--ink); }
+
+  /* ========== MAIN VIEW ========== */
+  .view-history {
+    display: grid;
+    grid-template-columns: 360px minmax(0, 1fr);
+    gap: 0;
+    border: 1px solid var(--grid-strong);
+    background: var(--paper);
+    box-shadow: 4px 4px 0 var(--grid-strong);
+    min-height: 620px;
+  }
+
+  /* 左侧时间线 */
+  .timeline {
+    border-right: 1px solid var(--grid-strong);
+    background: var(--paper-deep);
+    padding: 24px 0 24px;
+    overflow-y: auto;
+    max-height: 720px;
+  }
+
+  .timeline-head {
+    padding: 0 22px 16px;
+    border-bottom: 1px dashed var(--grid-strong);
+    margin-bottom: 12px;
+  }
+
+  .timeline-month {
+    font-family: 'Fraunces', serif;
+    font-weight: 400;
+    font-variation-settings: "opsz" 60, "SOFT" 50;
+    font-size: 26px;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+    margin-bottom: 4px;
+  }
+
+  .timeline-month::before {
+    content: '§ ';
+    color: var(--seal);
+    font-style: italic;
+    font-weight: 300;
+  }
+
+  .timeline-stat {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    color: var(--ink-faded);
+    text-transform: uppercase;
+  }
+
+  .timeline-stat .num { color: var(--seal); font-weight: 700; }
+
+  .timeline-groups { padding: 0 16px; }
+
+  .tl-group { margin-bottom: 18px; }
+
+  .tl-group-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 6px;
+    margin-bottom: 6px;
+  }
+
+  .tl-group-date {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: 15px;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+
+  .tl-group-date .today-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: var(--seal);
+    text-transform: uppercase;
+    margin-left: 6px;
+    vertical-align: middle;
+    font-weight: 700;
+  }
+
+  .tl-group-rule {
+    flex: 1;
+    height: 1px;
+    background: var(--grid-strong);
+  }
+
+  .tl-group-count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: var(--ink-faded);
+    text-transform: uppercase;
+    background: var(--paper);
+    padding: 2px 6px;
+    border: 1px solid var(--grid-strong);
+  }
+
+  .tl-item {
+    position: relative;
+    display: grid;
+    grid-template-columns: 18px 56px 1fr auto;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 10px 10px 8px;
+    cursor: pointer;
+    background: transparent;
+    border: 0;
+    width: 100%;
+    text-align: left;
+    font: inherit;
+    color: inherit;
+    border-left: 2px solid transparent;
+    transition: background 0.15s, border-color 0.15s;
+  }
+
+  .tl-item:hover { background: rgba(168, 54, 30, 0.05); }
+
+  .tl-item.active {
+    background: var(--paper);
+    border-left-color: var(--seal);
+  }
+
+  .tl-marker {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--seal);
+    line-height: 1;
+    text-align: center;
+    font-weight: 700;
+  }
+
+  .tl-marker.pending {
+    color: var(--ink-faded);
+    font-weight: 400;
+  }
+
+  .tl-time {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    color: var(--ink-soft);
+    font-weight: 500;
+  }
+
+  .tl-body { min-width: 0; }
+
+  .tl-title {
+    font-family: 'Newsreader', serif;
+    font-size: 14px;
+    line-height: 1.35;
+    color: var(--ink);
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .tl-item.active .tl-title { color: var(--seal); }
+
+  .tl-desc {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    color: var(--ink-faded);
+    text-transform: uppercase;
+    margin-top: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .tl-type {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: var(--ink-soft);
+    text-transform: uppercase;
+    padding: 3px 6px;
+    border: 1px solid var(--grid-strong);
+    background: var(--paper);
+    white-space: nowrap;
+  }
+
+  .tl-type.event { color: var(--seal); border-color: var(--seal); }
+  .tl-type.diary { color: var(--gold); border-color: var(--gold); }
+  .tl-type.system { color: var(--water); border-color: var(--water); }
+  .tl-type.alarm { color: var(--ink-soft); border-color: var(--ink-soft); }
+
+  .timeline-empty {
+    padding: 60px 22px;
+    text-align: center;
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 16px;
+    color: var(--ink-faded);
+  }
+
+  .timeline-empty::before {
+    content: '✕';
+    display: block;
+    font-size: 28px;
+    color: var(--grid-strong);
+    margin-bottom: 12px;
+    font-weight: 300;
+  }
+
+  /* 右侧详情面板 */
+  .detail {
+    display: grid;
+    grid-template-rows: auto auto 1fr auto auto;
+    background: var(--paper-deep);
+    border-left: 3px solid var(--seal);
+    padding: 28px 36px 24px;
+    min-height: 0;
+    position: relative;
+  }
+
+  .detail::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 28px;
+    height: 28px;
+    border-top: 1px solid var(--grid-strong);
+    border-right: 1px solid var(--grid-strong);
+    background:
+      linear-gradient(135deg, transparent 50%, var(--grid-strong) 50%, var(--grid-strong) 51%, transparent 51%);
+  }
+
+  .detail-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--grid-strong);
+  }
+
+  .detail-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    color: var(--seal);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .detail-title {
+    font-family: 'Fraunces', serif;
+    font-weight: 400;
+    font-variation-settings: "opsz" 60, "SOFT" 30;
+    font-size: 28px;
+    color: var(--ink);
+    letter-spacing: -0.015em;
+    line-height: 1.18;
+    max-width: 540px;
+  }
+
+  .detail-status {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--seal);
+    text-transform: uppercase;
+    padding: 6px 12px;
+    border: 1px solid var(--seal);
+    white-space: nowrap;
+    font-weight: 700;
+  }
+
+  .detail-status.pending {
+    color: var(--ink-faded);
+    border-color: var(--grid-strong);
+    font-weight: 400;
+  }
+
+  .detail-meta {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    margin: 18px 0 22px;
+    border: 1px solid var(--grid-strong);
+    background: var(--paper);
+  }
+
+  .detail-meta > div {
+    padding: 12px 14px;
+    border-right: 1px solid var(--grid-strong);
+  }
+
+  .detail-meta > div:last-child { border-right: 0; }
+
+  .detail-meta .lbl {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: var(--ink-faded);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .detail-meta .val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--ink);
+    font-weight: 500;
+    letter-spacing: 0.04em;
+  }
+
+  .detail-meta .val.seal { color: var(--seal); }
+  .detail-meta .val.water { color: var(--water); }
+  .detail-meta .val.gold { color: var(--gold); }
+
+  .detail-body {
+    background: var(--paper);
+    border: 1px solid var(--grid-strong);
+    padding: 18px 22px;
+    font-family: 'Newsreader', serif;
+    font-size: 16px;
+    line-height: 1.7;
+    color: var(--ink-soft);
+    overflow-y: auto;
+    max-height: 220px;
+  }
+
+  .detail-body p + p { margin-top: 12px; }
+
+  .detail-diff {
+    margin-top: 16px;
+    border: 1px solid var(--grid-strong);
+    background: var(--paper);
+  }
+
+  .detail-diff-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 14px;
+    border-bottom: 1px solid var(--grid-strong);
+    background: var(--paper-deep);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: var(--ink-faded);
+    text-transform: uppercase;
+  }
+
+  .detail-diff-head .crumb { color: var(--seal); font-weight: 700; }
+
+  .detail-diff-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .detail-diff-body > div {
+    padding: 12px 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    line-height: 1.6;
+    color: var(--ink-soft);
+  }
+
+  .detail-diff-body > div:first-child {
+    border-right: 1px dashed var(--grid-strong);
+  }
+
+  .detail-diff-body > div::before {
+    display: block;
+    font-size: 9px;
+    letter-spacing: 0.25em;
+    color: var(--ink-faded);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .detail-diff-body > div:first-child::before { content: '‹ BEFORE'; color: var(--ink-faded); }
+  .detail-diff-body > div:last-child::before { content: 'AFTER ›'; color: var(--seal); }
+
+  .detail-diff-body .strike {
+    text-decoration: line-through;
+    text-decoration-color: var(--seal);
+    text-decoration-thickness: 1px;
+    color: var(--ink-faded);
+  }
+
+  .detail-diff-body .ins {
+    color: var(--seal);
+    font-weight: 700;
+  }
+
+  .detail-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--grid-strong);
+    margin-top: 16px;
+  }
+
+  .detail-id {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    color: var(--ink-faded);
+    text-transform: uppercase;
+  }
+
+  .detail-id .num {
+    color: var(--ink);
+    font-weight: 700;
+  }
+
+  .detail-actions {
+    display: inline-flex;
+    gap: 10px;
+  }
+
+  .btn-ghost {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    background: var(--paper);
+    border: 1px solid var(--grid-strong);
+    padding: 11px 18px;
+    cursor: pointer;
+    transition: transform 0.12s, box-shadow 0.12s, color 0.15s, border-color 0.15s;
+    font-weight: 500;
+  }
+
+  .btn-ghost:hover {
+    color: var(--seal);
+    border-color: var(--seal);
+    transform: translate(-1px, -1px);
+    box-shadow: 2px 2px 0 var(--grid-strong);
+  }
+
+  .btn-ghost:active {
+    transform: translate(1px, 1px);
+    box-shadow: 0 0 0 var(--grid-strong);
+  }
+
+  .btn-restore {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--paper);
+    background: var(--ink);
+    border: 0;
+    padding: 11px 22px;
+    cursor: pointer;
+    box-shadow: 2px 2px 0 var(--seal);
+    transition: transform 0.12s, box-shadow 0.12s, background 0.15s;
+    font-weight: 700;
+  }
+
+  .btn-restore:hover {
+    background: var(--seal);
+    transform: translate(-1px, -1px);
+    box-shadow: 3px 3px 0 var(--ink);
+  }
+
+  .btn-restore:active {
+    transform: translate(1px, 1px);
+    box-shadow: 1px 1px 0 var(--ink);
+  }
+
+  .btn-restore:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+    box-shadow: 1px 1px 0 var(--grid-strong);
+  }
+
+  /* ========== HOURLY DISTRIBUTION ========== */
+  .view-distribution {
+    margin-top: 40px;
+    border: 1px solid var(--grid-strong);
+    background: var(--paper);
+    box-shadow: 4px 4px 0 var(--grid-strong);
+    padding: 28px 28px 24px;
+  }
+
+  .dist-head {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--grid-strong);
+    margin-bottom: 22px;
+  }
+
+  .dist-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    color: var(--seal);
+    text-transform: uppercase;
+  }
+
+  .dist-title {
+    font-family: 'Fraunces', serif;
+    font-weight: 400;
+    font-variation-settings: "opsz" 60, "SOFT" 30;
+    font-size: 26px;
+    color: var(--ink);
+    letter-spacing: -0.015em;
+  }
+
+  .dist-helper {
+    font-family: 'Newsreader', serif;
+    font-style: italic;
+    font-size: 14px;
+    color: var(--ink-soft);
+    margin-top: 2px;
+  }
+
+  .hour-grid {
+    display: grid;
+    grid-template-columns: repeat(24, minmax(0, 1fr));
+    gap: 4px;
+    margin-bottom: 12px;
+  }
+
+  .hour-cell {
+    aspect-ratio: 1 / 1.6;
+    background: var(--paper-deep);
+    border: 1px solid var(--grid-strong);
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.12s;
+  }
+
+  .hour-cell:hover {
+    transform: translateY(-2px);
+    border-color: var(--seal);
+  }
+
+  .hour-cell .lvl {
+    position: absolute;
+    inset: 0;
+    background: var(--seal);
+  }
+
+  .hour-cell.lvl-0 .lvl { opacity: 0; }
+  .hour-cell.lvl-1 .lvl { opacity: 0.18; }
+  .hour-cell.lvl-2 .lvl { opacity: 0.38; }
+  .hour-cell.lvl-3 .lvl { opacity: 0.62; }
+  .hour-cell.lvl-4 .lvl { opacity: 0.85; }
+  .hour-cell.lvl-5 .lvl { opacity: 1; }
+
+  .hour-cell .count {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--paper);
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+
+  .hour-cell.lvl-3 .count,
+  .hour-cell.lvl-4 .count,
+  .hour-cell.lvl-5 .count { opacity: 1; }
+
+  .hour-cell .count.dim { color: var(--ink); }
+
+  .hour-labels {
+    display: grid;
+    grid-template-columns: repeat(24, minmax(0, 1fr));
+    gap: 4px;
+    margin-bottom: 16px;
+  }
+
+  .hour-labels span {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.04em;
+    color: var(--ink-faded);
+    text-align: center;
+  }
+
+  .hour-labels span.peak { color: var(--seal); font-weight: 700; }
+
+  .dist-legend {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 16px;
+    border-top: 1px dashed var(--grid-strong);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    color: var(--ink-faded);
+    text-transform: uppercase;
+  }
+
+  .legend-scale {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .legend-scale .swatch {
+    width: 18px;
+    height: 10px;
+    border: 1px solid var(--grid-strong);
+  }
+
+  .legend-scale .label {
+    margin: 0 4px;
+  }
+
+  .dist-legend .stat {
+    color: var(--ink-soft);
+  }
+
+  .dist-legend .stat .num { color: var(--seal); font-weight: 700; }
+
+  /* ========== CLOSING ========== */
+  .closing {
+    margin: 80px 0 40px;
+    padding: 40px 0 0;
+    border-top: 2px solid var(--ink);
+    position: relative;
+    text-align: center;
+  }
+
+  .closing::before {
+    content: '✕';
+    position: absolute;
+    top: -16px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--paper);
+    color: var(--seal);
+    font-size: 24px;
+    padding: 0 16px;
+    font-weight: 300;
+  }
+
+  .closing-stamp {
+    display: inline-block;
+    margin: 0 auto 24px;
+    padding: 8px 20px;
+    border: 2px solid var(--seal);
+    color: var(--seal);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    transform: rotate(-2deg);
+    background: var(--paper);
+  }
+
+  .closing p {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-weight: 300;
+    font-variation-settings: "opsz" 144, "SOFT" 100;
+    font-size: clamp(18px, 2.2vw, 22px);
+    line-height: 1.55;
+    color: var(--ink);
+    max-width: 580px;
+    margin: 0 auto;
+    letter-spacing: -0.01em;
+  }
+
+  /* ========== FOOTER ========== */
+  footer {
+    margin: 40px 0 60px;
+    padding-top: 20px;
+    border-top: 1px dashed var(--grid-strong);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--ink-faded);
+    text-transform: uppercase;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  footer .crest {
+    color: var(--seal);
+    font-size: 14px;
+  }
+
+  /* ========== TOAST ========== */
+  .toast {
+    position: fixed;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--ink);
+    color: var(--paper);
+    padding: 12px 24px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    box-shadow: 3px 3px 0 var(--seal);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s, transform 0.2s;
+    z-index: 9999;
+  }
+
+  .toast.visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  ::selection {
+    background: var(--seal);
+    color: var(--paper);
+  }
+
+  /* ========== 响应式 ========== */
+  @media (max-width: 900px) {
+    .view-history { grid-template-columns: 1fr; min-height: auto; }
+    .timeline { border-right: 0; border-bottom: 1px solid var(--grid-strong); max-height: 380px; }
+    .detail { border-left: 0; border-top: 3px solid var(--seal); }
+    .detail-meta { grid-template-columns: repeat(2, 1fr); }
+    .detail-meta > div:nth-child(2n) { border-right: 0; }
+    .detail-meta > div:nth-child(1), .detail-meta > div:nth-child(2) { border-bottom: 1px solid var(--grid-strong); }
+    .detail-diff-body { grid-template-columns: 1fr; }
+    .detail-diff-body > div:first-child { border-right: 0; border-bottom: 1px dashed var(--grid-strong); }
+    .hour-grid { gap: 2px; }
+    .hour-cell .count { font-size: 8px; }
+  }
+
+  @media (max-width: 720px) {
+    .page { padding: 0 20px; }
+    .hero { padding: 48px 0 36px; }
+    .hero-row { flex-direction: column; align-items: flex-start; }
+    .compass { display: none; }
+    .hero-meta { flex-direction: column; gap: 12px; }
+    .detail { padding: 22px 22px 18px; }
+    .detail-title { font-size: 22px; }
+    .toolbar { gap: 10px; padding: 12px; }
+    .search input { width: 120px; }
+    .hour-grid { grid-template-columns: repeat(12, minmax(0, 1fr)); }
+    .hour-labels { grid-template-columns: repeat(12, minmax(0, 1fr)); }
+    .hour-cell .count { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ HERO ============ -->
+  <header class="hero">
+    <div class="hero-coords">
+      <span>N 31°14′ · E 121°28′</span>
+      <span>LOG BOOK № 27</span>
+      <span>2026 · WEEK 29</span>
+    </div>
+
+    <div class="hero-row">
+      <div class="hero-text">
+        <div class="hero-eyebrow">§ 01 · LOG &amp; RETROSPECT</div>
+        <h1>历史<span class="ampersand">与</span>回望</h1>
+        <p class="hero-sub">History &amp; Retrospect - 一份用墨水勘测的过去时区</p>
+      </div>
+
+      <div class="compass" aria-hidden="true">
+        <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="0.8" style="color: var(--ink-soft);">
+          <circle cx="50" cy="50" r="46"/>
+          <circle cx="50" cy="50" r="36"/>
+          <circle cx="50" cy="50" r="2" fill="currentColor"/>
+          <line x1="50" y1="4" x2="50" y2="96"/>
+          <line x1="4" y1="50" x2="96" y2="50"/>
+          <line x1="17" y1="17" x2="83" y2="83" stroke-dasharray="2,2" opacity="0.5"/>
+          <line x1="83" y1="17" x2="17" y2="83" stroke-dasharray="2,2" opacity="0.5"/>
+          <polygon points="50,8 45,50 55,50" fill="currentColor" style="fill: var(--seal);"/>
+          <polygon points="50,92 45,50 55,50" fill="currentColor" opacity="0.3"/>
+          <text x="50" y="3" text-anchor="middle" font-family="JetBrains Mono" font-size="6" fill="currentColor" style="font-weight:700;">N</text>
+          <text x="50" y="99" text-anchor="middle" font-family="JetBrains Mono" font-size="6" fill="currentColor">S</text>
+          <text x="2" y="52" text-anchor="middle" font-family="JetBrains Mono" font-size="6" fill="currentColor">W</text>
+          <text x="98" y="52" text-anchor="middle" font-family="JetBrains Mono" font-size="6" fill="currentColor">E</text>
+        </svg>
+      </div>
+    </div>
+
+    <div class="hero-meta">
+      <div>SUBJECT<span>操作日志 · 时间地图</span></div>
+      <div>METHOD<span>时间倒序 · 类型筛选</span></div>
+      <div>SCALE<span>1 条 ≈ 1 个标记</span></div>
+      <div>STORAGE<span>Supabase · 本地索引</span></div>
+    </div>
+  </header>
+
+  <!-- ============ TOOLBAR ============ -->
+  <div class="toolbar">
+    <span class="seg-lbl">RANGE</span>
+    <div class="seg" id="rangeSeg">
+      <button class="active" data-range="today">今日</button>
+      <button data-range="week">本周</button>
+      <button data-range="month">本月</button>
+      <button data-range="all">全部</button>
+    </div>
+
+    <span class="seg-lbl">TYPE</span>
+    <div class="seg" id="typeSeg">
+      <button class="active" data-type="all">所有</button>
+      <button data-type="event">事件</button>
+      <button data-type="diary">日记</button>
+      <button data-type="system">系统</button>
+      <button data-type="alarm">闹钟</button>
+    </div>
+
+    <div class="search">
+      <input id="searchInput" type="text" placeholder="SEARCH LOG" spellcheck="false" />
+    </div>
+
+    <div class="badge-stat" id="statBadge">
+      ◆ TOTAL <span class="num">0</span><span class="div">·</span>TODAY <span class="num">0</span><span class="div">·</span>WEEK <span class="num">0</span>
+    </div>
+
+    <div class="toolbar-spacer"></div>
+
+    <button class="btn-export" id="exportBtn">导出日志</button>
+  </div>
+
+  <!-- ============ MAIN VIEW ============ -->
+  <section class="view-history">
+    <!-- 左侧时间线 -->
+    <aside class="timeline">
+      <div class="timeline-head">
+        <div class="timeline-month" id="tlMonth">7 月 · 时间航迹</div>
+        <div class="timeline-stat">§ ENTRIES <span class="num" id="tlCount">0</span> · DESC</div>
+      </div>
+      <div class="timeline-groups" id="tlGroups"></div>
+    </aside>
+
+    <!-- 右侧详情面板 -->
+    <section class="detail" id="detailPanel">
+      <div class="detail-head">
+        <div>
+          <div class="detail-eyebrow" id="detailEyebrow">§ CURRENT RECORD · 07.19</div>
+          <h2 class="detail-title" id="detailTitle">--</h2>
+        </div>
+        <span class="detail-status" id="detailStatus">--</span>
+      </div>
+
+      <div class="detail-meta" id="detailMeta"></div>
+
+      <div class="detail-body" id="detailBody"></div>
+
+      <div class="detail-diff" id="detailDiff" style="display:none;">
+        <div class="detail-diff-head">
+          <span>§ DIFF · 变更对比</span>
+          <span class="crumb" id="diffCrumb">2 FIELDS</span>
+        </div>
+        <div class="detail-diff-body" id="detailDiffBody"></div>
+      </div>
+
+      <div class="detail-foot">
+        <span class="detail-id" id="detailId">ID · <span class="num">--</span></span>
+        <div class="detail-actions">
+          <button class="btn-ghost" id="copyBtn">复制 ID</button>
+          <button class="btn-restore" id="restoreBtn" disabled>恢复记录</button>
+        </div>
+      </div>
+    </section>
+  </section>
+
+  <!-- ============ HOURLY DISTRIBUTION ============ -->
+  <section class="view-distribution">
+    <div class="dist-head">
+      <div class="dist-eyebrow">§ 02 · HOURLY DISTRIBUTION</div>
+      <h2 class="dist-title">24 小时活跃度测量</h2>
+      <p class="dist-helper">将一日的时间拍成 24 块测站，墨迹的深浅即记录的疏密。</p>
+    </div>
+    <div class="hour-labels" id="hourLabels"></div>
+    <div class="hour-grid" id="hourGrid"></div>
+    <div class="dist-legend">
+      <div class="legend-scale">
+        <span class="swatch" style="background: var(--paper-deep);"></span>
+        <span class="label">‹ 0</span>
+        <span class="swatch" style="background: rgba(168,54,30,0.18);"></span>
+        <span class="swatch" style="background: rgba(168,54,30,0.38);"></span>
+        <span class="swatch" style="background: rgba(168,54,30,0.62);"></span>
+        <span class="swatch" style="background: rgba(168,54,30,0.85);"></span>
+        <span class="swatch" style="background: var(--seal);"></span>
+        <span class="label">5+ ›</span>
+      </div>
+      <div class="stat">PEAK <span class="num" id="peakHour">--</span> · TOTAL <span class="num" id="distTotal">0</span></div>
+    </div>
+  </section>
+
+  <!-- ============ CLOSING ============ -->
+  <section class="closing">
+    <div class="closing-stamp">MEMORIA TEMPORIS</div>
+    <p>历史不是过去的疆域，<br>而是此刻仍在被测绘的潮汐。</p>
+  </section>
+
+  <!-- ============ FOOTER ============ -->
+  <footer>
+    <span>HISTORY · v1.0 · CARTOGRAPHIC EDITION</span>
+    <span class="crest">❦</span>
+    <span>LOG BOOK · WEEK 29 · 2026</span>
+  </footer>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  const TODAY_ISO = '2026-07-19';
+  const WEEKDAY = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+
+  // ========== Mock 数据 ==========
+  const records = [
+    // 2026-07-19 今日
+    { id: 'LOG-0728', ts: '2026-07-19T14:32:00', type: 'event', action: 'create', title: '创建事件 "产品评审会"', desc: '添加至 7 月 21 日 10:00-11:30 · 标签 工作', status: 'done', meta: { target: '事件 #EVT-2041', tag: '工作', duration: '90m', scope: '本周' }, body: '在 7 月 21 日上午创建了一场时长 90 分钟的产品评审会，关联标签「工作」。事件已被加入本周时间地图，并触发日历视图的增量同步。' },
+    { id: 'LOG-0727', ts: '2026-07-19T13:18:00', type: 'diary', action: 'save', title: '保存日记 "雾与船鸣"', desc: '约 312 字 · Supabase 已同步', status: 'done', meta: { target: '日记 #DJ-119', tag: '7.19', duration: '312 字', scope: '今日' }, body: '续写了关于「边界」的随想，又添了几行关于刻度的思考。日记被标记为已同步状态，云端时间戳已更新。' },
+    { id: 'LOG-0726', ts: '2026-07-19T11:45:00', type: 'event', action: 'update', title: '修改事件 "晨跑 5km"', desc: '时间 06:30 → 06:45 · 标签不变', status: 'done', meta: { target: '事件 #EVT-2038', tag: '运动', duration: '15m', scope: '今日' }, body: '将今日的晨跑时间从 06:30 调整至 06:45，标签与地点保持不变。事件状态被记入变更日志，旧时间字段已被覆盖但可在历史中追溯。', diff: { before: { time: '06:30 - 07:00', tag: '运动', location: '河岸' }, after: { time: '06:45 - 07:15', tag: '运动', location: '河岸' } } },
+    { id: 'LOG-0725', ts: '2026-07-19T10:02:00', type: 'system', action: 'login', title: '账号登录', desc: 'iOS 26 · Safari · 上海', status: 'done', meta: { target: '会话 #SS-9821', tag: '认证', duration: '-', scope: '今日' }, body: '通过 iOS 26 的 Safari 完成登录，会话令牌已颁发并写入本地钥匙串。该会话将在 14 天后过期，期间可凭令牌免密访问云端数据。' },
+    { id: 'LOG-0724', ts: '2026-07-19T09:30:00', type: 'event', action: 'create', title: '创建事件 "整理本周笔记"', desc: '今日 09:30-10:30 · 标签 复盘', status: 'done', meta: { target: '事件 #EVT-2039', tag: '复盘', duration: '60m', scope: '今日' }, body: '新建了一个一小时的复盘时段，用于整理本周的笔记和地图。' },
+    { id: 'LOG-0723', ts: '2026-07-19T08:15:00', type: 'alarm', action: 'trigger', title: '闹钟触发 "起床"', desc: '08:15 · 单次 · 已确认', status: 'done', meta: { target: '闹钟 #AL-3301', tag: '生活', duration: '-', scope: '今日' }, body: '08:15 触发起床闹钟，单次模式。已手动确认关闭，未触发后续递归。' },
+    { id: 'LOG-0722', ts: '2026-07-19T07:48:00', type: 'system', action: 'sync', title: '云端同步完成', desc: '拉取 3 项 · 推送 5 项', status: 'done', meta: { target: '同步 #SY-552', tag: '数据', duration: '1.2s', scope: '今日' }, body: '与 Supabase 完成了一次双向同步：拉取 3 项远程变更，推送 5 项本地变更，无冲突。' },
+    { id: 'LOG-0721', ts: '2026-07-19T00:00:00', type: 'system', action: 'pending', title: '计划任务 · 待执行', desc: '凌晨数据归档 · 等待中', status: 'pending', meta: { target: '任务 #TK-007', tag: '归档', duration: '-', scope: '今日' }, body: '凌晨 00:00 的自动归档任务已调度，但尚未执行。系统将在下一次心跳时尝试触发。' },
+
+    // 2026-07-18 昨日
+    { id: 'LOG-0720', ts: '2026-07-18T22:10:00', type: 'event', action: 'delete', title: '删除事件 "周末电影"', desc: '已撤回至回收站 · 7 日内可恢复', status: 'done', meta: { target: '事件 #EVT-2035', tag: '生活', duration: '-', scope: '本周' }, body: '将原定 7 月 19 日的周末电影事件删除。事件被移入回收站，将在 7 日后永久清理。可通过历史面板的「恢复记录」按钮找回。', diff: { before: { title: '周末电影', time: '19:30 - 22:00', tag: '生活' }, after: { title: '(已删除)', time: '-', tag: '-' } } },
+    { id: 'LOG-0719', ts: '2026-07-18T19:42:00', type: 'diary', action: 'save', title: '保存日记 "周中笔记"', desc: '约 248 字 · Supabase 已同步', status: 'done', meta: { target: '日记 #DJ-118', tag: '7.18', duration: '248 字', scope: '本周' }, body: '写完了周三的笔记，记录了和 W 的对话片段，以及关于「测量」与「忽略」的随想。' },
+    { id: 'LOG-0718', ts: '2026-07-18T16:05:00', type: 'event', action: 'update', title: '修改事件 "下午茶"', desc: '地点 · 星巴克 → Manner', status: 'done', meta: { target: '事件 #EVT-2032', tag: '生活', duration: '60m', scope: '本周' }, body: '将下午茶的地点从星巴克调整至 Manner，时间与参与人保持不变。', diff: { before: { location: '星巴克 · 静安寺店', time: '16:00 - 17:00', tag: '生活' }, after: { location: 'Manner · 静安寺店', time: '16:00 - 17:00', tag: '生活' } } },
+    { id: 'LOG-0717', ts: '2026-07-18T10:30:00', type: 'system', action: 'login', title: '账号登录', desc: 'iOS 26 · Safari · 上海', status: 'done', meta: { target: '会话 #SS-9818', tag: '认证', duration: '-', scope: '本周' }, body: '通过 iOS 26 Safari 完成登录，会话令牌已颁发。' },
+
+    // 2026-07-17
+    { id: 'LOG-0716', ts: '2026-07-17T20:18:00', type: 'event', action: 'create', title: '创建事件 "和 W 散步"', desc: '7.17 19:00-20:30 · 标签 社交', status: 'done', meta: { target: '事件 #EVT-2028', tag: '社交', duration: '90m', scope: '本周' }, body: '新建了一场与 W 的散步事件，时长 90 分钟，沿河岸进行。' },
+    { id: 'LOG-0715', ts: '2026-07-17T15:42:00', type: 'diary', action: 'save', title: '保存日记 "看见与忽略"', desc: '约 198 字 · Supabase 已同步', status: 'done', meta: { target: '日记 #DJ-117', tag: '7.17', duration: '198 字', scope: '本周' }, body: '记录了 W 关于「地图即看见」与「地图即忽略」的论述。' },
+    { id: 'LOG-0714', ts: '2026-07-17T09:00:00', type: 'alarm', action: 'trigger', title: '闹钟触发 "晨间提醒"', desc: '09:00 · 工作日 · 已确认', status: 'done', meta: { target: '闹钟 #AL-3298', tag: '工作', duration: '-', scope: '本周' }, body: '工作日晨间提醒触发，已确认关闭。' },
+
+    // 2026-07-16
+    { id: 'LOG-0713', ts: '2026-07-16T21:30:00', type: 'event', action: 'create', title: '创建事件 "夜读《地图的力量》"', desc: '7.16 21:30-22:30 · 标签 阅读', status: 'done', meta: { target: '事件 #EVT-2025', tag: '阅读', duration: '60m', scope: '本周' }, body: '新建了一小时的阅读时段，计划读完《地图的力量》的第三章。' },
+    { id: 'LOG-0712', ts: '2026-07-16T14:00:00', type: 'system', action: 'sync', title: '云端同步完成', desc: '拉取 0 项 · 推送 2 项', status: 'done', meta: { target: '同步 #SY-548', tag: '数据', duration: '0.8s', scope: '本周' }, body: '与云端完成单向推送，无远程新变更。' },
+
+    // 2026-07-15
+    { id: 'LOG-0711', ts: '2026-07-15T22:50:00', type: 'diary', action: 'save', title: '保存日记 "续写刻度"', desc: '约 276 字 · Supabase 已同步', status: 'done', meta: { target: '日记 #DJ-116', tag: '7.15', duration: '276 字', scope: '本周' }, body: '续写了昨日被打断的关于「刻度」的随想。' },
+    { id: 'LOG-0710', ts: '2026-07-15T11:20:00', type: 'event', action: 'update', title: '修改事件 "周会"', desc: '时间 11:00 → 11:20 · 推迟 20 分钟', status: 'done', meta: { target: '事件 #EVT-2020', tag: '工作', duration: '40m', scope: '本周' }, body: '周会因临时冲突推迟 20 分钟开始。', diff: { before: { time: '11:00 - 11:40', tag: '工作', location: '会议室 A' }, after: { time: '11:20 - 12:00', tag: '工作', location: '会议室 A' } } },
+
+    // 2026-07-14
+    { id: 'LOG-0709', ts: '2026-07-14T20:00:00', type: 'diary', action: 'save', title: '保存日记 "雨与边界"', desc: '约 224 字 · Supabase 已同步', status: 'done', meta: { target: '日记 #DJ-115', tag: '7.14', duration: '224 字', scope: '本周' }, body: '记录了关于「边界即辨认位置」的随想，写到一半被打断。' },
+    { id: 'LOG-0708', ts: '2026-07-14T08:30:00', type: 'event', action: 'create', title: '创建事件 "晨跑 5km"', desc: '7.14 06:30-07:00 · 标签 运动', status: 'done', meta: { target: '事件 #EVT-2018', tag: '运动', duration: '30m', scope: '本周' }, body: '新建晨跑事件，计划沿河岸跑 5 公里。' },
+
+    // 2026-07-13 本周开始
+    { id: 'LOG-0707', ts: '2026-07-13T07:15:00', type: 'diary', action: 'save', title: '保存日记 "雾未散"', desc: '约 268 字 · Supabase 已同步', status: 'done', meta: { target: '日记 #DJ-114', tag: '7.13', duration: '268 字', scope: '本周' }, body: '记录了晨起沿河岸走的所见，以及序章里"地图不是疆域"在脑中回响的瞬间。' },
+    { id: 'LOG-0706', ts: '2026-07-13T09:00:00', type: 'system', action: 'login', title: '账号登录', desc: 'macOS · Chrome · 上海', status: 'done', meta: { target: '会话 #SS-9802', tag: '认证', duration: '-', scope: '本周' }, body: '通过 macOS Chrome 完成登录，开启本周的工作流。' },
+
+    // 2026-07-12 上周
+    { id: 'LOG-0705', ts: '2026-07-12T23:00:00', type: 'event', action: 'create', title: '创建事件 "周计划复盘"', desc: '7.13 09:00-10:00 · 标签 复盘', status: 'done', meta: { target: '事件 #EVT-2015', tag: '复盘', duration: '60m', scope: '本月' }, body: '为周日上午新建了一小时的周计划复盘事件。' },
+    { id: 'LOG-0704', ts: '2026-07-12T18:30:00', type: 'diary', action: 'save', title: '保存日记 "周六杂记"', desc: '约 156 字 · Supabase 已同步', status: 'done', meta: { target: '日记 #DJ-113', tag: '7.12', duration: '156 字', scope: '本月' }, body: '记录了周六的零散片段。' },
+    { id: 'LOG-0703', ts: '2026-07-12T07:00:00', type: 'alarm', action: 'trigger', title: '闹钟触发 "周末晨起"', desc: '07:00 · 单次 · 已确认', status: 'done', meta: { target: '闹钟 #AL-3290', tag: '生活', duration: '-', scope: '本月' }, body: '周末单次晨起闹钟触发，已确认。' }
+  ];
+
+  const TYPE_LABELS = {
+    event: 'EVENT',
+    diary: 'DIARY',
+    system: 'SYSTEM',
+    alarm: 'ALARM'
+  };
+
+  const ACTION_LABELS = {
+    create: 'CREATED',
+    update: 'UPDATED',
+    delete: 'DELETED',
+    save: 'SAVED',
+    login: 'LOGIN',
+    sync: 'SYNCED',
+    trigger: 'TRIGGERED',
+    pending: 'PENDING'
+  };
+
+  const state = {
+    range: 'today',
+    type: 'all',
+    search: '',
+    activeId: 'LOG-0728'
+  };
+
+  // ========== 工具函数 ==========
+  function pad2(n) { return String(n).padStart(2, '0'); }
+
+  function parseTs(ts) {
+    const [date, time] = ts.split('T');
+    return { date, time, d: new Date(ts) };
+  }
+
+  function fmtDateLabel(iso) {
+    const d = new Date(iso + 'T00:00:00');
+    const wd = WEEKDAY[d.getDay()];
+    const m = d.getMonth() + 1;
+    const day = d.getDate();
+    return `${m}.${pad2(day)} · ${wd}`;
+  }
+
+  function fmtTimeHM(time) {
+    return time.slice(0, 5);
+  }
+
+  function fmtMDShort(iso) {
+    const d = new Date(iso + 'T00:00:00');
+    return `${pad2(d.getMonth() + 1)}.${pad2(d.getDate())}`;
+  }
+
+  function isToday(iso) { return iso === TODAY_ISO; }
+
+  function inRange(iso, range) {
+    const d = new Date(iso + 'T00:00:00');
+    const today = new Date(TODAY_ISO + 'T00:00:00');
+    if (range === 'today') return iso === TODAY_ISO;
+    if (range === 'week') {
+      const dayIdx = (today.getDay() + 6) % 7;
+      const weekStart = new Date(today.getTime() - dayIdx * 86400000);
+      const weekEnd = new Date(weekStart.getTime() + 7 * 86400000 - 1);
+      return d >= weekStart && d <= weekEnd;
+    }
+    if (range === 'month') {
+      return d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear();
+    }
+    return true;
+  }
+
+  function getFilteredRecords() {
+    const kw = state.search.trim().toLowerCase();
+    return records.filter(r => {
+      const { date } = parseTs(r.ts);
+      if (!inRange(date, state.range)) return false;
+      if (state.type !== 'all' && r.type !== state.type) return false;
+      if (kw) {
+        const hay = `${r.title} ${r.desc} ${r.id} ${r.type} ${r.action}`.toLowerCase();
+        if (!hay.includes(kw)) return false;
+      }
+      return true;
+    }).sort((a, b) => b.ts.localeCompare(a.ts));
+  }
+
+  function groupByDate(list) {
+    const groups = {};
+    const order = [];
+    list.forEach(r => {
+      const { date } = parseTs(r.ts);
+      if (!groups[date]) { groups[date] = []; order.push(date); }
+      groups[date].push(r);
+    });
+    return order.sort((a, b) => b.localeCompare(a)).map(date => ({ date, items: groups[date] }));
+  }
+
+  // ========== 渲染：时间线 ==========
+  function renderTimeline() {
+    const list = getFilteredRecords();
+    const groups = groupByDate(list);
+    const container = document.getElementById('tlGroups');
+
+    document.getElementById('tlCount').textContent = list.length;
+
+    if (list.length === 0) {
+      container.innerHTML = `<div class="timeline-empty">此范围内无记录<br>‹ 调整筛选或时间范围 ›</div>`;
+      return;
+    }
+
+    container.innerHTML = groups.map(g => {
+      const today = isToday(g.date) ? '<span class="today-tag">TODAY</span>' : '';
+      return `
+        <div class="tl-group">
+          <div class="tl-group-head">
+            <span class="tl-group-date">${fmtDateLabel(g.date)}${today}</span>
+            <span class="tl-group-rule"></span>
+            <span class="tl-group-count">№ ${pad2(g.items.length)}</span>
+          </div>
+          ${g.items.map(r => {
+            const { time } = parseTs(r.ts);
+            const isActive = r.id === state.activeId;
+            const isPending = r.status === 'pending';
+            return `
+              <button class="tl-item ${isActive ? 'active' : ''}" data-id="${r.id}">
+                <span class="tl-marker ${isPending ? 'pending' : ''}">${isPending ? '○' : '◆'}</span>
+                <span class="tl-time">${fmtTimeHM(time)}</span>
+                <span class="tl-body">
+                  <span class="tl-title">${r.title}</span>
+                  <span class="tl-desc">${r.desc}</span>
+                </span>
+                <span class="tl-type ${r.type}">${TYPE_LABELS[r.type]}</span>
+              </button>
+            `;
+          }).join('')}
+        </div>
+      `;
+    }).join('');
+
+    container.querySelectorAll('.tl-item').forEach(btn => {
+      btn.addEventListener('click', () => selectRecord(btn.dataset.id));
+    });
+  }
+
+  // ========== 渲染：统计 badge ==========
+  function renderStatBadge() {
+    const allRecords = records;
+    const todayCount = allRecords.filter(r => parseTs(r.ts).date === TODAY_ISO).length;
+    const today = new Date(TODAY_ISO + 'T00:00:00');
+    const dayIdx = (today.getDay() + 6) % 7;
+    const weekStart = new Date(today.getTime() - dayIdx * 86400000);
+    const weekEnd = new Date(weekStart.getTime() + 7 * 86400000 - 1);
+    const weekCount = allRecords.filter(r => {
+      const d = new Date(r.ts);
+      return d >= weekStart && d <= weekEnd;
+    }).length;
+
+    document.getElementById('statBadge').innerHTML =
+      `◆ TOTAL <span class="num">${allRecords.length}</span><span class="div">·</span>TODAY <span class="num">${todayCount}</span><span class="div">·</span>WEEK <span class="num">${weekCount}</span>`;
+  }
+
+  // ========== 渲染：详情面板 ==========
+  function renderDetail() {
+    const r = records.find(x => x.id === state.activeId) || records[0];
+    if (!r) {
+      document.getElementById('detailEyebrow').textContent = '§ NO RECORD';
+      document.getElementById('detailTitle').textContent = '无选中记录';
+      document.getElementById('detailStatus').textContent = '--';
+      document.getElementById('detailMeta').innerHTML = '';
+      document.getElementById('detailBody').innerHTML = '<p>请从左侧时间线选择一条记录查看详情。</p>';
+      document.getElementById('detailDiff').style.display = 'none';
+      document.getElementById('restoreBtn').disabled = true;
+      return;
+    }
+    const { date, time } = parseTs(r.ts);
+    const isPending = r.status === 'pending';
+    const isDeletable = r.action === 'delete';
+
+    document.getElementById('detailEyebrow').textContent =
+      `§ CURRENT RECORD · ${fmtMDShort(date)} · ${fmtTimeHM(time)}`;
+    document.getElementById('detailTitle').textContent = r.title;
+
+    const statusEl = document.getElementById('detailStatus');
+    statusEl.textContent = `${TYPE_LABELS[r.type]} · ${ACTION_LABELS[r.action] || r.action.toUpperCase()}`;
+    statusEl.classList.toggle('pending', isPending);
+
+    const meta = r.meta || {};
+    document.getElementById('detailMeta').innerHTML = `
+      <div>
+        <div class="lbl">TARGET</div>
+        <div class="val seal">${meta.target || '--'}</div>
+      </div>
+      <div>
+        <div class="lbl">TAG</div>
+        <div class="val gold">${meta.tag || '--'}</div>
+      </div>
+      <div>
+        <div class="lbl">DURATION</div>
+        <div class="val water">${meta.duration || '--'}</div>
+      </div>
+      <div>
+        <div class="lbl">SCOPE</div>
+        <div class="val">${meta.scope || '--'}</div>
+      </div>
+    `;
+
+    document.getElementById('detailBody').innerHTML = `<p>${r.body || ''}</p>`;
+
+    const diffWrap = document.getElementById('detailDiff');
+    if (r.diff) {
+      diffWrap.style.display = 'block';
+      const b = r.diff.before || {};
+      const a = r.diff.after || {};
+      const fields = Array.from(new Set([...Object.keys(b), ...Object.keys(a)]));
+      document.getElementById('diffCrumb').textContent = `${fields.length} FIELDS`;
+      document.getElementById('detailDiffBody').innerHTML = `
+        <div>
+          ${fields.map(f => `<div><span class="strike">${b[f] ?? '-'}</span></div>`).join('')}
+        </div>
+        <div>
+          ${fields.map(f => `<div><span class="ins">${a[f] ?? '-'}</span></div>`).join('')}
+        </div>
+      `;
+    } else {
+      diffWrap.style.display = 'none';
+    }
+
+    document.getElementById('detailId').innerHTML = `ID · <span class="num">${r.id}</span>`;
+
+    const restoreBtn = document.getElementById('restoreBtn');
+    restoreBtn.disabled = !isDeletable;
+    restoreBtn.textContent = isDeletable ? '恢复记录' : (isPending ? '触发任务' : '不可恢复');
+  }
+
+  // ========== 渲染：24 小时活跃度 ==========
+  function renderHourGrid() {
+    const counts = new Array(24).fill(0);
+    records.forEach(r => {
+      const h = parseTs(r.ts).d.getHours();
+      counts[h]++;
+    });
+    const max = Math.max(1, ...counts);
+
+    const labels = document.getElementById('hourLabels');
+    const grid = document.getElementById('hourGrid');
+    labels.innerHTML = '';
+    grid.innerHTML = '';
+
+    let peakHour = 0;
+    let peakCount = 0;
+    let total = 0;
+
+    for (let h = 0; h < 24; h++) {
+      const c = counts[h];
+      total += c;
+      if (c > peakCount) { peakCount = c; peakHour = h; }
+      const ratio = c / max;
+      let lvl = 0;
+      if (c === 0) lvl = 0;
+      else if (ratio <= 0.2) lvl = 1;
+      else if (ratio <= 0.4) lvl = 2;
+      else if (ratio <= 0.6) lvl = 3;
+      else if (ratio <= 0.85) lvl = 4;
+      else lvl = 5;
+
+      const lbl = document.createElement('span');
+      lbl.textContent = pad2(h);
+      if (lvl >= 4) lbl.classList.add('peak');
+      labels.appendChild(lbl);
+
+      const cell = document.createElement('div');
+      cell.className = `hour-cell lvl-${lvl}`;
+      cell.title = `${pad2(h)}:00 - ${pad2(h)}:59 · ${c} 条记录`;
+      cell.innerHTML = `
+        <span class="lvl"></span>
+        <span class="count ${lvl <= 1 ? 'dim' : ''}">${c || ''}</span>
+      `;
+      grid.appendChild(cell);
+    }
+
+    document.getElementById('peakHour').textContent = `${pad2(peakHour)}:00`;
+    document.getElementById('distTotal').textContent = total;
+  }
+
+  // ========== 交互 ==========
+  function selectRecord(id) {
+    state.activeId = id;
+    renderTimeline();
+    renderDetail();
+  }
+
+  function switchRange(range) {
+    state.range = range;
+    document.querySelectorAll('#rangeSeg button').forEach(b => {
+      b.classList.toggle('active', b.dataset.range === range);
+    });
+    renderTimeline();
+    showToast(`§ 已切换至 ${range === 'today' ? '今日' : range === 'week' ? '本周' : range === 'month' ? '本月' : '全部'} 范围`);
+  }
+
+  function switchType(type) {
+    state.type = type;
+    document.querySelectorAll('#typeSeg button').forEach(b => {
+      b.classList.toggle('active', b.dataset.type === type);
+    });
+    renderTimeline();
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('visible');
+    setTimeout(() => t.classList.remove('visible'), 1800);
+  }
+
+  // ========== 绑定事件 ==========
+  document.querySelectorAll('#rangeSeg button').forEach(b => {
+    b.addEventListener('click', () => switchRange(b.dataset.range));
+  });
+
+  document.querySelectorAll('#typeSeg button').forEach(b => {
+    b.addEventListener('click', () => switchType(b.dataset.type));
+  });
+
+  let searchTimer = null;
+  document.getElementById('searchInput').addEventListener('input', (e) => {
+    state.search = e.target.value;
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => {
+      renderTimeline();
+    }, 120);
+  });
+
+  document.getElementById('exportBtn').addEventListener('click', () => {
+    const list = getFilteredRecords();
+    showToast(`§ 已导出 ${list.length} 条日志`);
+  });
+
+  document.getElementById('copyBtn').addEventListener('click', () => {
+    const r = records.find(x => x.id === state.activeId);
+    if (!r) return;
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(r.id).then(() => showToast(`§ 已复制 ${r.id}`));
+    } else {
+      showToast(`§ ID · ${r.id}`);
+    }
+  });
+
+  document.getElementById('restoreBtn').addEventListener('click', () => {
+    const r = records.find(x => x.id === state.activeId);
+    if (!r) return;
+    if (r.action === 'delete') {
+      showToast(`§ 已恢复 ${r.meta?.target || r.id}`);
+    } else if (r.status === 'pending') {
+      showToast(`§ 已触发任务 ${r.meta?.target || r.id}`);
+    }
+  });
+
+  // ========== 初始化 ==========
+  renderStatBadge();
+  renderHourGrid();
+  renderTimeline();
+  renderDetail();
+})();
+</script>
+</body>
+</html>

@@ -93,6 +93,14 @@ Never paste real values into code, docs, logs, commits, or PR text. If a future 
 - Current build warnings about missing `/index.css`, mixed static/dynamic `dateUtils.ts` imports, and bundle size are known non-blocking issues. Do not automatically attribute them to future documentation-only changes.
 - Do not edit `dist/`, `node_modules/`, or `.vercel/`.
 
+## Engineering Guardrails
+
+Before analyzing or editing code involving Supabase Auth, user profiles, avatars, `user_metadata`, JWTs, sessions, or profile synchronization, read this file completely:
+
+- `docs/engineering-guardrails/supabase-auth-metadata.md`
+
+After related changes, run every regression check required by that document. Unrelated tasks do not need to load it.
+
 ## Root Script And Scratch File Index
 
 These root-level files are not currently wired into `package.json` scripts. Treat them as manually run diagnostics, historical checks, or project notes unless a future task confirms otherwise.

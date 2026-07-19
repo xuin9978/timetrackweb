@@ -10,8 +10,8 @@ interface SidebarProfile {
 }
 
 interface SidebarProps {
-  activeModule: 'calendar' | 'alarm' | 'history' | 'diary';
-  onSwitch: (module: 'calendar' | 'alarm' | 'history' | 'diary') => void;
+  activeModule: 'calendar' | 'alarm' | 'history' | 'diary' | 'chat';
+  onSwitch: (module: 'calendar' | 'alarm' | 'history' | 'diary' | 'chat') => void;
   onOpenSettings: () => void;
   onOpenAuth: () => void;
   onOpenAccount: () => void;
@@ -38,13 +38,14 @@ const Sidebar: React.FC<SidebarProps> = ({ activeModule, onSwitch, onOpenSetting
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const navItems = [
-    { id: 'alarm', label: '闹钟', icon: Icons.Clock },
-    { id: 'history', label: '历史', icon: Icons.History },
     { id: 'calendar', label: '日历', icon: Icons.Calendar },
+    { id: 'history', label: '历史', icon: Icons.History },
+    { id: 'alarm', label: '闹钟', icon: Icons.Clock },
     { id: 'diary', label: '日记', icon: Icons.BookOpen },
+    { id: 'chat', label: '聊天', icon: Icons.MessageCircle },
   ];
 
-  const handleNavClick = (module: 'calendar' | 'alarm' | 'history' | 'diary') => {
+  const handleNavClick = (module: 'calendar' | 'alarm' | 'history' | 'diary' | 'chat') => {
     onSwitch(module);
 
     if (module !== 'calendar' || !onCalendarDetailsOpen) return;
@@ -155,7 +156,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeModule, onSwitch, onOpenSetting
           return (
             <button
               key={item.id}
-              onClick={() => handleNavClick(item.id as 'calendar' | 'alarm' | 'history' | 'diary')}
+              onClick={() => handleNavClick(item.id as 'calendar' | 'alarm' | 'history' | 'diary' | 'chat')}
               aria-label={item.label}
               title={item.label}
               className={`sidebar-nav-${item.id} board-sidebar-nav-button group flex flex-col items-center gap-2 relative transition-all duration-200 ${isActive ? 'is-active' : ''} ${isCollapsed ? 'md:gap-1.5' : ''}`}

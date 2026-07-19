@@ -1,0 +1,1800 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>侧边栏 · 制图学风格预览</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,700;0,9..144,900;1,9..144,400;1,9..144,500&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #faf9f5;
+    --paper-deep: #f0eee6;
+    --paper-shadow: #d9d4c8;
+    --ink: #1f1e1b;
+    --ink-soft: #4a4845;
+    --ink-faded: #8a857b;
+    --seal: #a8361e;
+    --seal-deep: #7a2511;
+    --water: #2b5575;
+    --gold: #8b6f3a;
+    --grid: rgba(31, 30, 27, 0.07);
+    --grid-strong: rgba(31, 30, 27, 0.18);
+    --highlight: rgba(168, 54, 30, 0.14);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background-color: var(--paper);
+    background-image:
+      radial-gradient(ellipse at 20% 10%, rgba(217, 212, 200, 0.4), transparent 60%),
+      radial-gradient(ellipse at 80% 90%, rgba(217, 212, 200, 0.3), transparent 55%),
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.12  0 0 0 0 0.11  0 0 0 0 0.1  0 0 0 0.14 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    background-size: auto, auto, 240px 240px;
+    background-attachment: fixed;
+    color: var(--ink);
+    font-family: 'Newsreader', Georgia, serif;
+    font-size: 19px;
+    line-height: 1.7;
+    font-weight: 400;
+    font-variation-settings: "opsz" 16;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+    min-height: 100vh;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 80px 80px;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.5;
+  }
+
+  .page {
+    position: relative;
+    z-index: 1;
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 0 40px;
+  }
+
+  /* ========== HERO ========== */
+  .hero {
+    position: relative;
+    padding: 72px 0 56px;
+    border-bottom: 1px solid var(--grid-strong);
+    margin-bottom: 40px;
+  }
+
+  .hero-coords {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--ink-faded);
+    text-transform: uppercase;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 40px;
+    padding-bottom: 12px;
+    border-bottom: 1px dashed var(--grid-strong);
+  }
+
+  .hero-coords span::before {
+    content: '◆';
+    color: var(--seal);
+    margin-right: 8px;
+  }
+
+  .hero-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.3em;
+    color: var(--seal);
+    text-transform: uppercase;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .hero-eyebrow::before,
+  .hero-eyebrow::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--seal);
+    opacity: 0.4;
+  }
+
+  .hero-eyebrow::before { max-width: 40px; }
+  .hero-eyebrow::after { max-width: 200px; }
+
+  .hero-row {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 40px;
+  }
+
+  .hero-text { flex: 1; min-width: 0; }
+
+  .hero h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 300;
+    font-variation-settings: "opsz" 144, "SOFT" 50;
+    font-size: clamp(48px, 7vw, 72px);
+    line-height: 0.98;
+    letter-spacing: -0.03em;
+    color: var(--ink);
+    margin-bottom: 12px;
+  }
+
+  .hero h1 .ampersand {
+    font-style: italic;
+    font-weight: 400;
+    color: var(--seal);
+    font-variation-settings: "opsz" 144, "SOFT" 100;
+    margin: 0 0.15em;
+  }
+
+  .hero-sub {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-weight: 300;
+    font-size: clamp(18px, 2vw, 22px);
+    color: var(--ink-soft);
+    letter-spacing: -0.01em;
+  }
+
+  .compass {
+    width: 110px;
+    height: 110px;
+    opacity: 0.55;
+    pointer-events: none;
+    flex-shrink: 0;
+  }
+
+  .compass svg { width: 100%; height: 100%; }
+
+  .hero-meta {
+    display: flex;
+    gap: 48px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    color: var(--ink-faded);
+    text-transform: uppercase;
+    padding-top: 24px;
+    margin-top: 36px;
+    border-top: 1px solid var(--grid-strong);
+  }
+
+  .hero-meta div span {
+    display: block;
+    color: var(--ink);
+    font-size: 12px;
+    margin-top: 6px;
+    letter-spacing: 0.08em;
+  }
+
+  /* ========== STAGE (主双栏视图) ========== */
+  .stage {
+    display: grid;
+    grid-template-columns: 300px minmax(0, 1fr);
+    gap: 0;
+    border: 1px solid var(--grid-strong);
+    background: var(--paper);
+    box-shadow: 4px 4px 0 var(--grid-strong);
+    min-height: 720px;
+    margin-bottom: 56px;
+  }
+
+  /* === SIDEBAR === */
+  .sidebar {
+    border-right: 1px solid var(--grid-strong);
+    background: var(--paper-deep);
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    position: relative;
+  }
+
+  /* 顶部品牌区 */
+  .sb-brand {
+    padding: 22px 22px 20px;
+    border-bottom: 1px dashed var(--grid-strong);
+    position: relative;
+  }
+
+  .sb-brand-coords {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.22em;
+    color: var(--ink-faded);
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .sb-brand-coords .crest {
+    color: var(--seal);
+    font-weight: 700;
+  }
+
+  .sb-brand-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .sb-compass {
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    color: var(--ink-soft);
+  }
+
+  .sb-compass svg { width: 100%; height: 100%; }
+
+  .sb-brand-text {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .sb-brand-title {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-variation-settings: "opsz" 60, "SOFT" 30;
+    font-size: 18px;
+    letter-spacing: 0.04em;
+    color: var(--ink);
+    line-height: 1.05;
+    text-transform: uppercase;
+  }
+
+  .sb-brand-sub {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-weight: 300;
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-top: 4px;
+    letter-spacing: 0;
+  }
+
+  /* 用户区 */
+  .sb-user {
+    padding: 18px 22px 20px;
+    border-bottom: 1px solid var(--grid-strong);
+    background: var(--paper);
+  }
+
+  .sb-user-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.25em;
+    color: var(--seal);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .sb-user-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .sb-avatar {
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    background: var(--paper-deep);
+    border: 2px solid var(--seal);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: 20px;
+    color: var(--seal);
+    position: relative;
+    box-shadow: 2px 2px 0 var(--grid-strong);
+  }
+
+  .sb-avatar::after {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border: 1px dashed var(--seal);
+    opacity: 0.4;
+    pointer-events: none;
+  }
+
+  .sb-user-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .sb-user-name {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: 16px;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+    line-height: 1.1;
+  }
+
+  .sb-user-mail {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-faded);
+    letter-spacing: 0.05em;
+    margin-top: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .sb-user-status {
+    margin-top: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+
+  .sb-status-dot {
+    width: 7px;
+    height: 7px;
+    background: var(--seal);
+    border: 1px solid var(--seal-deep);
+    flex-shrink: 0;
+  }
+
+  .sb-status-dot.online {
+    background: var(--seal);
+    animation: pulse 2.4s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.45; }
+  }
+
+  /* 时间条 */
+  .sb-time {
+    padding: 12px 22px;
+    border-bottom: 1px solid var(--grid-strong);
+    background: var(--paper-deep);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-faded);
+  }
+
+  .sb-time .now {
+    color: var(--ink);
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+  }
+
+  .sb-time .week::before {
+    content: '§ ';
+    color: var(--seal);
+    font-weight: 700;
+  }
+
+  /* 导航区 */
+  .sb-nav-section {
+    padding: 18px 0 8px;
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  .sb-nav-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.25em;
+    color: var(--ink-faded);
+    text-transform: uppercase;
+    padding: 0 22px 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .sb-nav-eyebrow .num {
+    color: var(--seal);
+    font-weight: 700;
+  }
+
+  .sb-nav {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .nav-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 22px 12px 19px;
+    cursor: pointer;
+    background: transparent;
+    border: 0;
+    width: 100%;
+    text-align: left;
+    font: inherit;
+    color: inherit;
+    transition: background 0.15s, color 0.15s;
+    border-left: 3px solid transparent;
+  }
+
+  .nav-item:hover:not(.active) {
+    background: rgba(168, 54, 30, 0.05);
+  }
+
+  .nav-item.active {
+    background: var(--paper);
+    border-left-color: var(--seal);
+  }
+
+  .nav-item.active .nav-label {
+    color: var(--seal);
+    font-weight: 700;
+  }
+
+  .nav-item.active .nav-icon {
+    color: var(--seal);
+  }
+
+  .nav-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--ink-faded);
+    text-transform: uppercase;
+    flex-shrink: 0;
+    width: 28px;
+  }
+
+  .nav-item.active .nav-num {
+    color: var(--seal);
+    font-weight: 700;
+  }
+
+  .nav-icon {
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+    color: var(--ink-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.15s;
+  }
+
+  .nav-icon svg { width: 100%; height: 100%; }
+
+  .nav-label {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: 15px;
+    color: var(--ink);
+    letter-spacing: -0.005em;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .nav-en {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    color: var(--ink-faded);
+    text-transform: uppercase;
+    flex-shrink: 0;
+  }
+
+  .nav-item.active .nav-en { color: var(--seal-deep); }
+
+  .nav-item .nav-tick {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--seal);
+    font-size: 14px;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+
+  .nav-item.active .nav-tick { opacity: 1; }
+
+  /* 底部操作区 */
+  .sb-foot {
+    border-top: 1px solid var(--grid-strong);
+    background: var(--paper-deep);
+    padding: 14px 0;
+  }
+
+  .sb-foot-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.25em;
+    color: var(--ink-faded);
+    text-transform: uppercase;
+    padding: 0 22px 10px;
+  }
+
+  .sb-foot-eyebrow::before {
+    content: '§ ';
+    color: var(--seal);
+    font-weight: 700;
+  }
+
+  .foot-row {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .foot-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 22px 11px 19px;
+    cursor: pointer;
+    background: transparent;
+    border: 0;
+    width: 100%;
+    text-align: left;
+    font: inherit;
+    color: inherit;
+    transition: background 0.15s, color 0.15s;
+    border-left: 3px solid transparent;
+  }
+
+  .foot-btn:hover {
+    background: rgba(168, 54, 30, 0.05);
+    color: var(--seal);
+  }
+
+  .foot-btn.danger:hover {
+    background: rgba(168, 54, 30, 0.10);
+    color: var(--seal-deep);
+  }
+
+  .foot-btn .foot-icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    color: var(--ink-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .foot-btn:hover .foot-icon { color: inherit; }
+
+  .foot-btn .foot-icon svg { width: 100%; height: 100%; }
+
+  .foot-btn .foot-label {
+    font-family: 'Fraunces', serif;
+    font-weight: 400;
+    font-size: 14px;
+    color: var(--ink);
+    flex: 1;
+  }
+
+  .foot-btn .foot-en {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: var(--ink-faded);
+    text-transform: uppercase;
+  }
+
+  .foot-btn:hover .foot-en { color: inherit; }
+
+  /* === STAGE MAIN === */
+  .stage-main {
+    display: flex;
+    flex-direction: column;
+    background: var(--paper);
+    min-width: 0;
+  }
+
+  .main-head {
+    padding: 22px 32px 18px;
+    border-bottom: 1px solid var(--grid-strong);
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .main-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    color: var(--seal);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .main-title {
+    font-family: 'Fraunces', serif;
+    font-weight: 400;
+    font-variation-settings: "opsz" 60, "SOFT" 30;
+    font-size: 30px;
+    color: var(--ink);
+    letter-spacing: -0.015em;
+    line-height: 1.15;
+  }
+
+  .main-title .accent {
+    font-style: italic;
+    color: var(--seal);
+    font-weight: 400;
+  }
+
+  .main-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--ink-soft);
+    text-transform: uppercase;
+    padding: 7px 12px;
+    border: 1px solid var(--grid-strong);
+    white-space: nowrap;
+  }
+
+  .main-tag .dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background: var(--seal);
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+
+  .main-body {
+    flex: 1;
+    padding: 26px 32px;
+    overflow-y: auto;
+  }
+
+  .panel-hint {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    color: var(--ink-faded);
+    text-transform: uppercase;
+    margin-bottom: 18px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed var(--grid-strong);
+  }
+
+  .panel-hint::before {
+    content: '§ ';
+    color: var(--seal);
+    font-weight: 700;
+  }
+
+  .preview-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .preview-card {
+    border: 1px solid var(--grid-strong);
+    background: var(--paper-deep);
+    padding: 16px 16px 18px;
+    position: relative;
+    box-shadow: 2px 2px 0 var(--grid-strong);
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+
+  .preview-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 3px 3px 0 var(--grid-strong);
+  }
+
+  .pc-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.22em;
+    color: var(--seal);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .pc-title {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: 18px;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+    margin-bottom: 6px;
+  }
+
+  .pc-desc {
+    font-family: 'Newsreader', serif;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--ink-soft);
+    font-style: italic;
+  }
+
+  .pc-foot {
+    margin-top: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: var(--ink-faded);
+    text-transform: uppercase;
+    display: flex;
+    justify-content: space-between;
+    padding-top: 10px;
+    border-top: 1px dashed var(--grid-strong);
+  }
+
+  .pc-foot .num { color: var(--seal); font-weight: 700; }
+
+  .preview-strip {
+    border: 1px solid var(--grid-strong);
+    background: var(--paper-deep);
+    padding: 18px 20px;
+    box-shadow: 2px 2px 0 var(--grid-strong);
+  }
+
+  .strip-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.22em;
+    color: var(--seal);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .strip-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .strip-row {
+    display: grid;
+    grid-template-columns: 80px 1fr auto;
+    gap: 16px;
+    align-items: baseline;
+    padding-bottom: 8px;
+    border-bottom: 1px dashed var(--grid);
+  }
+
+  .strip-row:last-child { border-bottom: 0; padding-bottom: 0; }
+
+  .strip-time {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    color: var(--seal);
+    font-weight: 700;
+  }
+
+  .strip-text {
+    font-family: 'Newsreader', serif;
+    font-size: 14px;
+    color: var(--ink);
+    line-height: 1.5;
+  }
+
+  .strip-meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    color: var(--ink-faded);
+    text-transform: uppercase;
+  }
+
+  /* === 缩略形态展示 === */
+  .variants {
+    margin: 56px 0 40px;
+    border: 1px solid var(--grid-strong);
+    background: var(--paper);
+    box-shadow: 4px 4px 0 var(--grid-strong);
+    padding: 28px 28px 24px;
+  }
+
+  .variants-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--grid-strong);
+    margin-bottom: 24px;
+  }
+
+  .variants-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    color: var(--seal);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .variants-title {
+    font-family: 'Fraunces', serif;
+    font-weight: 400;
+    font-variation-settings: "opsz" 60, "SOFT" 30;
+    font-size: 24px;
+    color: var(--ink);
+    letter-spacing: -0.015em;
+  }
+
+  .variants-helper {
+    font-family: 'Newsreader', serif;
+    font-style: italic;
+    font-size: 13px;
+    color: var(--ink-soft);
+    max-width: 320px;
+    text-align: right;
+  }
+
+  .variant-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+  }
+
+  .variant {
+    border: 1px solid var(--grid-strong);
+    background: var(--paper-deep);
+    padding: 16px 16px 14px;
+    position: relative;
+    box-shadow: 2px 2px 0 var(--grid-strong);
+  }
+
+  .variant-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.25em;
+    color: var(--seal);
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    padding-bottom: 8px;
+    border-bottom: 1px dashed var(--grid-strong);
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .variant-label .state {
+    color: var(--ink-faded);
+  }
+
+  /* 缩略形态 - 未登录 */
+  .mini-sb {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .mini-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px dashed var(--grid-strong);
+  }
+
+  .mini-compass {
+    width: 22px;
+    height: 22px;
+    color: var(--ink-soft);
+    flex-shrink: 0;
+  }
+
+  .mini-compass svg { width: 100%; height: 100%; }
+
+  .mini-title {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    color: var(--ink);
+    text-transform: uppercase;
+  }
+
+  .mini-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .mini-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px 6px 6px;
+    border-left: 2px solid transparent;
+    font-family: 'Fraunces', serif;
+    font-size: 12px;
+    color: var(--ink);
+  }
+
+  .mini-nav-item.active {
+    background: var(--paper);
+    border-left-color: var(--seal);
+    color: var(--seal);
+    font-weight: 700;
+  }
+
+  .mini-nav-item .num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8px;
+    letter-spacing: 0.12em;
+    color: var(--ink-faded);
+  }
+
+  .mini-nav-item.active .num { color: var(--seal); }
+
+  /* 缩略形态 - 折叠 */
+  .collapsed-sb {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 0 14px;
+  }
+
+  .col-avatar {
+    width: 32px;
+    height: 32px;
+    background: var(--paper);
+    border: 2px solid var(--seal);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: 14px;
+    color: var(--seal);
+  }
+
+  .col-nav {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .col-icon {
+    width: 22px;
+    height: 22px;
+    color: var(--ink-soft);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .col-icon.active {
+    color: var(--seal);
+  }
+
+  .col-icon.active::before {
+    content: '';
+    position: absolute;
+    left: -8px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--seal);
+  }
+
+  .col-icon svg { width: 100%; height: 100%; }
+
+  .col-foot {
+    margin-top: auto;
+    padding-top: 10px;
+    border-top: 1px dashed var(--grid-strong);
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .col-foot .col-icon { color: var(--ink-faded); }
+
+  /* 缩略形态 - 未登录 */
+  .guest-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .guest-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background: var(--paper);
+    border: 1px dashed var(--grid-strong);
+  }
+
+  .guest-avatar {
+    width: 28px;
+    height: 28px;
+    background: var(--paper-deep);
+    border: 1px dashed var(--ink-faded);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-faded);
+    flex-shrink: 0;
+  }
+
+  .guest-text {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .guest-text .top {
+    font-family: 'Fraunces', serif;
+    font-size: 12px;
+    color: var(--ink-faded);
+    font-style: italic;
+  }
+
+  .guest-text .bot {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8px;
+    letter-spacing: 0.18em;
+    color: var(--ink-faded);
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  .guest-login {
+    margin-top: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    color: var(--paper);
+    background: var(--seal);
+    padding: 8px 12px;
+    text-align: center;
+    text-transform: uppercase;
+    font-weight: 700;
+    box-shadow: 2px 2px 0 var(--ink);
+    cursor: pointer;
+    border: 0;
+    width: 100%;
+    transition: transform 0.12s, box-shadow 0.12s;
+  }
+
+  .guest-login:hover {
+    transform: translate(-1px, -1px);
+    box-shadow: 3px 3px 0 var(--ink);
+  }
+
+  /* ========== CLOSING ========== */
+  .closing {
+    margin: 60px 0 40px;
+    padding: 40px 0 0;
+    border-top: 2px solid var(--ink);
+    position: relative;
+    text-align: center;
+  }
+
+  .closing::before {
+    content: '✕';
+    position: absolute;
+    top: -16px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--paper);
+    color: var(--seal);
+    font-size: 24px;
+    padding: 0 16px;
+    font-weight: 300;
+  }
+
+  .closing-stamp {
+    display: inline-block;
+    margin: 0 auto 24px;
+    padding: 8px 20px;
+    border: 2px solid var(--seal);
+    color: var(--seal);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    transform: rotate(-2deg);
+    background: var(--paper);
+  }
+
+  .closing p {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-weight: 300;
+    font-variation-settings: "opsz" 144, "SOFT" 100;
+    font-size: clamp(18px, 2.2vw, 22px);
+    line-height: 1.55;
+    color: var(--ink);
+    max-width: 580px;
+    margin: 0 auto;
+    letter-spacing: -0.01em;
+  }
+
+  /* ========== FOOTER ========== */
+  footer {
+    margin: 40px 0 60px;
+    padding-top: 20px;
+    border-top: 1px dashed var(--grid-strong);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--ink-faded);
+    text-transform: uppercase;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  footer .crest {
+    color: var(--seal);
+    font-size: 14px;
+  }
+
+  /* ========== TOAST ========== */
+  .toast {
+    position: fixed;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--ink);
+    color: var(--paper);
+    padding: 12px 24px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    box-shadow: 3px 3px 0 var(--seal);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s, transform 0.2s;
+    z-index: 9999;
+  }
+
+  .toast.visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  ::selection {
+    background: var(--seal);
+    color: var(--paper);
+  }
+
+  /* ========== 响应式 ========== */
+  @media (max-width: 980px) {
+    .stage { grid-template-columns: 1fr; min-height: auto; }
+    .sidebar { border-right: 0; border-bottom: 1px solid var(--grid-strong); }
+    .preview-grid { grid-template-columns: repeat(2, 1fr); }
+    .variant-grid { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 720px) {
+    .page { padding: 0 20px; }
+    .hero { padding: 48px 0 36px; }
+    .hero-row { flex-direction: column; align-items: flex-start; }
+    .compass { display: none; }
+    .hero-meta { flex-direction: column; gap: 12px; }
+    .main-head { flex-direction: column; align-items: flex-start; padding: 18px 22px; }
+    .main-body { padding: 20px 22px; }
+    .preview-grid { grid-template-columns: 1fr; }
+    .variants { padding: 22px 22px 20px; }
+    .variants-head { flex-direction: column; align-items: flex-start; }
+    .variants-helper { text-align: left; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ HERO ============ -->
+  <header class="hero">
+    <div class="hero-coords">
+      <span>N 31°14′ · E 121°28′</span>
+      <span>FIELD STATION № 01</span>
+      <span>2026 · WEEK 29</span>
+    </div>
+
+    <div class="hero-row">
+      <div class="hero-text">
+        <div class="hero-eyebrow">§ 01 · NAVIGATION CONSOLE</div>
+        <h1>侧边栏<span class="ampersand">·</span>野外站</h1>
+        <p class="hero-sub">Field Station - 在所有模块之间，定位你此刻所在的坐标</p>
+      </div>
+
+      <div class="compass" aria-hidden="true">
+        <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="0.8" style="color: var(--ink-soft);">
+          <circle cx="50" cy="50" r="46"/>
+          <circle cx="50" cy="50" r="36"/>
+          <circle cx="50" cy="50" r="2" fill="currentColor"/>
+          <line x1="50" y1="4" x2="50" y2="96"/>
+          <line x1="4" y1="50" x2="96" y2="50"/>
+          <line x1="17" y1="17" x2="83" y2="83" stroke-dasharray="2,2" opacity="0.5"/>
+          <line x1="83" y1="17" x2="17" y2="83" stroke-dasharray="2,2" opacity="0.5"/>
+          <polygon points="50,8 45,50 55,50" fill="currentColor" style="fill: var(--seal);"/>
+          <polygon points="50,92 45,50 55,50" fill="currentColor" opacity="0.3"/>
+          <text x="50" y="3" text-anchor="middle" font-family="JetBrains Mono" font-size="6" fill="currentColor" style="font-weight:700;">N</text>
+          <text x="50" y="99" text-anchor="middle" font-family="JetBrains Mono" font-size="6" fill="currentColor">S</text>
+          <text x="2" y="52" text-anchor="middle" font-family="JetBrains Mono" font-size="6" fill="currentColor">W</text>
+          <text x="98" y="52" text-anchor="middle" font-family="JetBrains Mono" font-size="6" fill="currentColor">E</text>
+        </svg>
+      </div>
+    </div>
+
+    <div class="hero-meta">
+      <div>SUBJECT<span>主导航 · 5 个模块</span></div>
+      <div>METHOD<span>章节编号 · 印章红 accent</span></div>
+      <div>SCALE<span>1 模块 ≈ 1 节</span></div>
+      <div>SESSION<span>探险家 · 在线</span></div>
+    </div>
+  </header>
+
+  <!-- ============ STAGE ============ -->
+  <section class="stage">
+
+    <!-- === SIDEBAR === -->
+    <aside class="sidebar" aria-label="侧边栏">
+
+      <!-- 品牌区 -->
+      <div class="sb-brand">
+        <div class="sb-brand-coords">
+          <span class="crest">◆</span>
+          <span>FS · 01 / 2026</span>
+        </div>
+        <div class="sb-brand-row">
+          <div class="sb-compass" aria-hidden="true">
+            <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="50" cy="50" r="44"/>
+              <circle cx="50" cy="50" r="3" fill="currentColor" style="fill: var(--seal);"/>
+              <polygon points="50,8 44,50 56,50" fill="currentColor" style="fill: var(--seal);"/>
+              <polygon points="50,92 44,50 56,50" fill="currentColor" opacity="0.35"/>
+              <line x1="50" y1="6" x2="50" y2="20"/>
+              <line x1="50" y1="80" x2="50" y2="94"/>
+              <line x1="6" y1="50" x2="20" y2="50"/>
+              <line x1="80" y1="50" x2="94" y2="50"/>
+              <text x="50" y="4" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="currentColor" style="font-weight:700;">N</text>
+            </svg>
+          </div>
+          <div class="sb-brand-text">
+            <div class="sb-brand-title">Field Station</div>
+            <div class="sb-brand-sub">所有模块的野外起点</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 用户区 -->
+      <div class="sb-user">
+        <div class="sb-user-eyebrow">§ 02 · OPERATOR</div>
+        <div class="sb-user-row">
+          <div class="sb-avatar" id="sbAvatar" title="点击编辑个人资料">探</div>
+          <div class="sb-user-info">
+            <div class="sb-user-name" id="sbUserName">探险家</div>
+            <div class="sb-user-mail" id="sbUserMail">explorer@field.station</div>
+          </div>
+        </div>
+        <div class="sb-user-status">
+          <span class="sb-status-dot online" id="sbStatusDot"></span>
+          <span id="sbStatusText">ONLINE · 已登录</span>
+        </div>
+      </div>
+
+      <!-- 时间条 -->
+      <div class="sb-time">
+        <span class="now" id="sbNow">14:32</span>
+        <span class="week" id="sbWeek">WEEK 29 · 2026</span>
+      </div>
+
+      <!-- 导航区 -->
+      <nav class="sb-nav-section" aria-label="主导航">
+        <div class="sb-nav-eyebrow">
+          <span>§ NAVIGATION</span>
+          <span class="num">5</span>
+        </div>
+        <div class="sb-nav" id="navList"></div>
+      </nav>
+
+      <!-- 底部操作 -->
+      <div class="sb-foot">
+        <div class="sb-foot-eyebrow">03 · STATION OPS</div>
+        <div class="foot-row" id="footList"></div>
+      </div>
+
+    </aside>
+
+    <!-- === STAGE MAIN === -->
+    <section class="stage-main">
+      <div class="main-head">
+        <div>
+          <div class="main-eyebrow" id="mainEyebrow">§ CURRENT MODULE · 01 / 05</div>
+          <h2 class="main-title" id="mainTitle">日历 <span class="accent">/</span> Calendar</h2>
+        </div>
+        <span class="main-tag"><span class="dot"></span>已激活 · ACTIVE</span>
+      </div>
+
+      <div class="main-body">
+        <div class="panel-hint" id="panelHint">CURRENT · 日历模块预览 · 7 月 19 日 · 周日</div>
+
+        <div class="preview-grid" id="previewGrid"></div>
+
+        <div class="preview-strip">
+          <div class="strip-eyebrow">§ UPCOMING · 下一个日程</div>
+          <div class="strip-list" id="stripList"></div>
+        </div>
+      </div>
+    </section>
+
+  </section>
+
+  <!-- ============ VARIANTS ============ -->
+  <section class="variants">
+    <div class="variants-head">
+      <div>
+        <div class="variants-eyebrow">§ 03 · STATE VARIANTS</div>
+        <h2 class="variants-title">侧边栏的其他形态</h2>
+      </div>
+      <p class="variants-helper">登录态、折叠态、未登录态三种变体，对应不同会话状态下的导航条。</p>
+    </div>
+
+    <div class="variant-grid">
+
+      <!-- 折叠态 -->
+      <div class="variant">
+        <div class="variant-label">
+          <span>§ COLLAPSED</span>
+          <span class="state">折叠态</span>
+        </div>
+        <div class="collapsed-sb">
+          <div class="col-avatar">探</div>
+          <div class="col-nav">
+            <div class="col-icon active" title="日历">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg>
+            </div>
+            <div class="col-icon" title="历史">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><line x1="12" y1="7" x2="12" y2="12"/><line x1="12" y1="12" x2="15" y2="14"/></svg>
+            </div>
+            <div class="col-icon" title="闹钟">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="13" r="8"/><path d="M5 3 2 6"/><path d="m22 6-3-3"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="13" x2="15" y2="11"/></svg>
+            </div>
+            <div class="col-icon" title="日记">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4z"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg>
+            </div>
+            <div class="col-icon" title="聊天">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a8 8 0 0 1-8 8H7l-4 3V6a4 4 0 0 1 4-4h6a8 8 0 0 1 8 8z"/></svg>
+            </div>
+          </div>
+          <div class="col-foot">
+            <div class="col-icon" title="账户">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-7 8-7s8 3 8 7"/></svg>
+            </div>
+            <div class="col-icon" title="设置">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 未登录态 -->
+      <div class="variant">
+        <div class="variant-label">
+          <span>§ GUEST</span>
+          <span class="state">未登录态</span>
+        </div>
+        <div class="guest-card">
+          <div class="mini-brand">
+            <div class="mini-compass" aria-hidden="true">
+              <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="50" cy="50" r="44"/>
+                <polygon points="50,10 44,50 56,50" fill="currentColor" style="fill: var(--seal);"/>
+                <polygon points="50,90 44,50 56,50" fill="currentColor" opacity="0.35"/>
+                <circle cx="50" cy="50" r="3" fill="currentColor" style="fill: var(--seal);"/>
+              </svg>
+            </div>
+            <div class="mini-title">FIELD STATION</div>
+          </div>
+          <div class="guest-row">
+            <div class="guest-avatar">?</div>
+            <div class="guest-text">
+              <div class="top">未登录的访客</div>
+              <div class="bot">OFFLINE · GUEST</div>
+            </div>
+          </div>
+          <button class="guest-login" type="button">登录 / 注册 · SIGN IN</button>
+          <div class="mini-nav">
+            <div class="mini-nav-item active">
+              <span class="num">§ 01</span>
+              <span>日历</span>
+            </div>
+            <div class="mini-nav-item">
+              <span class="num">§ 02</span>
+              <span>历史</span>
+            </div>
+            <div class="mini-nav-item">
+              <span class="num">§ 03</span>
+              <span>闹钟</span>
+            </div>
+            <div class="mini-nav-item">
+              <span class="num">§ 04</span>
+              <span>日记</span>
+            </div>
+            <div class="mini-nav-item">
+              <span class="num">§ 05</span>
+              <span>聊天</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 完整态迷你预览 -->
+      <div class="variant">
+        <div class="variant-label">
+          <span>§ MINI</span>
+          <span class="state">完整态</span>
+        </div>
+        <div class="mini-sb">
+          <div class="mini-brand">
+            <div class="mini-compass" aria-hidden="true">
+              <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="50" cy="50" r="44"/>
+                <polygon points="50,10 44,50 56,50" fill="currentColor" style="fill: var(--seal);"/>
+                <polygon points="50,90 44,50 56,50" fill="currentColor" opacity="0.35"/>
+                <circle cx="50" cy="50" r="3" fill="currentColor" style="fill: var(--seal);"/>
+              </svg>
+            </div>
+            <div class="mini-title">FIELD STATION</div>
+          </div>
+          <div class="mini-nav">
+            <div class="mini-nav-item active">
+              <span class="num">§ 01</span>
+              <span>日历</span>
+            </div>
+            <div class="mini-nav-item">
+              <span class="num">§ 02</span>
+              <span>历史</span>
+            </div>
+            <div class="mini-nav-item">
+              <span class="num">§ 03</span>
+              <span>闹钟</span>
+            </div>
+            <div class="mini-nav-item">
+              <span class="num">§ 04</span>
+              <span>日记</span>
+            </div>
+            <div class="mini-nav-item">
+              <span class="num">§ 05</span>
+              <span>聊天</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============ CLOSING ============ -->
+  <section class="closing">
+    <div class="closing-stamp">QVI NAVIGAT</div>
+    <p>侧边栏是这张地图的指南针--<br>无论走到哪个模块，都能从这里重新定位出发。</p>
+  </section>
+
+  <!-- ============ FOOTER ============ -->
+  <footer>
+    <span>SIDEBAR · v1.0 · CARTOGRAPHIC EDITION</span>
+    <span class="crest">❦</span>
+    <span>FIELD STATION · WEEK 29 · 2026</span>
+  </footer>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  // ========== ICONS (内联 SVG) ==========
+  const ICONS = {
+    calendar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter"><rect x="3" y="4" width="18" height="17"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/><rect x="7" y="13" width="3" height="3" fill="currentColor" stroke="none"/></svg>',
+    history: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter"><path d="M3 12a9 9 0 1 0 3-6.7"/><polyline points="3 4 3 9 8 9"/><line x1="12" y1="7" x2="12" y2="12"/><line x1="12" y1="12" x2="15" y2="14"/></svg>',
+    alarm: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter"><circle cx="12" cy="13" r="8"/><path d="M5 3 2 6"/><path d="m22 6-3-3"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="13" x2="15" y2="11"/></svg>',
+    diary: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter"><path d="M4 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4z"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="11" x2="16" y2="11"/><line x1="8" y1="15" x2="14" y2="15"/></svg>',
+    chat: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter"><path d="M21 12a8 8 0 0 1-8 8H7l-4 3V6a4 4 0 0 1 4-4h6a8 8 0 0 1 8 8z"/><line x1="8" y1="10" x2="8" y2="10"/><line x1="12" y1="10" x2="12" y2="10"/><line x1="16" y1="10" x2="16" y2="10"/></svg>',
+    account: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-7 8-7s8 3 8 7"/></svg>',
+    settings: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>',
+    logout: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>'
+  };
+
+  // ========== 数据 ==========
+  const NAV_ITEMS = [
+    { id: 'calendar', num: '§ 01', label: '日历', en: 'CALENDAR' },
+    { id: 'history', num: '§ 02', label: '历史', en: 'HISTORY' },
+    { id: 'alarm', num: '§ 03', label: '闹钟', en: 'ALARM' },
+    { id: 'diary', num: '§ 04', label: '日记', en: 'DIARY' },
+    { id: 'chat', num: '§ 05', label: '聊天', en: 'CHAT' }
+  ];
+
+  const MODULE_PREVIEW = {
+    calendar: {
+      eyebrow: '§ CURRENT MODULE · 01 / 05',
+      title: '日历',
+      en: 'Calendar',
+      hint: 'CURRENT · 日历模块预览 · 7 月 19 日 · 周日',
+      cards: [
+        { eyebrow: '§ TODAY', title: '7 月 19 日 · 周日', desc: '今日 3 项日程，最近一项 16:00 开始。', foot: ['EVENTS', '03'] },
+        { eyebrow: '§ THIS WEEK', title: '本周航迹', desc: '已完成 12 / 计划 18 项，进度 67%。', foot: ['WEEK', '29'] },
+        { eyebrow: '§ NEXT', title: '7 月 22 日 · 周三', desc: '上午 09:30 项目启动会，提前 15 分钟提醒。', foot: ['DAYS', '03'] }
+      ],
+      strips: [
+        { time: '16:00', text: '与设计组对齐 v2 视觉规范', meta: 'TODAY' },
+        { time: '18:30', text: '沿河岸慢跑 5 公里', meta: 'TODAY' },
+        { time: '21:00', text: '阅读《地图的力量》序章', meta: 'TODAY' },
+        { time: '09:30', text: '项目启动会 · 7 月 22 日', meta: '+3D' }
+      ]
+    },
+    history: {
+      eyebrow: '§ CURRENT MODULE · 02 / 05',
+      title: '历史',
+      en: 'History',
+      hint: 'CURRENT · 历史模块预览 · 浏览过去的所有事件',
+      cards: [
+        { eyebrow: '§ YESTERDAY', title: '7 月 18 日', desc: '完成 5 项日程，最长一项持续 2 小时 40 分。', foot: ['ITEMS', '05'] },
+        { eyebrow: '§ THIS WEEK', title: '本周汇总', desc: '累计 47 条事件记录，平均每日 6.7 条。', foot: ['TOTAL', '47'] },
+        { eyebrow: '§ ARCHIVE', title: '7 月归档', desc: '本月已归档 142 条事件，可按标签检索。', foot: ['ARCHIVED', '142'] }
+      ],
+      strips: [
+        { time: '14:22', text: '完成了《地图的力量》第 2 章阅读', meta: '-1D' },
+        { time: '11:05', text: '与 W 讨论空间与边界', meta: '-1D' },
+        { time: '09:30', text: '晨间例会 · 团队同步', meta: '-1D' },
+        { time: '20:10', text: '日记 · 续写昨日笔记', meta: '-1D' }
+      ]
+    },
+    alarm: {
+      eyebrow: '§ CURRENT MODULE · 03 / 05',
+      title: '闹钟',
+      en: 'Alarm',
+      hint: 'CURRENT · 闹钟模块预览 · 4 个生效中',
+      cards: [
+        { eyebrow: '§ NEXT', title: '07:00', desc: '晨起闹钟，工作日生效，附 5 分钟贪睡。', foot: ['IN', '16H'] },
+        { eyebrow: '§ ACTIVE', title: '4 个生效', desc: '其中 1 个为一次性，3 个为循环闹钟。', foot: ['ACTIVE', '04'] },
+        { eyebrow: '§ SUNRISE', title: '日出 · 05:18', desc: '今日日出时间，可作为自然唤醒参考。', foot: ['CIVIL', '05:18'] }
+      ],
+      strips: [
+        { time: '07:00', text: '晨起 · 工作日生效', meta: 'TOMORROW' },
+        { time: '12:30', text: '午间提醒 · 喝水', meta: 'DAILY' },
+        { time: '21:30', text: '夜间提醒 · 关闭屏幕', meta: 'DAILY' },
+        { time: '08:00', text: '会议日 · 仅周一至周五', meta: 'WEEKDAYS' }
+      ]
+    },
+    diary: {
+      eyebrow: '§ CURRENT MODULE · 04 / 05',
+      title: '日记',
+      en: 'Diary',
+      hint: 'CURRENT · 日记模块预览 · 7 月 19 日 · 周日',
+      cards: [
+        { eyebrow: '§ TODAY', title: '今日 · 已写', desc: '今日已记录 318 字，等待最后定稿。', foot: ['WORDS', '318'] },
+        { eyebrow: '§ THIS WEEK', title: '本周航迹', desc: '已写 5 / 7 天，连续记录 4 天。', foot: ['STREAK', '04'] },
+        { eyebrow: '§ REVIEW', title: '周日 · 周末回望', desc: '本周共 1,842 字，相比上周 +12%。', foot: ['WORDS', '1842'] }
+      ],
+      strips: [
+        { time: '07.13', text: '雾未散，沿河岸走了一公里', meta: 'MON' },
+        { time: '07.14', text: '雨。读到边界与辨认的段落', meta: 'TUE' },
+        { time: '07.15', text: '续完昨日笔记，添了刻度随想', meta: 'WED' },
+        { time: '07.17', text: 'W 说，地图是一种看见的方式', meta: 'FRI' }
+      ]
+    },
+    chat: {
+      eyebrow: '§ CURRENT MODULE · 05 / 05',
+      title: '聊天',
+      en: 'Chat',
+      hint: 'CURRENT · 聊天模块预览 · 3 个对话',
+      cards: [
+        { eyebrow: '§ NEWEST', title: 'W · 14:02', desc: '"那本《地图的力量》读完了吗？"', foot: ['UNREAD', '02'] },
+        { eyebrow: '§ TODAY', title: '今日对话', desc: '与 3 位联系人共 14 条消息往来。', foot: ['MSG', '14'] },
+        { eyebrow: '§ PINNED', title: '置顶 · 设计组', desc: '本周视觉规范讨论，已置顶 3 天。', foot: ['PIN', '01'] }
+      ],
+      strips: [
+        { time: '14:02', text: 'W：那本《地图的力量》读完了吗？', meta: 'NOW' },
+        { time: '13:48', text: '设计组：v2 规范已上传至共享盘', meta: '14M' },
+        { time: '11:15', text: '母亲：周末是否回家吃饭？', meta: '3H' },
+        { time: '09:30', text: '项目组：上午 9:30 启动会准时开始', meta: '5H' }
+      ]
+    }
+  };
+
+  const FOOT_ITEMS = [
+    { id: 'account', label: '账户管理', en: 'ACCOUNT', icon: 'account', danger: false },
+    { id: 'settings', label: '设置', en: 'SETTINGS', icon: 'settings', danger: false },
+    { id: 'logout', label: '退出登录', en: 'SIGN OUT', icon: 'logout', danger: true }
+  ];
+
+  // ========== 状态 ==========
+  const state = {
+    activeModule: 'calendar',
+    isLoggedIn: true,
+    now: new Date()
+  };
+
+  // ========== 渲染导航 ==========
+  function renderNav() {
+    const list = document.getElementById('navList');
+    list.innerHTML = '';
+    NAV_ITEMS.forEach(item => {
+      const btn = document.createElement('button');
+      btn.className = `nav-item ${item.id === state.activeModule ? 'active' : ''}`;
+      btn.dataset.module = item.id;
+      btn.innerHTML = `
+        <span class="nav-num">${item.num}</span>
+        <span class="nav-icon">${ICONS[item.id]}</span>
+        <span class="nav-label">${item.label}</span>
+        <span class="nav-en">${item.en}</span>
+        <span class="nav-tick">›</span>
+      `;
+      btn.addEventListener('click', () => switchModule(item.id));
+      list.appendChild(btn);
+    });
+  }
+
+  // ========== 渲染底部 ==========
+  function renderFoot() {
+    const list = document.getElementById('footList');
+    list.innerHTML = '';
+    FOOT_ITEMS.forEach(item => {
+      const btn = document.createElement('button');
+      btn.className = `foot-btn ${item.danger ? 'danger' : ''}`;
+      btn.dataset.action = item.id;
+      btn.innerHTML = `
+        <span class="foot-icon">${ICONS[item.icon]}</span>
+        <span class="foot-label">${item.label}</span>
+        <span class="foot-en">${item.en}</span>
+      `;
+      btn.addEventListener('click', () => handleFoot(item.id));
+      list.appendChild(btn);
+    });
+  }
+
+  // ========== 渲染主区域 ==========
+  function renderMain() {
+    const mod = MODULE_PREVIEW[state.activeModule];
+    const idx = NAV_ITEMS.findIndex(i => i.id === state.activeModule) + 1;
+    document.getElementById('mainEyebrow').textContent = `§ CURRENT MODULE · 0${idx} / 05`;
+    document.getElementById('mainTitle').innerHTML = `${mod.title} <span class="accent">/</span> ${mod.en}`;
+    document.getElementById('panelHint').textContent = mod.hint;
+
+    const grid = document.getElementById('previewGrid');
+    grid.innerHTML = '';
+    mod.cards.forEach((c, i) => {
+      const card = document.createElement('div');
+      card.className = 'preview-card';
+      card.innerHTML = `
+        <div class="pc-eyebrow">${c.eyebrow}</div>
+        <div class="pc-title">${c.title}</div>
+        <div class="pc-desc">${c.desc}</div>
+        <div class="pc-foot">
+          <span>${c.foot[0]}</span>
+          <span class="num">${c.foot[1]}</span>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+
+    const strip = document.getElementById('stripList');
+    strip.innerHTML = '';
+    mod.strips.forEach(s => {
+      const row = document.createElement('div');
+      row.className = 'strip-row';
+      row.innerHTML = `
+        <span class="strip-time">${s.time}</span>
+        <span class="strip-text">${s.text}</span>
+        <span class="strip-meta">${s.meta}</span>
+      `;
+      strip.appendChild(row);
+    });
+  }
+
+  // ========== 切换模块 ==========
+  function switchModule(id) {
+    if (state.activeModule === id) return;
+    state.activeModule = id;
+    renderNav();
+    renderMain();
+    const label = NAV_ITEMS.find(i => i.id === id).label;
+    showToast(`§ 已切换到 ${label} 模块`);
+  }
+
+  // ========== 底部操作 ==========
+  function handleFoot(action) {
+    if (action === 'logout') {
+      showToast('§ 已退出登录 · SAFE TRAVELS');
+      const dot = document.getElementById('sbStatusDot');
+      const text = document.getElementById('sbStatusText');
+      dot.classList.remove('online');
+      text.textContent = 'OFFLINE · 已登出';
+    } else if (action === 'account') {
+      showToast('§ 打开账户管理');
+    } else if (action === 'settings') {
+      showToast('§ 打开设置面板');
+    }
+  }
+
+  // ========== 头像点击 ==========
+  document.getElementById('sbAvatar').addEventListener('click', () => {
+    showToast('§ 编辑个人资料 · 资料已锁定');
+  });
+
+  // ========== 时间 ==========
+  function updateTime() {
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2, '0');
+    const mm = String(now.getMinutes()).padStart(2, '0');
+    document.getElementById('sbNow').textContent = `${hh}:${mm}`;
+
+    // 周数
+    const start = new Date(now.getFullYear(), 0, 1);
+    const diff = (now - start) / 86400000;
+    const week = Math.ceil((diff + start.getDay() + 1) / 7);
+    document.getElementById('sbWeek').textContent = `WEEK ${String(week).padStart(2, '0')} · ${now.getFullYear()}`;
+  }
+
+  // ========== Toast ==========
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('visible');
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => t.classList.remove('visible'), 1800);
+  }
+
+  // ========== 初始化 ==========
+  renderNav();
+  renderFoot();
+  renderMain();
+  updateTime();
+  setInterval(updateTime, 30000);
+
+  // guest login 按钮提示
+  document.querySelector('.guest-login').addEventListener('click', () => {
+    showToast('§ 准备登录 · 请稍候');
+  });
+})();
+</script>
+</body>
+</html>

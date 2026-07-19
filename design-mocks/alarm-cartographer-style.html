@@ -1,0 +1,1861 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>闹钟 · 制图学风格预览</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,700;0,9..144,900;1,9..144,400;1,9..144,500&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #faf9f5;
+    --paper-deep: #f0eee6;
+    --paper-shadow: #d9d4c8;
+    --ink: #1f1e1b;
+    --ink-soft: #4a4845;
+    --ink-faded: #8a857b;
+    --seal: #a8361e;
+    --seal-deep: #7a2511;
+    --water: #2b5575;
+    --gold: #8b6f3a;
+    --grid: rgba(31, 30, 27, 0.07);
+    --grid-strong: rgba(31, 30, 27, 0.18);
+    --highlight: rgba(168, 54, 30, 0.14);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background-color: var(--paper);
+    background-image:
+      radial-gradient(ellipse at 20% 10%, rgba(217, 212, 200, 0.4), transparent 60%),
+      radial-gradient(ellipse at 80% 90%, rgba(217, 212, 200, 0.3), transparent 55%),
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.12  0 0 0 0 0.11  0 0 0 0 0.1  0 0 0 0.14 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    background-size: auto, auto, 240px 240px;
+    background-attachment: fixed;
+    color: var(--ink);
+    font-family: 'Newsreader', Georgia, serif;
+    font-size: 19px;
+    line-height: 1.7;
+    font-weight: 400;
+    font-variation-settings: "opsz" 16;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+    min-height: 100vh;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 80px 80px;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.5;
+  }
+
+  .page {
+    position: relative;
+    z-index: 1;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 40px;
+  }
+
+  /* ========== HERO ========== */
+  .hero {
+    position: relative;
+    padding: 72px 0 56px;
+    border-bottom: 1px solid var(--grid-strong);
+    margin-bottom: 40px;
+  }
+
+  .hero-coords {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--ink-faded);
+    text-transform: uppercase;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 40px;
+    padding-bottom: 12px;
+    border-bottom: 1px dashed var(--grid-strong);
+  }
+
+  .hero-coords span::before {
+    content: '◆';
+    color: var(--seal);
+    margin-right: 8px;
+  }
+
+  .hero-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.3em;
+    color: var(--seal);
+    text-transform: uppercase;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .hero-eyebrow::before,
+  .hero-eyebrow::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--seal);
+    opacity: 0.4;
+  }
+
+  .hero-eyebrow::before { max-width: 40px; }
+  .hero-eyebrow::after { max-width: 200px; }
+
+  .hero-row {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 40px;
+  }
+
+  .hero-text { flex: 1; min-width: 0; }
+
+  .hero h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 300;
+    font-variation-settings: "opsz" 144, "SOFT" 50;
+    font-size: clamp(48px, 7vw, 72px);
+    line-height: 0.98;
+    letter-spacing: -0.03em;
+    color: var(--ink);
+    margin-bottom: 12px;
+  }
+
+  .hero h1 .ampersand {
+    font-style: italic;
+    font-weight: 400;
+    color: var(--seal);
+    font-variation-settings: "opsz" 144, "SOFT" 100;
+    margin: 0 0.15em;
+  }
+
+  .hero-sub {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-weight: 300;
+    font-size: clamp(18px, 2vw, 22px);
+    color: var(--ink-soft);
+    letter-spacing: -0.01em;
+  }
+
+  .compass {
+    width: 110px;
+    height: 110px;
+    opacity: 0.55;
+    pointer-events: none;
+    flex-shrink: 0;
+  }
+
+  .compass svg { width: 100%; height: 100%; }
+
+  .hero-meta {
+    display: flex;
+    gap: 48px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    color: var(--ink-faded);
+    text-transform: uppercase;
+    padding-top: 24px;
+    margin-top: 36px;
+    border-top: 1px solid var(--grid-strong);
+  }
+
+  .hero-meta div span {
+    display: block;
+    color: var(--ink);
+    font-size: 12px;
+    margin-top: 6px;
+    letter-spacing: 0.08em;
+  }
+
+  /* ========== TOOLBAR ========== */
+  .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    margin-bottom: 32px;
+    background: var(--paper-deep);
+    border-left: 3px solid var(--seal);
+    box-shadow: 3px 3px 0 var(--grid-strong);
+  }
+
+  .seg {
+    display: inline-flex;
+    border: 1px solid var(--grid-strong);
+    background: var(--paper);
+  }
+
+  .seg button {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    background: transparent;
+    border: 0;
+    padding: 9px 18px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+
+  .seg button + button { border-left: 1px solid var(--grid-strong); }
+
+  .seg button.active {
+    background: var(--ink);
+    color: var(--paper);
+    font-weight: 700;
+  }
+
+  .seg button:hover:not(.active) {
+    color: var(--seal);
+  }
+
+  .badge-stat {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    color: var(--ink-soft);
+    text-transform: uppercase;
+    padding: 9px 14px;
+    border: 1px solid var(--grid-strong);
+    background: var(--paper);
+  }
+
+  .badge-stat .num { color: var(--seal); font-weight: 700; }
+
+  .toolbar-spacer { flex: 1; }
+
+  .btn-new {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--paper);
+    background: var(--seal);
+    border: 0;
+    padding: 10px 18px;
+    cursor: pointer;
+    box-shadow: 2px 2px 0 var(--ink);
+    transition: transform 0.12s, box-shadow 0.12s;
+  }
+
+  .btn-new:hover { transform: translate(-1px, -1px); box-shadow: 3px 3px 0 var(--ink); }
+  .btn-new:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 var(--ink); }
+
+  /* ========== LIST VIEW ========== */
+  .view-list {
+    border: 1px solid var(--grid-strong);
+    background: var(--paper);
+    box-shadow: 4px 4px 0 var(--grid-strong);
+    padding: 8px 0 0;
+  }
+
+  .list-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    padding: 20px 28px 14px;
+    border-bottom: 1px solid var(--grid-strong);
+    margin-bottom: 8px;
+  }
+
+  .list-head-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    color: var(--seal);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .list-head-title {
+    font-family: 'Fraunces', serif;
+    font-weight: 400;
+    font-variation-settings: "opsz" 60, "SOFT" 30;
+    font-size: 26px;
+    color: var(--ink);
+    letter-spacing: -0.015em;
+  }
+
+  .list-head-meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--ink-faded);
+    text-transform: uppercase;
+  }
+
+  .alarm-list {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .alarm-card {
+    position: relative;
+    display: grid;
+    grid-template-columns: 160px 1fr auto auto;
+    align-items: center;
+    gap: 28px;
+    padding: 22px 28px;
+    border-bottom: 1px solid var(--grid);
+    background: var(--paper);
+    border-left: 3px solid transparent;
+    transition: background 0.15s, border-color 0.15s;
+  }
+
+  .alarm-card:last-child { border-bottom: 0; }
+
+  .alarm-card.enabled {
+    border-left-color: var(--seal);
+  }
+
+  .alarm-card.disabled {
+    opacity: 0.5;
+  }
+
+  .alarm-card:hover {
+    background: rgba(168, 54, 30, 0.04);
+  }
+
+  .alarm-time {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 44px;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .alarm-card.disabled .alarm-time {
+    color: var(--ink-soft);
+  }
+
+  .alarm-body {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .alarm-label {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: 20px;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+  }
+
+  .alarm-card.disabled .alarm-label { color: var(--ink-soft); font-style: italic; }
+
+  .alarm-meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--ink-faded);
+    text-transform: uppercase;
+  }
+
+  .alarm-meta .sep { margin: 0 6px; opacity: 0.4; }
+
+  .alarm-next {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    color: var(--ink-soft);
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  .alarm-next .num {
+    color: var(--seal);
+    font-weight: 700;
+  }
+
+  .alarm-card.disabled .alarm-next .num {
+    color: var(--ink-faded);
+  }
+
+  /* Square toggle (no iOS pill) */
+  .toggle {
+    width: 38px;
+    height: 38px;
+    border: 1px solid var(--ink-soft);
+    background: var(--paper);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 16px;
+    color: var(--ink-faded);
+    transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.12s;
+    box-shadow: 2px 2px 0 var(--grid-strong);
+  }
+
+  .toggle:hover {
+    transform: translate(-1px, -1px);
+    box-shadow: 3px 3px 0 var(--grid-strong);
+  }
+
+  .toggle:active {
+    transform: translate(1px, 1px);
+    box-shadow: 1px 1px 0 var(--grid-strong);
+  }
+
+  .toggle.on {
+    background: var(--seal);
+    color: var(--paper);
+    border-color: var(--seal);
+    box-shadow: 2px 2px 0 var(--ink);
+  }
+
+  .toggle.on:hover {
+    box-shadow: 3px 3px 0 var(--ink);
+  }
+
+  .alarm-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  .icon-btn {
+    width: 34px;
+    height: 34px;
+    border: 1px solid var(--grid-strong);
+    background: var(--paper);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--ink-soft);
+    transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.12s;
+    box-shadow: 1px 1px 0 var(--grid-strong);
+  }
+
+  .icon-btn:hover {
+    color: var(--seal);
+    border-color: var(--seal);
+    transform: translate(-1px, -1px);
+    box-shadow: 2px 2px 0 var(--seal);
+  }
+
+  .icon-btn:active {
+    transform: translate(1px, 1px);
+    box-shadow: 0 0 0 var(--seal);
+  }
+
+  .icon-btn.danger:hover {
+    color: var(--paper);
+    background: var(--seal);
+  }
+
+  .empty-state {
+    padding: 60px 28px;
+    text-align: center;
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    color: var(--ink-faded);
+    font-size: 18px;
+  }
+
+  .empty-state::before {
+    content: '§';
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 32px;
+    color: var(--seal);
+    margin-bottom: 12px;
+    opacity: 0.6;
+  }
+
+  /* ========== TIMELINE VIEW ========== */
+  .view-timeline {
+    border: 1px solid var(--grid-strong);
+    background: var(--paper);
+    box-shadow: 4px 4px 0 var(--grid-strong);
+    padding: 28px 28px 32px;
+  }
+
+  .timeline-head {
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--grid-strong);
+    margin-bottom: 32px;
+  }
+
+  .timeline-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    color: var(--seal);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .timeline-title {
+    font-family: 'Fraunces', serif;
+    font-weight: 400;
+    font-variation-settings: "opsz" 60, "SOFT" 30;
+    font-size: 26px;
+    color: var(--ink);
+    letter-spacing: -0.015em;
+  }
+
+  .timeline-helper {
+    font-family: 'Newsreader', serif;
+    font-style: italic;
+    font-size: 14px;
+    color: var(--ink-soft);
+    margin-top: 6px;
+  }
+
+  .timeline-axis {
+    position: relative;
+    margin: 60px 0 32px;
+    padding: 0 0 60px;
+  }
+
+  .timeline-track {
+    position: relative;
+    height: 2px;
+    background: var(--ink);
+  }
+
+  .timeline-track::before,
+  .timeline-track::after {
+    content: '';
+    position: absolute;
+    top: -4px;
+    width: 1px;
+    height: 10px;
+    background: var(--ink);
+  }
+
+  .timeline-track::before { left: 0; }
+  .timeline-track::after { right: 0; }
+
+  .tick {
+    position: absolute;
+    top: -3px;
+    width: 1px;
+    background: var(--ink-soft);
+    transform: translateX(-50%);
+  }
+
+  .tick.major { height: 12px; top: -5px; background: var(--ink); }
+  .tick.minor { height: 6px; top: -2px; opacity: 0.5; }
+
+  .tick-label {
+    position: absolute;
+    top: 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    color: var(--ink-faded);
+    transform: translateX(-50%);
+    white-space: nowrap;
+  }
+
+  .tick-label.major {
+    color: var(--ink);
+    font-weight: 700;
+    font-size: 11px;
+  }
+
+  /* Period zones */
+  .period-zone {
+    position: absolute;
+    top: -32px;
+    height: 24px;
+    border-top: 1px dashed var(--grid-strong);
+    border-left: 1px dashed var(--grid-strong);
+    border-right: 1px dashed var(--grid-strong);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: var(--ink-faded);
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .alarm-pin {
+    position: absolute;
+    bottom: 14px;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    z-index: 2;
+  }
+
+  .alarm-pin .pin-time {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 6px;
+    letter-spacing: 0.05em;
+    background: var(--paper);
+    padding: 2px 6px;
+    border: 1px solid var(--grid-strong);
+    box-shadow: 1px 1px 0 var(--grid-strong);
+    white-space: nowrap;
+  }
+
+  .alarm-pin.disabled .pin-time {
+    color: var(--ink-faded);
+    font-weight: 400;
+  }
+
+  .alarm-pin .pin-stem {
+    width: 1px;
+    height: 22px;
+    background: var(--ink-soft);
+  }
+
+  .alarm-pin .pin-head {
+    width: 12px;
+    height: 12px;
+    background: var(--seal);
+    border: 1px solid var(--ink);
+    transform: rotate(45deg);
+    box-shadow: 1px 1px 0 var(--ink);
+  }
+
+  .alarm-pin.disabled .pin-head {
+    background: var(--paper);
+    border-color: var(--ink-faded);
+    box-shadow: none;
+  }
+
+  .alarm-pin .pin-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    color: var(--ink-soft);
+    text-transform: uppercase;
+    margin-top: 8px;
+    text-align: center;
+    max-width: 80px;
+    line-height: 1.3;
+  }
+
+  .alarm-pin:hover .pin-time {
+    background: var(--seal);
+    color: var(--paper);
+    border-color: var(--seal);
+  }
+
+  .timeline-legend {
+    display: flex;
+    gap: 32px;
+    padding-top: 24px;
+    border-top: 1px dashed var(--grid-strong);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    color: var(--ink-faded);
+    text-transform: uppercase;
+  }
+
+  .timeline-legend .swatch {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    background: var(--seal);
+    border: 1px solid var(--ink);
+    transform: rotate(45deg);
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+
+  .timeline-legend .swatch.off {
+    background: var(--paper);
+    border-color: var(--ink-faded);
+  }
+
+  /* ========== MODAL ========== */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(31, 30, 27, 0.4);
+    backdrop-filter: blur(2px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+  }
+
+  .modal-overlay.visible { display: flex; }
+
+  .modal {
+    width: 100%;
+    max-width: 480px;
+    background: var(--paper);
+    border: 1px solid var(--ink);
+    box-shadow: 6px 6px 0 var(--seal);
+    position: relative;
+  }
+
+  .modal-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--grid-strong);
+    background: var(--paper-deep);
+  }
+
+  .modal-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    color: var(--seal);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .modal-title {
+    font-family: 'Fraunces', serif;
+    font-weight: 400;
+    font-variation-settings: "opsz" 60, "SOFT" 30;
+    font-size: 24px;
+    color: var(--ink);
+    letter-spacing: -0.015em;
+  }
+
+  .modal-close {
+    width: 28px;
+    height: 28px;
+    border: 1px solid var(--grid-strong);
+    background: var(--paper);
+    cursor: pointer;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    color: var(--ink-soft);
+    transition: color 0.15s, border-color 0.15s, transform 0.12s;
+    box-shadow: 1px 1px 0 var(--grid-strong);
+  }
+
+  .modal-close:hover {
+    color: var(--seal);
+    border-color: var(--seal);
+    transform: translate(-1px, -1px);
+    box-shadow: 2px 2px 0 var(--seal);
+  }
+
+  .modal-body {
+    padding: 24px;
+  }
+
+  .field {
+    margin-bottom: 22px;
+  }
+
+  .field-label {
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--ink-faded);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .field-label .num {
+    color: var(--seal);
+    margin-right: 8px;
+    font-weight: 700;
+  }
+
+  .time-input {
+    width: 100%;
+    border: 1px solid var(--grid-strong);
+    background: var(--paper-deep);
+    padding: 14px 18px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 36px;
+    letter-spacing: 0.05em;
+    color: var(--ink);
+    text-align: center;
+    outline: none;
+    transition: border-color 0.15s, background 0.15s;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .time-input:focus {
+    border-color: var(--seal);
+    background: var(--paper);
+  }
+
+  .text-input {
+    width: 100%;
+    border: 1px solid var(--grid-strong);
+    background: var(--paper-deep);
+    padding: 11px 14px;
+    font-family: 'Newsreader', serif;
+    font-size: 17px;
+    color: var(--ink);
+    outline: none;
+    transition: border-color 0.15s, background 0.15s;
+  }
+
+  .text-input:focus {
+    border-color: var(--seal);
+    background: var(--paper);
+  }
+
+  .text-input::placeholder {
+    color: var(--ink-faded);
+    font-style: italic;
+  }
+
+  .repeat-row {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+  }
+
+  .day-pick {
+    border: 1px solid var(--grid-strong);
+    background: var(--paper);
+    padding: 10px 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--ink-soft);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.12s;
+    box-shadow: 1px 1px 0 var(--grid-strong);
+  }
+
+  .day-pick:hover {
+    transform: translate(-1px, -1px);
+    box-shadow: 2px 2px 0 var(--grid-strong);
+    color: var(--seal);
+  }
+
+  .day-pick.on {
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
+    box-shadow: 1px 1px 0 var(--seal);
+  }
+
+  .preset-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+  }
+
+  .preset-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    background: var(--paper);
+    border: 1px solid var(--grid-strong);
+    padding: 6px 10px;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s, transform 0.12s;
+    box-shadow: 1px 1px 0 var(--grid-strong);
+  }
+
+  .preset-btn:hover {
+    color: var(--seal);
+    border-color: var(--seal);
+    transform: translate(-1px, -1px);
+    box-shadow: 2px 2px 0 var(--seal);
+  }
+
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-top: 1px dashed var(--grid-strong);
+  }
+
+  .toggle-row:first-of-type {
+    border-top: 1px solid var(--grid-strong);
+    padding-top: 16px;
+    margin-top: 6px;
+  }
+
+  .toggle-row-label {
+    font-family: 'Newsreader', serif;
+    font-size: 16px;
+    color: var(--ink);
+  }
+
+  .toggle-row-hint {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: var(--ink-faded);
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  .modal-foot {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 16px 24px 24px;
+    border-top: 1px solid var(--grid-strong);
+    background: var(--paper-deep);
+  }
+
+  .btn-cancel {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    background: var(--paper);
+    border: 1px solid var(--grid-strong);
+    padding: 11px 20px;
+    cursor: pointer;
+    transition: transform 0.12s, box-shadow 0.12s, color 0.15s, border-color 0.15s;
+    box-shadow: 2px 2px 0 var(--grid-strong);
+  }
+
+  .btn-cancel:hover {
+    color: var(--seal);
+    border-color: var(--seal);
+    transform: translate(-1px, -1px);
+    box-shadow: 3px 3px 0 var(--seal);
+  }
+
+  .btn-confirm {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--paper);
+    background: var(--seal);
+    border: 0;
+    padding: 11px 22px;
+    cursor: pointer;
+    box-shadow: 2px 2px 0 var(--ink);
+    transition: transform 0.12s, box-shadow 0.12s, background 0.15s;
+    font-weight: 700;
+  }
+
+  .btn-confirm:hover {
+    background: var(--seal-deep);
+    transform: translate(-1px, -1px);
+    box-shadow: 3px 3px 0 var(--ink);
+  }
+
+  .btn-confirm:active {
+    transform: translate(1px, 1px);
+    box-shadow: 1px 1px 0 var(--ink);
+  }
+
+  .btn-confirm:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+    box-shadow: 1px 1px 0 var(--grid-strong);
+  }
+
+  /* ========== CONFIRM DELETE ========== */
+  .confirm-card {
+    width: 100%;
+    max-width: 360px;
+    background: var(--paper);
+    border: 1px solid var(--ink);
+    box-shadow: 6px 6px 0 var(--seal);
+  }
+
+  .confirm-body {
+    padding: 24px;
+    text-align: center;
+  }
+
+  .confirm-stamp {
+    display: inline-block;
+    margin-bottom: 14px;
+    padding: 4px 14px;
+    border: 2px solid var(--seal);
+    color: var(--seal);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    transform: rotate(-2deg);
+  }
+
+  .confirm-text {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 18px;
+    color: var(--ink);
+    line-height: 1.4;
+  }
+
+  .confirm-text .alarm-id {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    color: var(--seal);
+    font-style: normal;
+  }
+
+  /* ========== CLOSING ========== */
+  .closing {
+    margin: 80px 0 40px;
+    padding: 40px 0 0;
+    border-top: 2px solid var(--ink);
+    position: relative;
+    text-align: center;
+  }
+
+  .closing::before {
+    content: '✕';
+    position: absolute;
+    top: -16px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--paper);
+    color: var(--seal);
+    font-size: 24px;
+    padding: 0 16px;
+    font-weight: 300;
+  }
+
+  .closing-stamp {
+    display: inline-block;
+    margin: 0 auto 24px;
+    padding: 8px 20px;
+    border: 2px solid var(--seal);
+    color: var(--seal);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    transform: rotate(-2deg);
+    background: var(--paper);
+  }
+
+  .closing p {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-weight: 300;
+    font-variation-settings: "opsz" 144, "SOFT" 100;
+    font-size: clamp(18px, 2.2vw, 22px);
+    line-height: 1.55;
+    color: var(--ink);
+    max-width: 580px;
+    margin: 0 auto;
+    letter-spacing: -0.01em;
+  }
+
+  /* ========== FOOTER ========== */
+  footer {
+    margin: 40px 0 60px;
+    padding-top: 20px;
+    border-top: 1px dashed var(--grid-strong);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--ink-faded);
+    text-transform: uppercase;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  footer .crest {
+    color: var(--seal);
+    font-size: 14px;
+  }
+
+  /* ========== TOAST ========== */
+  .toast {
+    position: fixed;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--ink);
+    color: var(--paper);
+    padding: 12px 24px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    box-shadow: 3px 3px 0 var(--seal);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s, transform 0.2s;
+    z-index: 9999;
+  }
+
+  .toast.visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  ::selection {
+    background: var(--seal);
+    color: var(--paper);
+  }
+
+  /* ========== 响应式 ========== */
+  @media (max-width: 900px) {
+    .alarm-card {
+      grid-template-columns: 110px 1fr auto;
+      gap: 16px;
+      padding: 18px 18px;
+    }
+    .alarm-time { font-size: 32px; }
+    .alarm-actions { grid-column: 2 / 4; justify-content: flex-end; margin-top: 6px; }
+  }
+
+  @media (max-width: 720px) {
+    .page { padding: 0 20px; }
+    .hero { padding: 48px 0 36px; }
+    .hero-row { flex-direction: column; align-items: flex-start; }
+    .compass { display: none; }
+    .hero-meta { flex-direction: column; gap: 12px; }
+    .list-head { padding: 16px 18px 12px; }
+    .alarm-card {
+      grid-template-columns: 90px 1fr;
+      gap: 12px;
+      padding: 16px 18px;
+    }
+    .alarm-time { font-size: 28px; }
+    .alarm-label { font-size: 17px; }
+    .alarm-actions { grid-column: 1 / 3; justify-content: flex-end; }
+    .toolbar { gap: 10px; }
+    .timeline-legend { flex-direction: column; gap: 10px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ HERO ============ -->
+  <header class="hero">
+    <div class="hero-coords">
+      <span>N 31°14′ · E 121°28′</span>
+      <span>ALMANAC № 14</span>
+      <span>2026 · 07 · 19</span>
+    </div>
+
+    <div class="hero-row">
+      <div class="hero-text">
+        <div class="hero-eyebrow">§ 01 · ALARM REGISTRY</div>
+        <h1>闹钟<span class="ampersand">与</span>时刻表</h1>
+        <p class="hero-sub">Alarms &amp; Timetable - 把一天刻进时间的版图</p>
+      </div>
+
+      <div class="compass" aria-hidden="true">
+        <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="0.8" style="color: var(--ink-soft);">
+          <circle cx="50" cy="50" r="46"/>
+          <circle cx="50" cy="50" r="36"/>
+          <circle cx="50" cy="50" r="2" fill="currentColor"/>
+          <line x1="50" y1="4" x2="50" y2="96"/>
+          <line x1="4" y1="50" x2="96" y2="50"/>
+          <line x1="17" y1="17" x2="83" y2="83" stroke-dasharray="2,2" opacity="0.5"/>
+          <line x1="83" y1="17" x2="17" y2="83" stroke-dasharray="2,2" opacity="0.5"/>
+          <polygon points="50,8 45,50 55,50" fill="currentColor" style="fill: var(--seal);"/>
+          <polygon points="50,92 45,50 55,50" fill="currentColor" opacity="0.3"/>
+          <text x="50" y="3" text-anchor="middle" font-family="JetBrains Mono" font-size="6" fill="currentColor" style="font-weight:700;">N</text>
+          <text x="50" y="99" text-anchor="middle" font-family="JetBrains Mono" font-size="6" fill="currentColor">S</text>
+          <text x="2" y="52" text-anchor="middle" font-family="JetBrains Mono" font-size="6" fill="currentColor">W</text>
+          <text x="98" y="52" text-anchor="middle" font-family="JetBrains Mono" font-size="6" fill="currentColor">E</text>
+        </svg>
+      </div>
+    </div>
+
+    <div class="hero-meta">
+      <div>SUBJECT<span>闹钟与每日时刻</span></div>
+      <div>METHOD<span>枚举 · 排布 · 触发</span></div>
+      <div>SCALE<span>24 H · 1440 MIN</span></div>
+      <div>STORAGE<span>Supabase · 本地缓存</span></div>
+    </div>
+  </header>
+
+  <!-- ============ TOOLBAR ============ -->
+  <div class="toolbar">
+    <div class="seg" id="viewSeg">
+      <button class="active" data-view="list">列表</button>
+      <button data-view="timeline">时间轴</button>
+    </div>
+
+    <div class="seg" id="filterSeg">
+      <button class="active" data-filter="all">全部</button>
+      <button data-filter="enabled">启用</button>
+      <button data-filter="disabled">禁用</button>
+    </div>
+
+    <div class="seg" id="sortSeg">
+      <button class="active" data-sort="time">按时间</button>
+      <button data-sort="label">按名称</button>
+    </div>
+
+    <div class="badge-stat">
+      ◆ TOTAL <span class="num" id="totalCount">6</span> · ACTIVE <span class="num" id="activeCount">4</span>
+    </div>
+
+    <div class="toolbar-spacer"></div>
+
+    <button class="btn-new" id="newAlarmBtn">+ 新增闹钟</button>
+  </div>
+
+  <!-- ============ LIST VIEW ============ -->
+  <section class="view-list" id="listView">
+    <div class="list-head">
+      <div>
+        <div class="list-head-eyebrow">§ 02 · DAILY REGISTRY</div>
+        <h2 class="list-head-title" id="listTitle">今日闹钟 · 共 6 项</h2>
+      </div>
+      <div class="list-head-meta" id="listHeadMeta">SORT BY TIME › ASC</div>
+    </div>
+    <div class="alarm-list" id="alarmList"></div>
+  </section>
+
+  <!-- ============ TIMELINE VIEW ============ -->
+  <section class="view-timeline" id="timelineView" style="display:none;">
+    <div class="timeline-head">
+      <div class="timeline-eyebrow">§ 03 · 24H CARTOGRAPHY</div>
+      <h2 class="timeline-title">24 小时刻度图</h2>
+      <p class="timeline-helper">把所有闹钟标在 24 小时的子午线上 - 启用为印章红实心方块，禁用为空心方块。</p>
+    </div>
+    <div class="timeline-axis" id="timelineAxis"></div>
+    <div class="timeline-legend">
+      <span><span class="swatch"></span>ENABLED · 启用</span>
+      <span><span class="swatch off"></span>DISABLED · 禁用</span>
+      <span style="margin-left:auto">◆ 点击图钉可编辑该闹钟</span>
+    </div>
+  </section>
+
+  <!-- ============ CLOSING ============ -->
+  <section class="closing">
+    <div class="closing-stamp">HORA FUGIT</div>
+    <p>每一个闹钟都是一枚坐标--<br>在 24 小时的版图上，标记一次"该醒来了"。</p>
+  </section>
+
+  <!-- ============ FOOTER ============ -->
+  <footer>
+    <span>ALARM · v1.0 · CARTOGRAPHIC EDITION</span>
+    <span class="crest">❦</span>
+    <span>ALMANAC · 2026 · 07 · 19</span>
+  </footer>
+
+</div>
+
+<!-- ============ ADD / EDIT MODAL ============ -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modal">
+    <div class="modal-head">
+      <div>
+        <div class="modal-eyebrow" id="modalEyebrow">§ NEW ALARM</div>
+        <h3 class="modal-title" id="modalTitle">新增闹钟</h3>
+      </div>
+      <button class="modal-close" id="modalClose" aria-label="关闭">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label class="field-label" for="timeInput"><span class="num">№ 01</span>TIME · 时间 (HH:MM)</label>
+        <input class="time-input" id="timeInput" type="text" value="07:30" maxlength="5" placeholder="07:30" autocomplete="off" spellcheck="false">
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="labelInput"><span class="num">№ 02</span>LABEL · 标签</label>
+        <input class="text-input" id="labelInput" type="text" value="晨起" placeholder="如：晨起 / 午休 / 睡前" maxlength="20" autocomplete="off">
+      </div>
+
+      <div class="field">
+        <label class="field-label"><span class="num">№ 03</span>REPEAT · 重复 · 点击切换</label>
+        <div class="repeat-row" id="repeatRow">
+          <button class="day-pick" data-day="1">一</button>
+          <button class="day-pick" data-day="2">二</button>
+          <button class="day-pick" data-day="3">三</button>
+          <button class="day-pick" data-day="4">四</button>
+          <button class="day-pick" data-day="5">五</button>
+          <button class="day-pick" data-day="6">六</button>
+          <button class="day-pick" data-day="0">日</button>
+        </div>
+        <div class="preset-row" id="presetRow">
+          <button class="preset-btn" data-preset="weekday">工作日</button>
+          <button class="preset-btn" data-preset="weekend">周末</button>
+          <button class="preset-btn" data-preset="daily">每天</button>
+          <button class="preset-btn" data-preset="none">仅一次</button>
+        </div>
+      </div>
+
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-row-label">启用此闹钟</div>
+          <div class="toggle-row-hint">ENABLED · 切换为印章红</div>
+        </div>
+        <button class="toggle on" id="enabledToggle" aria-label="启用">◆</button>
+      </div>
+
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-row-label">稍后提醒 · Snooze</div>
+          <div class="toggle-row-hint">DELAY 5 MIN · 最多三次</div>
+        </div>
+        <button class="toggle on" id="snoozeToggle" aria-label="稍后提醒">◆</button>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-cancel" id="modalCancel">取消</button>
+      <button class="btn-confirm" id="modalConfirm">保存闹钟</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ CONFIRM DELETE ============ -->
+<div class="modal-overlay" id="confirmOverlay">
+  <div class="confirm-card">
+    <div class="modal-head">
+      <div>
+        <div class="modal-eyebrow">§ CONFIRM ERASURE</div>
+        <h3 class="modal-title">删除此闹钟？</h3>
+      </div>
+    </div>
+    <div class="confirm-body">
+      <div class="confirm-stamp">DESTROY · NO UNDO</div>
+      <p class="confirm-text">即将擦除 <span class="alarm-id" id="confirmAlarmId">07:30 晨起</span><br>此操作无法撤销。</p>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-cancel" id="confirmCancel">保留</button>
+      <button class="btn-confirm" id="confirmOk">擦除</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  const TODAY_ISO = '2026-07-19';
+  const WEEKDAY_NAMES = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+  const DAY_KEYS = ['1', '2', '3', '4', '5', '6', '0']; // Mon..Sun keys used in set
+  const SORT_TIME_SLOT = 'TIME-ASC';
+
+  // Mock data
+  let alarms = [
+    { id: 'a1', time: '06:00', label: '周末早起', enabled: false, repeat: new Set(['6', '0']), snooze: true },
+    { id: 'a2', time: '07:30', label: '晨起 · 拉开窗帘', enabled: true,  repeat: new Set(['1', '2', '3', '4', '5']), snooze: true },
+    { id: 'a3', time: '12:00', label: '午休提醒', enabled: true,  repeat: new Set(['1', '2', '3', '4', '5', '6', '0']), snooze: false },
+    { id: 'a4', time: '18:30', label: '下班 · 收尾', enabled: true,  repeat: new Set(['1', '2', '3', '4', '5']), snooze: true },
+    { id: 'a5', time: '22:00', label: '睡前 · 放下手机', enabled: true,  repeat: new Set(['1', '2', '3', '4', '5', '6', '0']), snooze: true },
+    { id: 'a6', time: '23:30', label: '深夜存档', enabled: false, repeat: new Set(['1', '2', '3', '4', '5']), snooze: false }
+  ];
+
+  let nextId = 7;
+
+  const state = {
+    view: 'list',
+    filter: 'all',
+    sort: 'time',
+    editingId: null,
+    deletingId: null,
+    modal: {
+      time: '07:30',
+      label: '晨起',
+      repeat: new Set(['1', '2', '3', '4', '5']),
+      enabled: true,
+      snooze: true
+    }
+  };
+
+  function pad2(n) { return String(n).padStart(2, '0'); }
+
+  function parseTime(s) {
+    const m = /^(\d{1,2}):(\d{2})$/.exec(s.trim());
+    if (!m) return null;
+    const h = parseInt(m[1], 10);
+    const min = parseInt(m[2], 10);
+    if (h < 0 || h > 23 || min < 0 || min > 59) return null;
+    return { h, min };
+  }
+
+  function sortAlarms(arr) {
+    const sorted = [...arr];
+    if (state.sort === 'time') {
+      sorted.sort((a, b) => a.time.localeCompare(b.time));
+    } else if (state.sort === 'label') {
+      sorted.sort((a, b) => a.label.localeCompare(b.label, 'zh'));
+    }
+    return sorted;
+  }
+
+  function getVisibleAlarms() {
+    let arr = alarms;
+    if (state.filter === 'enabled') arr = arr.filter(a => a.enabled);
+    else if (state.filter === 'disabled') arr = arr.filter(a => !a.enabled);
+    return sortAlarms(arr);
+  }
+
+  function repeatLabel(set) {
+    if (set.size === 0) return '仅一次';
+    if (set.size === 7) return '每天';
+    const weekday = new Set(['1', '2', '3', '4', '5']);
+    const weekend = new Set(['6', '0']);
+    const isWeekday = weekday.every(d => set.has(d)) && !weekend.some(d => set.has(d));
+    const isWeekend = weekend.every(d => set.has(d)) && !weekday.some(d => set.has(d));
+    if (isWeekday) return '工作日';
+    if (isWeekend) return '周末';
+    // 按 Mon..Sun 输出
+    const ordered = DAY_KEYS.filter(d => set.has(d)).map(d => {
+      const idx = DAY_KEYS.indexOf(d);
+      return WEEKDAY_NAMES[idx];
+    });
+    return ordered.join(' · ');
+  }
+
+  function nextTriggerISO(alarm) {
+    const t = parseTime(alarm.time);
+    if (!t) return '----';
+    const now = new Date(TODAY_ISO + 'T00:00:00');
+    const todayDow = now.getDay(); // 0=Sun..6=Sat
+    // keys: 1=Mon..5=Fri, 6=Sat, 0=Sun. convert todayDow to key
+    const todayKey = String(todayDow);
+
+    const days = alarm.repeat.size === 0
+      ? [0]
+      : [0, 1, 2, 3, 4, 5, 6].filter(off => {
+          const d = new Date(now);
+          d.setDate(d.getDate() + off);
+          return alarm.repeat.has(String(d.getDay()));
+        });
+
+    if (days.length === 0) return '----';
+    const off = days[0];
+    const trigger = new Date(now);
+    trigger.setDate(trigger.getDate() + off);
+    trigger.setHours(t.h, t.min, 0, 0);
+    // If today and same-day and time already passed and there's no later same-day, skip
+    if (off === 0) {
+      const nowReal = new Date();
+      if (trigger < nowReal && days.length > 1) {
+        const next = new Date(now);
+        next.setDate(next.getDate() + days[1]);
+        next.setHours(t.h, t.min, 0, 0);
+        return `${next.getFullYear()}-${pad2(next.getMonth() + 1)}-${pad2(next.getDate())} ${pad2(t.h)}:${pad2(t.min)}`;
+      }
+    }
+    return `${trigger.getFullYear()}-${pad2(trigger.getMonth() + 1)}-${pad2(trigger.getDate())} ${pad2(t.h)}:${pad2(t.min)}`;
+  }
+
+  /* ========== RENDER LIST ========== */
+  function renderList() {
+    const list = document.getElementById('alarmList');
+    const visible = getVisibleAlarms();
+    list.innerHTML = '';
+
+    if (visible.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'empty-state';
+      empty.textContent = '此条件下没有闹钟 · 点击右上角新增';
+      list.appendChild(empty);
+    }
+
+    visible.forEach(a => {
+      const card = document.createElement('div');
+      card.className = `alarm-card ${a.enabled ? 'enabled' : 'disabled'}`;
+      card.dataset.id = a.id;
+      card.innerHTML = `
+        <div class="alarm-time">${a.time}</div>
+        <div class="alarm-body">
+          <div class="alarm-label">${escapeHTML(a.label)}</div>
+          <div class="alarm-meta">${repeatLabel(a.repeat)}<span class="sep">›</span>${a.snooze ? 'SNOOZE ON' : 'SNOOZE OFF'}</div>
+          <div class="alarm-next">NEXT · <span class="num">${nextTriggerISO(a)}</span></div>
+        </div>
+        <button class="toggle ${a.enabled ? 'on' : ''}" data-action="toggle" aria-label="切换启用">${a.enabled ? '◆' : '○'}</button>
+        <div class="alarm-actions">
+          <button class="icon-btn" data-action="edit" aria-label="编辑" title="编辑">✎</button>
+          <button class="icon-btn danger" data-action="delete" aria-label="删除" title="删除">✕</button>
+        </div>
+      `;
+      list.appendChild(card);
+    });
+
+    document.getElementById('totalCount').textContent = alarms.length;
+    document.getElementById('activeCount').textContent = alarms.filter(a => a.enabled).length;
+    const filterLabel = state.filter === 'all' ? '全部' : state.filter === 'enabled' ? '启用' : '禁用';
+    document.getElementById('listTitle').textContent = `今日闹钟 · ${filterLabel} · 共 ${visible.length} 项`;
+    const sortLabel = state.sort === 'time' ? 'TIME › ASC' : 'LABEL › A-Z';
+    document.getElementById('listHeadMeta').textContent = `SORT BY ${sortLabel}`;
+  }
+
+  function escapeHTML(s) {
+    return s.replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+
+  /* ========== RENDER TIMELINE ========== */
+  function renderTimeline() {
+    const axis = document.getElementById('timelineAxis');
+    axis.innerHTML = '';
+
+    // Period zones (子午线分区)
+    const zones = [
+      { from: 0, to: 6, label: 'NIGHT · 子夜' },
+      { from: 6, to: 12, label: 'MORNING · 午前' },
+      { from: 12, to: 18, label: 'AFTERNOON · 午后' },
+      { from: 18, to: 24, label: 'EVENING · 黄昏' }
+    ];
+
+    zones.forEach(z => {
+      const el = document.createElement('div');
+      el.className = 'period-zone';
+      el.style.left = `${(z.from / 24) * 100}%`;
+      el.style.width = `${((z.to - z.from) / 24) * 100}%`;
+      el.textContent = z.label;
+      axis.appendChild(el);
+    });
+
+    // Ticks: every hour major, every 30 min minor
+    for (let h = 0; h <= 24; h++) {
+      const tick = document.createElement('div');
+      tick.className = 'tick major';
+      tick.style.left = `${(h / 24) * 100}%`;
+      axis.appendChild(tick);
+
+      const label = document.createElement('div');
+      label.className = 'tick-label major';
+      label.style.left = `${(h / 24) * 100}%`;
+      label.textContent = pad2(h % 24) + ':00';
+      axis.appendChild(label);
+
+      if (h < 24) {
+        const minor = document.createElement('div');
+        minor.className = 'tick minor';
+        minor.style.left = `${((h + 0.5) / 24) * 100}%`;
+        axis.appendChild(minor);
+      }
+    }
+
+    // Track
+    const track = document.createElement('div');
+    track.className = 'timeline-track';
+    axis.appendChild(track);
+
+    // Pins
+    const visible = sortAlarms(alarms);
+    visible.forEach(a => {
+      const t = parseTime(a.time);
+      if (!t) return;
+      const percent = ((t.h + t.min / 60) / 24) * 100;
+      const pin = document.createElement('div');
+      pin.className = `alarm-pin ${a.enabled ? '' : 'disabled'}`;
+      pin.style.left = `${percent}%`;
+      pin.dataset.id = a.id;
+      pin.innerHTML = `
+        <div class="pin-time">${a.time}</div>
+        <div class="pin-stem"></div>
+        <div class="pin-head"></div>
+        <div class="pin-label">${escapeHTML(a.label)}</div>
+      `;
+      pin.addEventListener('click', () => openEditModal(a.id));
+      axis.appendChild(pin);
+    });
+  }
+
+  /* ========== VIEW SWITCH ========== */
+  function switchView(view) {
+    state.view = view;
+    document.querySelectorAll('#viewSeg button').forEach(b => {
+      b.classList.toggle('active', b.dataset.view === view);
+    });
+    document.getElementById('listView').style.display = view === 'list' ? 'block' : 'none';
+    document.getElementById('timelineView').style.display = view === 'timeline' ? 'block' : 'none';
+    if (view === 'timeline') renderTimeline();
+  }
+
+  /* ========== MODAL ========== */
+  function openNewModal() {
+    state.editingId = null;
+    state.modal = {
+      time: '08:00',
+      label: '',
+      repeat: new Set(['1', '2', '3', '4', '5']),
+      enabled: true,
+      snooze: true
+    };
+    document.getElementById('modalEyebrow').textContent = '§ NEW ALARM';
+    document.getElementById('modalTitle').textContent = '新增闹钟';
+    document.getElementById('modalConfirm').textContent = '保存闹钟';
+    syncModalUI();
+    document.getElementById('modalOverlay').classList.add('visible');
+    setTimeout(() => document.getElementById('timeInput').focus(), 50);
+  }
+
+  function openEditModal(id) {
+    const a = alarms.find(x => x.id === id);
+    if (!a) return;
+    state.editingId = id;
+    state.modal = {
+      time: a.time,
+      label: a.label,
+      repeat: new Set(a.repeat),
+      enabled: a.enabled,
+      snooze: a.snooze
+    };
+    document.getElementById('modalEyebrow').textContent = `§ EDIT · ALARM № ${id.toUpperCase()}`;
+    document.getElementById('modalTitle').textContent = '编辑闹钟';
+    document.getElementById('modalConfirm').textContent = '保存修改';
+    syncModalUI();
+    document.getElementById('modalOverlay').classList.add('visible');
+  }
+
+  function closeModal() {
+    document.getElementById('modalOverlay').classList.remove('visible');
+    state.editingId = null;
+  }
+
+  function syncModalUI() {
+    document.getElementById('timeInput').value = state.modal.time;
+    document.getElementById('labelInput').value = state.modal.label;
+    document.querySelectorAll('.day-pick').forEach(btn => {
+      btn.classList.toggle('on', state.modal.repeat.has(btn.dataset.day));
+    });
+    const enabledBtn = document.getElementById('enabledToggle');
+    enabledBtn.classList.toggle('on', state.modal.enabled);
+    enabledBtn.textContent = state.modal.enabled ? '◆' : '○';
+    const snoozeBtn = document.getElementById('snoozeToggle');
+    snoozeBtn.classList.toggle('on', state.modal.snooze);
+    snoozeBtn.textContent = state.modal.snooze ? '◆' : '○';
+  }
+
+  function applyPreset(preset) {
+    const set = new Set();
+    if (preset === 'weekday') ['1', '2', '3', '4', '5'].forEach(d => set.add(d));
+    else if (preset === 'weekend') ['6', '0'].forEach(d => set.add(d));
+    else if (preset === 'daily') ['1', '2', '3', '4', '5', '6', '0'].forEach(d => set.add(d));
+    else if (preset === 'none') {} // 仅一次
+    state.modal.repeat = set;
+    syncModalUI();
+  }
+
+  function handleModalConfirm() {
+    const timeStr = document.getElementById('timeInput').value.trim();
+    const parsed = parseTime(timeStr);
+    if (!parsed) {
+      showToast('§ 时间格式应为 HH:MM');
+      return;
+    }
+    const label = document.getElementById('labelInput').value.trim() || '未命名';
+    state.modal.time = `${pad2(parsed.h)}:${pad2(parsed.min)}`;
+    state.modal.label = label;
+
+    if (state.editingId) {
+      const a = alarms.find(x => x.id === state.editingId);
+      if (a) {
+        a.time = state.modal.time;
+        a.label = state.modal.label;
+        a.repeat = new Set(state.modal.repeat);
+        a.enabled = state.modal.enabled;
+        a.snooze = state.modal.snooze;
+      }
+      showToast(`§ 已更新 ${a.time} · ${a.label}`);
+    } else {
+      const newAlarm = {
+        id: 'a' + (nextId++),
+        time: state.modal.time,
+        label: state.modal.label,
+        enabled: state.modal.enabled,
+        repeat: new Set(state.modal.repeat),
+        snooze: state.modal.snooze
+      };
+      alarms.push(newAlarm);
+      showToast(`§ 已新增 ${newAlarm.time} · ${newAlarm.label}`);
+    }
+    closeModal();
+    renderList();
+    if (state.view === 'timeline') renderTimeline();
+  }
+
+  /* ========== TOGGLE / EDIT / DELETE ========== */
+  function handleListClick(e) {
+    const card = e.target.closest('.alarm-card');
+    if (!card) return;
+    const id = card.dataset.id;
+    const action = e.target.dataset.action;
+    if (!action) return;
+
+    if (action === 'toggle') {
+      const a = alarms.find(x => x.id === id);
+      if (a) {
+        a.enabled = !a.enabled;
+        showToast(`§ ${a.label} · ${a.enabled ? '已启用' : '已禁用'}`);
+        renderList();
+        if (state.view === 'timeline') renderTimeline();
+      }
+    } else if (action === 'edit') {
+      openEditModal(id);
+    } else if (action === 'delete') {
+      state.deletingId = id;
+      const a = alarms.find(x => x.id === id);
+      if (a) {
+        document.getElementById('confirmAlarmId').textContent = `${a.time} ${a.label}`;
+        document.getElementById('confirmOverlay').classList.add('visible');
+      }
+    }
+  }
+
+  function handleConfirmDelete() {
+    const id = state.deletingId;
+    const a = alarms.find(x => x.id === id);
+    if (a) {
+      alarms = alarms.filter(x => x.id !== id);
+      showToast(`§ 已擦除 ${a.time} · ${a.label}`);
+    }
+    state.deletingId = null;
+    document.getElementById('confirmOverlay').classList.remove('visible');
+    renderList();
+    if (state.view === 'timeline') renderTimeline();
+  }
+
+  function closeConfirm() {
+    state.deletingId = null;
+    document.getElementById('confirmOverlay').classList.remove('visible');
+  }
+
+  /* ========== TOAST ========== */
+  let toastTimer = null;
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('visible');
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('visible'), 2000);
+  }
+
+  /* ========== EVENTS ========== */
+  document.querySelectorAll('#viewSeg button').forEach(b => {
+    b.addEventListener('click', () => switchView(b.dataset.view));
+  });
+
+  document.querySelectorAll('#filterSeg button').forEach(b => {
+    b.addEventListener('click', () => {
+      state.filter = b.dataset.filter;
+      document.querySelectorAll('#filterSeg button').forEach(x => {
+        x.classList.toggle('active', x === b);
+      });
+      renderList();
+    });
+  });
+
+  document.querySelectorAll('#sortSeg button').forEach(b => {
+    b.addEventListener('click', () => {
+      state.sort = b.dataset.sort;
+      document.querySelectorAll('#sortSeg button').forEach(x => {
+        x.classList.toggle('active', x === b);
+      });
+      renderList();
+      if (state.view === 'timeline') renderTimeline();
+    });
+  });
+
+  document.getElementById('newAlarmBtn').addEventListener('click', openNewModal);
+  document.getElementById('alarmList').addEventListener('click', handleListClick);
+
+  document.getElementById('modalClose').addEventListener('click', closeModal);
+  document.getElementById('modalCancel').addEventListener('click', closeModal);
+  document.getElementById('modalConfirm').addEventListener('click', handleModalConfirm);
+  document.getElementById('modalOverlay').addEventListener('click', (e) => {
+    if (e.target.id === 'modalOverlay') closeModal();
+  });
+
+  document.getElementById('confirmCancel').addEventListener('click', closeConfirm);
+  document.getElementById('confirmOk').addEventListener('click', handleConfirmDelete);
+  document.getElementById('confirmOverlay').addEventListener('click', (e) => {
+    if (e.target.id === 'confirmOverlay') closeConfirm();
+  });
+
+  document.getElementById('timeInput').addEventListener('input', (e) => {
+    let v = e.target.value.replace(/[^\d:]/g, '');
+    // Auto-insert colon
+    if (v.length >= 2 && v[1] !== ':') {
+      v = v.slice(0, 2) + ':' + v.slice(2);
+    }
+    if (v.length > 5) v = v.slice(0, 5);
+    e.target.value = v;
+    state.modal.time = v;
+  });
+
+  document.getElementById('labelInput').addEventListener('input', (e) => {
+    state.modal.label = e.target.value;
+  });
+
+  document.querySelectorAll('.day-pick').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const d = btn.dataset.day;
+      const set = new Set(state.modal.repeat);
+      if (set.has(d)) set.delete(d);
+      else set.add(d);
+      state.modal.repeat = set;
+      btn.classList.toggle('on');
+    });
+  });
+
+  document.querySelectorAll('.preset-btn').forEach(btn => {
+    btn.addEventListener('click', () => applyPreset(btn.dataset.preset));
+  });
+
+  document.getElementById('enabledToggle').addEventListener('click', (e) => {
+    state.modal.enabled = !state.modal.enabled;
+    e.currentTarget.classList.toggle('on', state.modal.enabled);
+    e.currentTarget.textContent = state.modal.enabled ? '◆' : '○';
+  });
+
+  document.getElementById('snoozeToggle').addEventListener('click', (e) => {
+    state.modal.snooze = !state.modal.snooze;
+    e.currentTarget.classList.toggle('on', state.modal.snooze);
+    e.currentTarget.textContent = state.modal.snooze ? '◆' : '○';
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      closeModal();
+      closeConfirm();
+    }
+  });
+
+  /* ========== INIT ========== */
+  renderList();
+  renderTimeline();
+})();
+</script>
+</body>
+</html>

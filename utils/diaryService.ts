@@ -50,6 +50,45 @@ export const fetchDiaryEntries = async (
   return (data ?? []).map(fromDB);
 };
 
+export const fetchAllDiaryEntries = async (
+  userId: string,
+  signal?: AbortSignal
+): Promise<DiaryEntryRecord[]> => {
+  if (!supabase) {
+    console.warn('Supabase client is not initialized');
+    return [];
+  }
+
+  const pageSize = 1000;
+  const rows: any[] = [];
+
+  for (let from = 0; ; from += pageSize) {
+    const query = supabase
+      .from('diary_entries')
+      .select('id,user_id,entry_date,content,created_at,updated_at')
+      .eq('user_id', userId)
+      .order('entry_date', { ascending: true })
+      .range(from, from + pageSize - 1);
+
+    if (signal) query.abortSignal(signal);
+
+    const { data, error } = await query;
+    if (error) {
+      const msg = String(error.message ?? '');
+      const isAbortLike = signal?.aborted || error.name === 'AbortError' || /AbortError|aborted/i.test(msg);
+      if (isAbortLike) return [];
+      throw new Error(error.message || '日记读取失败');
+    }
+
+    const page = Array.isArray(data) ? data : [];
+    rows.push(...page);
+
+    if (page.length < pageSize) break;
+  }
+
+  return rows.map(fromDB);
+};
+
 export const saveDiaryEntry = async (
   userId: string,
   entryDate: string,

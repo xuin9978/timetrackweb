@@ -36,6 +36,34 @@ const fromDB = (row: any): CalendarEvent => {
   };
 };
 
+const fetchAllEventRows = async (userId: string, signal?: AbortSignal) => {
+  if (!supabase) return [];
+
+  const pageSize = 1000;
+  const rows: any[] = [];
+
+  for (let from = 0; ; from += pageSize) {
+    const query = supabase
+      .from('events')
+      .select('id,title,start_time,end_time,category')
+      .eq('user_id', userId)
+      .order('start_time', { ascending: true })
+      .range(from, from + pageSize - 1);
+
+    if (signal) query.abortSignal(signal);
+
+    const { data, error } = await query;
+    if (error) throw error;
+
+    const page = Array.isArray(data) ? data : [];
+    rows.push(...page);
+
+    if (page.length < pageSize) break;
+  }
+
+  return rows;
+};
+
 export const fetchEvents = async (
   userId: string,
   startDate: Date,
@@ -65,7 +93,19 @@ export const fetchEvents = async (
     let resultB: any = null;
 
     if (loadAll) {
-      resultA = base;
+      const mapped = (await fetchAllEventRows(userId, signal)).map(fromDB);
+      try {
+        const payload = mapped.map(e => ({
+          id: e.id,
+          title: e.title,
+          startTime: e.startTime,
+          endTime: e.endTime,
+          category: e.category,
+          dateISO: e.date.toISOString()
+        }));
+        localStorage.setItem(`events_cache_${userId}`, JSON.stringify(payload));
+      } catch {}
+      return mapped;
     } else if (ignoreRange) {
       // Debug mode: fetch recent N days anchored to now to include上周/上月尾
       const nowISO = new Date().toISOString();
