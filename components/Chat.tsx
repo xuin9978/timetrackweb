@@ -92,6 +92,7 @@ interface HistorySidebarProps {
   onRename: (session: ChatSessionRecord) => void;
   onDelete: (session: ChatSessionRecord) => void;
   onTogglePinned: (session: ChatSessionRecord) => void;
+  onCollapse?: () => void;
   hasSearchResults: boolean;
 }
 
@@ -105,11 +106,23 @@ const HistorySidebar: React.FC<HistorySidebarProps> = ({
   onRename,
   onDelete,
   onTogglePinned,
+  onCollapse,
   hasSearchResults,
 }) => (
   <aside className="flex h-full w-[260px] shrink-0 flex-col border-r border-gray-100 bg-white/70 px-3 py-4">
     <div className="mb-3 flex items-center justify-between px-1">
       <h2 className="text-[15px] font-bold text-gray-900">历史</h2>
+      {onCollapse && (
+        <button
+          type="button"
+          onClick={onCollapse}
+          aria-label="隐藏历史侧边栏"
+          title="隐藏历史侧边栏"
+          className="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"
+        >
+          <Icons.PanelLeft size={16} strokeWidth={2.2} />
+        </button>
+      )}
     </div>
     <button
       type="button"
@@ -202,6 +215,7 @@ const Chat: React.FC<ChatProps> = ({ events, tags, currentDate, userId, demoDiar
   const [diaryLoadError, setDiaryLoadError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [isHistoryCollapsed, setIsHistoryCollapsed] = useState(false);
   const [renameTarget, setRenameTarget] = useState<ChatSessionRecord | null>(null);
   const [renameValue, setRenameValue] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<ChatSessionRecord | null>(null);
@@ -543,7 +557,7 @@ const Chat: React.FC<ChatProps> = ({ events, tags, currentDate, userId, demoDiar
     </form>
   );
 
-  const history = (
+  const renderHistory = (onCollapse?: () => void) => (
     <HistorySidebar
       sessions={sessions}
       activeSessionId={activeSessionId}
@@ -554,16 +568,31 @@ const Chat: React.FC<ChatProps> = ({ events, tags, currentDate, userId, demoDiar
       onRename={openRename}
       onDelete={setDeleteTarget}
       onTogglePinned={togglePinned}
+      onCollapse={onCollapse}
       hasSearchResults={sessions.length > 0}
     />
   );
 
   return (
     <section className="flex h-[85vh] w-full overflow-hidden rounded-[28px] border border-gray-100 bg-[#FAFAFA] shadow-sm animate-[fadeIn_0.2s_ease-out]">
-      <div className="hidden md:block">{history}</div>
+      <div className="hidden md:block">
+        {isHistoryCollapsed ? (
+          <div className="flex h-full w-14 items-start justify-center border-r border-gray-100 bg-white/70 px-2 py-4">
+            <button
+              type="button"
+              onClick={() => setIsHistoryCollapsed(false)}
+              aria-label="显示历史侧边栏"
+              title="显示历史侧边栏"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 shadow-sm transition hover:border-gray-300 hover:text-gray-900"
+            >
+              <Icons.PanelRight size={17} strokeWidth={2.2} />
+            </button>
+          </div>
+        ) : renderHistory(() => setIsHistoryCollapsed(true))}
+      </div>
       {isHistoryOpen && (
         <div className="fixed inset-0 z-50 bg-black/20 md:hidden" onClick={() => setIsHistoryOpen(false)}>
-          <div className="h-full" onClick={event => event.stopPropagation()}>{history}</div>
+          <div className="h-full" onClick={event => event.stopPropagation()}>{renderHistory()}</div>
         </div>
       )}
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden px-5 py-5 md:px-8 md:py-7">
