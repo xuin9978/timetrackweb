@@ -1408,6 +1408,7 @@ const App: React.FC = () => {
                 userId={activeUserIsDemo ? undefined : currentUser?.id}
                 demoDiaryEntries={activeUserIsDemo ? DEMO_DIARY_ENTRIES : undefined}
                 demoStorageNamespace={activeUserIsDemo ? 'demo' : undefined}
+                enableContextExport={activeUserIsDemo}
               />
             </div>
           )}
