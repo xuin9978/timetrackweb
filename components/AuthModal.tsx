@@ -7,9 +7,10 @@ interface AuthModalProps {
   onClose: () => void;
   onLogin: (email: string, password: string) => Promise<{ ok: boolean; error?: string }>;
   onRegister: (email: string, password: string) => Promise<{ ok: boolean; error?: string }>;
+  onDemoLogin: () => void;
 }
 
-const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin, onRegister }) => {
+const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin, onRegister, onDemoLogin }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [mode, setMode] = useState<'login' | 'register'>('login');
@@ -66,6 +67,16 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin, onRegis
           <div className="flex items-center justify-between">
             <button type="button" onClick={() => setMode(mode === 'login' ? 'register' : 'login')} className="text-gray-500 hover:text-black text-sm font-medium">{mode === 'login' ? '没有账号? 去注册' : '已有账号? 去登陆'}</button>
             <button type="submit" className="px-4 py-2 rounded-xl bg-black text-white text-sm font-semibold hover:bg-gray-800 transition-colors">{mode === 'login' ? '登陆' : '注册'}</button>
+          </div>
+          <div className="pt-2 border-t border-gray-100">
+            <button
+              type="button"
+              onClick={onDemoLogin}
+              className="w-full rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm font-bold text-blue-700 transition hover:bg-blue-100"
+            >
+              免登录体验 Demo
+            </button>
+            <p className="mt-2 text-center text-xs font-medium text-gray-400">仅使用本地示例数据，不读取 Supabase 账号数据</p>
           </div>
 
         </form>

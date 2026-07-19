@@ -2,7 +2,8 @@ import React from 'react';
 import { addDays, addWeeks, format, isAfter, isSameDay, startOfWeek } from 'date-fns';
 import GlassCard from './GlassCard';
 import { Icons } from './Icons';
-import { fetchDiaryEntries, saveDiaryEntry } from '../utils/diaryService';
+import { DiaryEntryRecord, fetchDiaryEntries, saveDiaryEntry } from '../utils/diaryService';
+import { loadDemoDiaryEntries, saveDemoDiaryEntries } from '../utils/demoMode';
 
 type DiaryView = 'daily' | 'weekly';
 type SaveState = 'idle' | 'saving' | 'saved' | 'error';
@@ -27,6 +28,8 @@ interface DiaryWeek {
 
 interface DiaryProps {
   userId?: string;
+  isDemoMode?: boolean;
+  demoEntries?: DiaryEntryRecord[];
   onWeeklyModeChange?: (isWeekly: boolean) => void;
 }
 
@@ -89,7 +92,7 @@ const getWeekBounds = (date: Date) => {
   };
 };
 
-const Diary: React.FC<DiaryProps> = ({ userId, onWeeklyModeChange }) => {
+const Diary: React.FC<DiaryProps> = ({ userId, isDemoMode = false, demoEntries = [], onWeeklyModeChange }) => {
   const today = React.useMemo(() => new Date(), []);
   const [view, setView] = React.useState<DiaryView>('daily');
   const [activeDate, setActiveDate] = React.useState(today);
@@ -120,6 +123,18 @@ const Diary: React.FC<DiaryProps> = ({ userId, onWeeklyModeChange }) => {
   }, [toast]);
 
   React.useEffect(() => {
+    if (isDemoMode) {
+      const nextEntries = new Map<string, string>();
+      const sourceEntries = loadDemoDiaryEntries();
+      const fallbackEntries = sourceEntries.length > 0 ? sourceEntries : demoEntries;
+      fallbackEntries.forEach(record => nextEntries.set(record.entryDate, record.content));
+      setEntriesByDate(nextEntries);
+      setDraftsByDate(nextEntries);
+      setSaveState('idle');
+      setIsLoading(false);
+      return;
+    }
+
     if (!userId) {
       setEntriesByDate(new Map());
       setDraftsByDate(new Map());
@@ -149,7 +164,7 @@ const Diary: React.FC<DiaryProps> = ({ userId, onWeeklyModeChange }) => {
       });
 
     return () => controller.abort();
-  }, [userId, activeWeekStartISO]);
+  }, [userId, isDemoMode, demoEntries, activeWeekStartISO]);
 
   const isToday = (entry: DiaryEntry) => isSameDay(new Date(`${entry.isoDate}T00:00:00`), today);
 
@@ -175,6 +190,29 @@ const Diary: React.FC<DiaryProps> = ({ userId, onWeeklyModeChange }) => {
   };
 
   const saveActiveEntry = async () => {
+    if (isDemoMode) {
+      const content = (draftsByDate.get(activeEntry.isoDate) ?? '').trimEnd();
+      const existingEntries = loadDemoDiaryEntries();
+      const nextEntries = existingEntries.filter(entry => entry.entryDate !== activeEntry.isoDate);
+      if (content.trim()) {
+        nextEntries.push({
+          id: `demo-diary-${activeEntry.isoDate}`,
+          userId: userId ?? 'liquid-calendar-demo-user',
+          entryDate: activeEntry.isoDate,
+          content,
+          updatedAt: new Date().toISOString(),
+        });
+      }
+      saveDemoDiaryEntries(nextEntries);
+      const nextMap = new Map<string, string>();
+      nextEntries.forEach(entry => nextMap.set(entry.entryDate, entry.content));
+      setEntriesByDate(nextMap);
+      setDraftsByDate(nextMap);
+      setSaveState('saved');
+      setToast(content.trim() ? '已保存到 Demo 本地数据' : '已清空 Demo 日记');
+      return;
+    }
+
     if (!userId) {
       setToast('请先登录后再保存日记');
       return;
@@ -348,7 +386,7 @@ const Diary: React.FC<DiaryProps> = ({ userId, onWeeklyModeChange }) => {
             />
 
             <footer className="flex items-center justify-between gap-4 pt-4 text-xs font-bold text-gray-500">
-              <span>{(draftsByDate.get(activeEntry.isoDate) ?? '').trim() ? `约 ${(draftsByDate.get(activeEntry.isoDate) ?? '').length} 字 · Supabase 同步` : '空白日记 · 等待输入'}</span>
+              <span>{(draftsByDate.get(activeEntry.isoDate) ?? '').trim() ? `约 ${(draftsByDate.get(activeEntry.isoDate) ?? '').length} 字 · ${isDemoMode ? 'Demo 本地保存' : 'Supabase 同步'}` : '空白日记 · 等待输入'}</span>
               <button
                 type="button"
                 onClick={saveActiveEntry}

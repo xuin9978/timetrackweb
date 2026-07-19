@@ -18,6 +18,15 @@ import { fetchEvents, createEvents, updateEvent as updateEventDB, deleteEvent as
 import { backupEventsToLocalStorage, restoreEventsFromLocalStorage, cleanOldBackups } from './utils/dataBackupService';
 import { fetchTags as fetchTagsDB, createTag as createTagDB, updateTag as updateTagDB, deleteTag as deleteTagDB, updateTagOrder } from './utils/tagService';
 import { avatarForUserMetadata, isInlineAvatar } from './utils/profileAvatar';
+import {
+  DEMO_DIARY_ENTRIES,
+  DEMO_USER,
+  isDemoUser,
+  loadDemoEvents,
+  loadDemoTags,
+  saveDemoEvents,
+  saveDemoTags,
+} from './utils/demoMode';
 
 import { CalendarEvent, Tag, ModalConfig, AlarmState, AlarmMode, LogSessionModalConfig, ViewMode } from './types';
 
@@ -91,7 +100,9 @@ const App: React.FC = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [isDemoMode, setIsDemoMode] = useState(false);
   const [localProfileAvatar, setLocalProfileAvatar] = useState<string | null>(null);
+  const activeUserIsDemo = isDemoMode || isDemoUser(currentUser);
 
   React.useEffect(() => {
     if (!currentUser?.id) {
@@ -108,6 +119,7 @@ const App: React.FC = () => {
       } catch {
         setLocalProfileAvatar(null);
       }
+      if (activeUserIsDemo) return;
       supabase?.auth.refreshSession().then(({ data }) => {
         if (data.session?.user) setCurrentUser(data.session.user);
       });
@@ -119,16 +131,26 @@ const App: React.FC = () => {
     } catch {
       setLocalProfileAvatar(null);
     }
-  }, [currentUser]);
+  }, [currentUser, activeUserIsDemo]);
 
   // Load initial mock data when not logged in
   React.useEffect(() => {
+    if (activeUserIsDemo) {
+      const demoTags = loadDemoTags();
+      setEvents(loadDemoEvents());
+      setTags(demoTags);
+      setVisibleTags(demoTags.map(t => t.id));
+      setHasMoreTags(false);
+      setSyncStatus('offline-cache');
+      return;
+    }
+
     if (!currentUser) {
       setEvents(INITIAL_EVENTS);
       setTags(INITIAL_TAGS);
       setVisibleTags(INITIAL_TAGS.map(t => t.id));
     }
-  }, [currentUser]);
+  }, [currentUser, activeUserIsDemo]);
 
   React.useEffect(() => {
     return () => {
@@ -191,6 +213,11 @@ const App: React.FC = () => {
   }, [currentUser, localProfileAvatar]);
 
   const handleSidebarProfileSave = useCallback(async (profile: SidebarProfile) => {
+    if (activeUserIsDemo) {
+      showToast({ tone: 'success', message: 'Demo 资料已在本地预览', detail: '不会同步到 Supabase。' }, 3000);
+      return;
+    }
+
     if (!supabase || !currentUser) {
       showToast({ tone: 'info', message: '已在当前页面预览', detail: '登录后可同步到你的账号。' }, 3000);
       return;
@@ -221,7 +248,7 @@ const App: React.FC = () => {
 
     setCurrentUser(data.user ?? currentUser);
     showToast({ tone: 'success', message: '个人资料已同步', detail: '已保存到当前 Supabase 账号。' }, 3000);
-  }, [currentUser, showToast]);
+  }, [currentUser, activeUserIsDemo, showToast]);
 
   // Set default view mode to Day when in PWA mode
   React.useEffect(() => {
@@ -301,6 +328,10 @@ const App: React.FC = () => {
   }, []);
 
   const refreshEvents = useCallback(async () => {
+    if (activeUserIsDemo) {
+      setEvents(loadDemoEvents());
+      return;
+    }
     if (!currentUser) return;
     const { startDate, endDate } = getVisibleDateRange(currentDate, viewMode, selectedDate);
     const refreshed = await fetchEvents(currentUser.id, startDate, endDate, undefined, { loadAll: true });
@@ -314,9 +345,38 @@ const App: React.FC = () => {
     });
 
 
-  }, [currentUser, currentDate, viewMode, selectedDate]);
+  }, [currentUser, activeUserIsDemo, currentDate, viewMode, selectedDate]);
 
   const handleAddEvent = useCallback(async (newEventData: Omit<CalendarEvent, 'id'>): Promise<boolean> => {
+    if (activeUserIsDemo) {
+      const eventSegments = splitEventAcrossDays(newEventData);
+      const createdEvents = eventSegments.map(seg => ({ ...seg, id: `demo-${crypto.randomUUID()}` }));
+      setEvents(prev => {
+        const next = [...prev, ...createdEvents];
+        saveDemoEvents(next);
+        return next;
+      });
+      if (newEventData.category) {
+        setVisibleTags(prev => prev.includes(newEventData.category) ? prev : [...prev, newEventData.category]);
+      }
+      showToast({
+        tone: 'success',
+        message: `Demo 已创建 ${createdEvents.length} 个日程`,
+        detail: '数据仅保存在当前浏览器本地。',
+        actionLabel: '撤销',
+        onAction: () => {
+          dismissToast();
+          setEvents(prev => {
+            const ids = new Set(createdEvents.map(event => event.id));
+            const next = prev.filter(event => !ids.has(event.id));
+            saveDemoEvents(next);
+            return next;
+          });
+        }
+      });
+      return true;
+    }
+
     if (!supabase) {
       showToast({ tone: 'error', message: '未配置 Supabase，当前无法保存日程。' });
       return false;
@@ -429,7 +489,7 @@ const App: React.FC = () => {
       console.error(e);
       return false;
     }
-  }, [currentUser, dismissToast, showToast]);
+  }, [currentUser, activeUserIsDemo, dismissToast, showToast]);
 
   const handleSmartAddEvent = useCallback(() => {
     // Filter events for the selected date to determine the default start time
@@ -499,6 +559,32 @@ const App: React.FC = () => {
   }, [logSessionModalConfig, tags, handleAddEvent]);
 
   const handleUpdateEvent = useCallback(async (updatedEvent: CalendarEvent) => {
+    if (activeUserIsDemo) {
+      const previousEvent = events.find(e => e.id === updatedEvent.id);
+      setEvents(prev => {
+        const next = prev.map(e => e.id === updatedEvent.id ? updatedEvent : e);
+        saveDemoEvents(next);
+        return next;
+      });
+      if (previousEvent) {
+        showToast({
+          tone: 'success',
+          message: 'Demo 日程已更新',
+          detail: '数据仅保存在当前浏览器本地。',
+          actionLabel: '撤销',
+          onAction: () => {
+            dismissToast();
+            setEvents(prev => {
+              const next = prev.map(e => e.id === previousEvent.id ? previousEvent : e);
+              saveDemoEvents(next);
+              return next;
+            });
+          }
+        });
+      }
+      return;
+    }
+
     if (!currentUser || !supabase) {
       showToast({ tone: 'info', message: '请先登录', detail: '登录后才能同步修改。' });
       return;
@@ -548,9 +634,35 @@ const App: React.FC = () => {
       }
       console.error(e);
     }
-  }, [currentUser, dismissToast, events, showToast]);
+  }, [currentUser, activeUserIsDemo, dismissToast, events, showToast]);
 
   const handleDeleteEvent = useCallback(async (id: string) => {
+    if (activeUserIsDemo) {
+      const deletedEvent = events.find(e => e.id === id);
+      setEvents(prev => {
+        const next = prev.filter(e => e.id !== id);
+        saveDemoEvents(next);
+        return next;
+      });
+      if (deletedEvent) {
+        showToast({
+          tone: 'success',
+          message: 'Demo 日程已删除',
+          detail: '数据仅保存在当前浏览器本地。',
+          actionLabel: '撤销',
+          onAction: () => {
+            dismissToast();
+            setEvents(prev => {
+              const next = [...prev, deletedEvent];
+              saveDemoEvents(next);
+              return next;
+            });
+          }
+        });
+      }
+      return;
+    }
+
     if (!currentUser || !supabase) {
       showToast({ tone: 'info', message: '请先登录', detail: '登录后才能同步删除。' });
       return;
@@ -611,7 +723,7 @@ const App: React.FC = () => {
       }
       console.error(e);
     }
-  }, [currentUser, dismissToast, events, showToast]);
+  }, [currentUser, activeUserIsDemo, dismissToast, events, showToast]);
 
   // Tag Management
   const handleAddTag = useCallback(async (label: string, color: string, icon: string) => {
@@ -621,6 +733,13 @@ const App: React.FC = () => {
     const previousTags = tags;
     setTags(prev => [...prev, newTag]);
     setVisibleTags(prev => [...prev, newTag.id]); // Optimistically add to visible tags
+
+    if (activeUserIsDemo) {
+      const nextTags = [...previousTags, newTag];
+      saveDemoTags(nextTags);
+      showToast({ tone: 'success', message: 'Demo 标签已创建', detail: '数据仅保存在当前浏览器本地。' }, 3000);
+      return;
+    }
 
     if (!currentUser || !supabase) {
       // If not logged in, revert optimistic update and alert
@@ -649,12 +768,19 @@ const App: React.FC = () => {
       console.error(e);
       alert('标签保存失败');
     }
-  }, [currentUser, tags]);
+  }, [currentUser, activeUserIsDemo, tags, showToast]);
 
   const handleUpdateTag = useCallback(async (updatedTag: Tag) => {
     // Optimistic update
     const previousTags = tags;
     setTags(prev => prev.map(t => t.id === updatedTag.id ? updatedTag : t));
+
+    if (activeUserIsDemo) {
+      const nextTags = previousTags.map(t => t.id === updatedTag.id ? updatedTag : t);
+      saveDemoTags(nextTags);
+      showToast({ tone: 'success', message: 'Demo 标签已更新', detail: '数据仅保存在当前浏览器本地。' }, 3000);
+      return;
+    }
 
     if (!currentUser || !supabase) {
       setTags(previousTags); // Revert if not logged in
@@ -674,7 +800,7 @@ const App: React.FC = () => {
       console.error(e);
       alert('标签更新失败');
     }
-  }, [currentUser, tags]);
+  }, [currentUser, activeUserIsDemo, tags, showToast]);
 
   const handleDeleteTag = useCallback(async (id: string) => {
     const previousTags = tags;
@@ -691,6 +817,15 @@ const App: React.FC = () => {
     setTags(prev => prev.filter(t => t.id !== id));
     setVisibleTags(prev => prev.filter(tagId => tagId !== id));
     setEvents(prev => prev.map(e => e.category === id ? { ...e, category: '' } : e));
+
+    if (activeUserIsDemo) {
+      const nextTags = previousTags.filter(t => t.id !== id);
+      const nextEvents = previousEvents.map(e => e.category === id ? { ...e, category: '' } : e);
+      saveDemoTags(nextTags);
+      saveDemoEvents(nextEvents);
+      showToast({ tone: 'success', message: 'Demo 标签已删除', detail: '关联记录已归为未分类。' }, 3000);
+      return;
+    }
 
     if (!currentUser || !supabase) {
       setTags(previousTags);
@@ -719,7 +854,7 @@ const App: React.FC = () => {
       alert(msg);
       console.error(e);
     }
-  }, [currentUser, supabase, tags, events, visibleTags]);
+  }, [currentUser, activeUserIsDemo, supabase, tags, events, visibleTags, showToast]);
 
   const handleToggleTagVisibility = useCallback((tagId: string) => {
     setVisibleTags(prev =>
@@ -734,6 +869,12 @@ const App: React.FC = () => {
   const handleSaveTagOrder = useCallback(async (tagsToSave?: Tag[]) => {
     const orderedTags = tagsToSave ?? tags;
     try {
+      if (activeUserIsDemo) {
+        saveDemoTags(orderedTags);
+        showToast({ tone: 'success', message: 'Demo 标签排序已保存', detail: '数据仅保存在当前浏览器本地。' }, 3000);
+        return;
+      }
+
       if (!currentUser) {
         try {
           localStorage.setItem('tag_order_guest', JSON.stringify(orderedTags.map(t => t.id)));
@@ -751,7 +892,7 @@ const App: React.FC = () => {
       alert('排序保存失败，请检查网络');
       throw e;
     }
-  }, [currentUser, tags]);
+  }, [currentUser, activeUserIsDemo, tags, showToast]);
 
   const filteredEvents = useMemo(() => {
     if (visibleTags.length === 0) return [];
@@ -815,6 +956,7 @@ const App: React.FC = () => {
 
   // 监听事件数据变化，自动备份到本地存储
   React.useEffect(() => {
+    if (activeUserIsDemo) return;
     if (!currentUser || events.length === 0) return;
     
     // 自动备份事件数据到本地存储
@@ -822,7 +964,7 @@ const App: React.FC = () => {
     
     // 清理旧的备份数据
     cleanOldBackups(currentUser.id);
-  }, [currentUser, events]);
+  }, [currentUser, activeUserIsDemo, events]);
 
   React.useEffect(() => {
     const handleOnline = () => {
@@ -845,16 +987,21 @@ const App: React.FC = () => {
 
   React.useEffect(() => {
     if (!supabase) return;
-    supabase.auth.getSession().then(({ data }) => setCurrentUser(data.session?.user ?? null));
+    if (activeUserIsDemo) return;
+    supabase.auth.getSession().then(({ data }) => {
+      if (!activeUserIsDemo) setCurrentUser(data.session?.user ?? null);
+    });
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (activeUserIsDemo) return;
       setCurrentUser(session?.user ?? null);
     });
     return () => listener.subscription.unsubscribe();
-  }, []);
+  }, [activeUserIsDemo]);
 
 
 
   React.useEffect(() => {
+    if (activeUserIsDemo) return;
     if (!currentUser) return;
 
     let mounted = true;
@@ -923,9 +1070,10 @@ const App: React.FC = () => {
     return () => {
       mounted = false;
     };
-  }, [currentUser, reloadNonce, currentDate, viewMode, selectedDate, showToast]);
+  }, [currentUser, activeUserIsDemo, reloadNonce, currentDate, viewMode, selectedDate, showToast]);
 
   const loadMoreTags = useCallback(async () => {
+    if (activeUserIsDemo) return;
     if (!currentUser || !hasMoreTags) return;
     const nextPage = tagPage + 1;
     const newTags = await fetchTagsDB(currentUser.id, nextPage);
@@ -936,15 +1084,31 @@ const App: React.FC = () => {
     if (newTags.length < 50) {
       setHasMoreTags(false);
     }
-  }, [currentUser, hasMoreTags, tagPage]);
+  }, [currentUser, activeUserIsDemo, hasMoreTags, tagPage]);
 
   // 移除本地持久化，所有 UI 状态来源于数据库
+
+  const handleDemoLogin = useCallback(() => {
+    const demoTags = loadDemoTags();
+    setIsDemoMode(true);
+    setCurrentUser(DEMO_USER);
+    setEvents(loadDemoEvents());
+    setTags(demoTags);
+    setVisibleTags(demoTags.map(t => t.id));
+    setHasMoreTags(false);
+    setTagPage(1);
+    setIsAuthOpen(false);
+    setIsAccountOpen(false);
+    setSyncStatus('offline-cache');
+    showToast({ tone: 'success', message: '已进入免登录 Demo', detail: '数据仅保存在当前浏览器本地，不读取 Supabase 账号数据。' }, 5000);
+  }, [showToast]);
 
   const handleLogin = async (email: string, password: string): Promise<{ ok: boolean; error?: string }> => {
     if (!supabase) { return { ok: false, error: '未配置 Supabase' }; }
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) { return { ok: false, error: '邮箱或密码错误' }; }
     const { data } = await supabase.auth.getSession();
+    setIsDemoMode(false);
     setCurrentUser(data.session?.user ?? null);
     setIsAuthOpen(false);
     return { ok: true };
@@ -959,6 +1123,7 @@ const App: React.FC = () => {
     }
     if (data.session) {
       const { data: s } = await supabase.auth.getSession();
+      setIsDemoMode(false);
       setCurrentUser(s.session?.user ?? null);
       setIsAuthOpen(false);
       return { ok: true };
@@ -968,6 +1133,7 @@ const App: React.FC = () => {
       return { ok: false, error: '邮箱验证已开启，请完成验证后登录' };
     }
     const { data: s2 } = await supabase.auth.getSession();
+    setIsDemoMode(false);
     setCurrentUser(s2.session?.user ?? null);
     setIsAuthOpen(false);
     return { ok: true };
@@ -976,6 +1142,17 @@ const App: React.FC = () => {
 
 
   const handleRestoreData = useCallback(async (restoredEvents: CalendarEvent[], restoredTags: Tag[]) => {
+    if (activeUserIsDemo) {
+      setEvents(restoredEvents);
+      setTags(restoredTags);
+      setVisibleTags(restoredTags.map(t => t.id));
+      saveDemoEvents(restoredEvents);
+      saveDemoTags(restoredTags);
+      setSyncStatus('offline-cache');
+      showToast({ tone: 'success', message: 'Demo 数据恢复完成', detail: `恢复 ${restoredEvents.length} 个日程、${restoredTags.length} 个标签。` });
+      return;
+    }
+
     if (currentUser) {
       const items = restoredEvents.map(e => ({ title: e.title, startTime: e.startTime, endTime: e.endTime, category: e.category, date: e.date }));
       const saved = await replaceAllEvents(currentUser.id, items);
@@ -990,7 +1167,7 @@ const App: React.FC = () => {
     });
     setSyncStatus('synced');
     showToast({ tone: 'success', message: '数据恢复完成', detail: `恢复 ${restoredEvents.length} 个日程、${restoredTags.length} 个标签。` });
-  }, [currentUser, showToast]);
+  }, [currentUser, activeUserIsDemo, showToast]);
 
   const handleImportEvents = useCallback(async (importedEvents: Partial<CalendarEvent>[]) => {
     // 1. Convert Partial<CalendarEvent> to full CalendarEvent
@@ -1042,6 +1219,18 @@ const App: React.FC = () => {
 
     const newCategories = Array.from(new Set(uniqueSegments.map(e => e.category)));
     setVisibleTags(prev => Array.from(new Set([...prev, ...newCategories])));
+
+    if (activeUserIsDemo) {
+      const localCreated = uniqueSegments.map(e => ({ ...e, id: `demo-${crypto.randomUUID()}` }));
+      setEvents(prev => {
+        const next = [...prev, ...localCreated];
+        saveDemoEvents(next);
+        return next;
+      });
+      setSyncStatus('offline-cache');
+      showToast({ tone: 'success', message: 'Demo 导入完成', detail: `已导入 ${localCreated.length} 个日程，仅保存在本地。` });
+      return;
+    }
 
     if (!currentUser || !supabase) {
       const localCreated = uniqueSegments.map(e => ({ ...e, id: crypto.randomUUID() }));
@@ -1101,7 +1290,7 @@ const App: React.FC = () => {
       const localCreated = uniqueSegments.map(ev => ({ ...ev, id: crypto.randomUUID() }));
       setEvents(prev => [...prev, ...localCreated]);
     }
-  }, [currentUser, events, tags, refreshEvents, showToast]);
+  }, [currentUser, activeUserIsDemo, events, tags, refreshEvents, showToast]);
 
   return (
     <div className={`App board-app-shell ${isSidebarCollapsed ? 'sidebar-is-collapsed' : ''} relative min-h-screen w-full flex items-stretch md:items-center justify-center bg-[#F2F2F7] overflow-x-auto p-4 md:p-6`}>
@@ -1109,7 +1298,7 @@ const App: React.FC = () => {
       {/* Main Layout */}
       <div className={`main-layout board-main-layout relative z-10 w-full flex flex-col md:flex-row h-full md:h-auto transition-[gap,max-width] duration-300 ${isSidebarCollapsed ? 'max-w-none md:gap-0' : 'max-w-7xl md:gap-6'}`}>
         <div className="board-status-strip absolute flex items-center justify-end z-30">
-          <span className="board-prototype-label">Liquid Calendar Board Mock</span>
+          <span className="board-prototype-label">{activeUserIsDemo ? 'Demo 模式 · 本地数据' : 'Liquid Calendar Board Mock'}</span>
         </div>
 
         {/* Sidebar Navigation */}
@@ -1197,7 +1386,12 @@ const App: React.FC = () => {
           )}
           {activeModule === 'diary' && (
             <div className={`flex-1 ${!currentUser ? 'pointer-events-none opacity-60' : ''}`}>
-              <Diary userId={currentUser?.id} onWeeklyModeChange={setIsSidebarCollapsed} />
+              <Diary
+                userId={currentUser?.id}
+                isDemoMode={activeUserIsDemo}
+                demoEntries={DEMO_DIARY_ENTRIES}
+                onWeeklyModeChange={setIsSidebarCollapsed}
+              />
               {!currentUser && (
                 <div className="absolute inset-0 z-30 flex items-center justify-center">
                   <div className="px-4 py-2 rounded-xl bg-white border border-gray-200 shadow-sm text-gray-600 text-sm">请先登录以查看日记</div>
@@ -1211,7 +1405,9 @@ const App: React.FC = () => {
                 events={events}
                 tags={tags}
                 currentDate={currentDate}
-                userId={currentUser?.id}
+                userId={activeUserIsDemo ? undefined : currentUser?.id}
+                demoDiaryEntries={activeUserIsDemo ? DEMO_DIARY_ENTRIES : undefined}
+                demoStorageNamespace={activeUserIsDemo ? 'demo' : undefined}
               />
             </div>
           )}
@@ -1268,6 +1464,7 @@ const App: React.FC = () => {
         onClose={() => setIsAuthOpen(false)}
         onLogin={handleLogin}
         onRegister={handleRegister}
+        onDemoLogin={handleDemoLogin}
       />
 
       <AccountModal
@@ -1275,6 +1472,16 @@ const App: React.FC = () => {
         email={currentUser?.email}
         onClose={() => setIsAccountOpen(false)}
         onSignOut={async () => {
+          if (activeUserIsDemo) {
+            setIsDemoMode(false);
+            setCurrentUser(null);
+            setIsAccountOpen(false);
+            setEvents(INITIAL_EVENTS);
+            setTags(INITIAL_TAGS);
+            setVisibleTags(INITIAL_TAGS.map(t => t.id));
+            showToast({ tone: 'info', message: '已退出 Demo 模式', detail: '正式账号数据仍需登录后查看。' }, 3000);
+            return;
+          }
           if (!supabase) return;
           try {
             const { error } = await supabase.auth.signOut({ scope: 'global' } as any);

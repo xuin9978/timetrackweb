@@ -10,9 +10,11 @@ import {
   MAX_PINNED_SESSIONS,
   buildChatSessionTitle,
   createChatHistoryStore,
+  createLocalChatHistoryStore,
   formatChatRelativeTime,
   sortChatSessions,
 } from '../utils/chatHistoryService';
+import { loadDemoDiaryEntries } from '../utils/demoMode';
 
 interface ChatMessage extends ChatServiceMessage {
   id: string;
@@ -25,6 +27,8 @@ interface ChatProps {
   tags: Tag[];
   currentDate: Date;
   userId?: string;
+  demoDiaryEntries?: DiaryEntryRecord[];
+  demoStorageNamespace?: string;
 }
 
 const quickPrompts = [
@@ -185,7 +189,7 @@ const HistorySidebar: React.FC<HistorySidebarProps> = ({
   </aside>
 );
 
-const Chat: React.FC<ChatProps> = ({ events, tags, currentDate, userId }) => {
+const Chat: React.FC<ChatProps> = ({ events, tags, currentDate, userId, demoDiaryEntries, demoStorageNamespace }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [sessions, setSessions] = useState<ChatSessionRecord[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
@@ -204,7 +208,12 @@ const Chat: React.FC<ChatProps> = ({ events, tags, currentDate, userId }) => {
   const [syncNotice, setSyncNotice] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const store = useMemo(() => createChatHistoryStore(userId), [userId]);
+  const store = useMemo(
+    () => demoStorageNamespace
+      ? createLocalChatHistoryStore(undefined, demoStorageNamespace, 'local')
+      : createChatHistoryStore(userId),
+    [userId, demoStorageNamespace]
+  );
   const hasMessages = messages.length > 0;
   const activeSession = sessions.find(session => session.id === activeSessionId);
 
@@ -263,6 +272,14 @@ const Chat: React.FC<ChatProps> = ({ events, tags, currentDate, userId }) => {
   }, [searchQuery, store, userId]);
 
   useEffect(() => {
+    if (demoDiaryEntries) {
+      const localEntries = loadDemoDiaryEntries();
+      setDiaryEntries(localEntries.length > 0 ? localEntries : demoDiaryEntries);
+      setDiaryLoadError('');
+      setIsDiaryLoading(false);
+      return;
+    }
+
     if (!userId) {
       setDiaryEntries([]);
       setDiaryLoadError('');
@@ -289,7 +306,7 @@ const Chat: React.FC<ChatProps> = ({ events, tags, currentDate, userId }) => {
       });
 
     return () => controller.abort();
-  }, [userId]);
+  }, [userId, demoDiaryEntries]);
 
   const ensureSession = async (firstMessage: string) => {
     if (activeSessionId) return activeSessionId;
@@ -443,12 +460,7 @@ const Chat: React.FC<ChatProps> = ({ events, tags, currentDate, userId }) => {
     }
   };
 
-  const exportRealClientContext = () => {
-    const { clientContext, contextSources } = buildAgentClientContext(events, tags, diaryEntries, currentDate);
-    const requestSources = diaryLoadError && !contextSources.missing.includes('最近 7 天日记')
-      ? { ...contextSources, missing: [...contextSources.missing, '最近 7 天日记'] }
-      : contextSources;
-    const payload = { ...clientContext, contextSources: requestSources };
+  const downloadRealClientContext = (payload: unknown) => {
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -458,7 +470,28 @@ const Chat: React.FC<ChatProps> = ({ events, tags, currentDate, userId }) => {
     link.click();
     link.remove();
     URL.revokeObjectURL(url);
-    setSyncNotice('真实上下文 JSON 已生成，仅保存在你的浏览器下载位置。');
+  };
+
+  const exportRealClientContext = async () => {
+    const { clientContext, contextSources } = buildAgentClientContext(events, tags, diaryEntries, currentDate);
+    const requestSources = diaryLoadError && !contextSources.missing.includes('最近 7 天日记')
+      ? { ...contextSources, missing: [...contextSources.missing, '最近 7 天日记'] }
+      : contextSources;
+    const payload = { ...clientContext, contextSources: requestSources };
+
+    try {
+      const response = await fetch('/api/agent-context/export', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const result = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(result?.error || '本地保存失败');
+      setSyncNotice('真实上下文已保存到 private，可直接运行 real 评估。');
+    } catch {
+      downloadRealClientContext(payload);
+      setSyncNotice('本地保存接口不可用，已改为浏览器下载真实上下文 JSON。');
+    }
   };
 
   const inputBar = (
