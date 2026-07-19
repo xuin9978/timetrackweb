@@ -15,6 +15,11 @@ dist-ssr
 !.env.example
 *.local
 
+# Agent evaluation private outputs
+聊天/Agent聊天效果评估/private/*.local.md
+聊天/Agent聊天效果评估/private/*.local.json
+聊天/Agent聊天效果评估/private/runs/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

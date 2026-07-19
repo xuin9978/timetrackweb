@@ -1,0 +1,202 @@
+{
+  "currentDate": "2026-07-19",
+  "timezone": "Asia/Shanghai",
+  "contextSources": {
+    "used": [
+      "今日日程",
+      "本周日程",
+      "本月时间趋势",
+      "全部历史时间摘要",
+      "最近 7 天日记",
+      "本月日记趋势",
+      "全部日记长期摘要"
+    ],
+    "missing": [
+      "长期记忆"
+    ],
+    "confidence": "high"
+  },
+  "calendarContext": {
+    "todayEvents": [
+      {
+        "title": "整理 Agent 作品集",
+        "date": "2026-07-19",
+        "start": "09:30",
+        "end": "11:30",
+        "durationMinutes": 120,
+        "tagLabel": "作品集"
+      },
+      {
+        "title": "GEO Agent 二面准备",
+        "date": "2026-07-19",
+        "start": "14:00",
+        "end": "16:00",
+        "durationMinutes": 120,
+        "tagLabel": "面试"
+      },
+      {
+        "title": "休息和散步",
+        "date": "2026-07-19",
+        "start": "17:30",
+        "end": "18:10",
+        "durationMinutes": 40,
+        "tagLabel": "生活"
+      }
+    ],
+    "weekEvents": [
+      {
+        "title": "支付宝阿宝体验分析",
+        "date": "2026-07-18",
+        "start": "10:00",
+        "end": "12:00",
+        "durationMinutes": 120,
+        "tagLabel": "产品分析"
+      },
+      {
+        "title": "TimeTrack Agent V1 开发",
+        "date": "2026-07-18",
+        "start": "15:00",
+        "end": "18:00",
+        "durationMinutes": 180,
+        "tagLabel": "开发"
+      },
+      {
+        "title": "整理 Agent 作品集",
+        "date": "2026-07-19",
+        "start": "09:30",
+        "end": "11:30",
+        "durationMinutes": 120,
+        "tagLabel": "作品集"
+      },
+      {
+        "title": "GEO Agent 二面准备",
+        "date": "2026-07-19",
+        "start": "14:00",
+        "end": "16:00",
+        "durationMinutes": 120,
+        "tagLabel": "面试"
+      }
+    ],
+    "monthSummary": {
+      "eventCount": 42,
+      "totalScheduledMinutes": 3840,
+      "busyDays": [
+        "2026-07-18",
+        "2026-07-19"
+      ],
+      "overloadedDays": [
+        "2026-07-18"
+      ],
+      "topTags": [
+        {
+          "label": "作品集",
+          "eventCount": 12,
+          "totalMinutes": 1080
+        },
+        {
+          "label": "面试",
+          "eventCount": 8,
+          "totalMinutes": 760
+        },
+        {
+          "label": "开发",
+          "eventCount": 9,
+          "totalMinutes": 900
+        }
+      ]
+    },
+    "allTimeSummary": {
+      "eventCount": 168,
+      "trackedDays": 52,
+      "firstDate": "2026-05-28",
+      "lastDate": "2026-07-19",
+      "topTags": [
+        {
+          "label": "作品集",
+          "eventCount": 31,
+          "totalMinutes": 2680
+        },
+        {
+          "label": "产品分析",
+          "eventCount": 25,
+          "totalMinutes": 2160
+        },
+        {
+          "label": "开发",
+          "eventCount": 28,
+          "totalMinutes": 2500
+        }
+      ],
+      "commonBusyWindows": [
+        "09:00-12:00",
+        "14:00-17:00",
+        "20:00-22:00"
+      ],
+      "commonFreeWindows": [
+        "12:00-14:00",
+        "18:00-20:00"
+      ]
+    }
+  },
+  "diaryContext": {
+    "recentSevenDays": [
+      {
+        "date": "2026-07-17",
+        "titleOrFirstLine": "最近面试和作品集准备有点挤在一起",
+        "summary": "感觉要同时准备 GEO Agent、支付宝阿宝体验和 TimeTrack 作品集，任务很多，容易焦虑。希望能先抓最重要的产出。",
+        "length": 86
+      },
+      {
+        "date": "2026-07-18",
+        "titleOrFirstLine": "TimeTrack Agent V1 做出来了",
+        "summary": "聊天 Agent 已经能读取日历和日记上下文，但回答还不够自然，需要从产品体验角度继续优化。",
+        "length": 72
+      }
+    ],
+    "monthSummary": {
+      "entryCount": 14,
+      "totalCharacters": 4200,
+      "topKeywords": [
+        "面试",
+        "作品集",
+        "Agent",
+        "时间管理",
+        "焦虑"
+      ],
+      "recurringIssues": [
+        "任务并行导致焦虑",
+        "作品集需要更清晰的证据留痕",
+        "Agent 回答需要更自然"
+      ],
+      "moodSignals": [
+        "焦虑",
+        "期待",
+        "疲惫",
+        "有动力"
+      ]
+    },
+    "allTimeSummary": {
+      "entryCount": 48,
+      "firstDate": "2026-05-28",
+      "lastDate": "2026-07-18",
+      "averageCharacters": 290,
+      "topKeywords": [
+        "面试",
+        "产品",
+        "作品集",
+        "Agent",
+        "时间"
+      ],
+      "recurringIssues": [
+        "容易在多个重要项目之间切换",
+        "需要把过程沉淀成作品集",
+        "希望 AI 产品思考更系统"
+      ],
+      "longTermThemes": [
+        "AI 产品求职准备",
+        "个人时间管理产品迭代",
+        "作品集证据建设"
+      ]
+    }
+  }
+}
