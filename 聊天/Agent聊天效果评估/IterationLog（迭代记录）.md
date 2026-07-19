@@ -69,6 +69,68 @@ npm run build
 - 将高频 Badcase 反向生成更小的 prompt 回归样本。
 - 如果后续做聊天记录持久化，再评估长期上下文连续性。
 
+## Iteration 002：真实 LLM 输出评估
+
+时间：2026-07-19
+
+### 触发原因
+
+Iteration 001 只完成了 mock synthetic 验证，还不能证明当前 Agent 的真实输出质量。用户要求补齐真实 LLM 的 40 条 Actual Output、多轮回放、real 私有评估尝试，并把真实 Badcase 回写到文档。
+
+### 发现的 Badcase
+
+- 单轮真实 synthetic 评估：40 条样本，平均分 11.3 / 25，硬失败数 32，结论 Fail。
+- 多轮真实 synthetic 回放：8 组流程、36 轮，规则平均分 24.5 / 25，硬失败数 2，结论 Fail。
+- 高频问题一：泛化问题被背景日程抢答，Agent 容易直接套用 synthetic 日程和日记，而不是先判断用户是否要求基于记录。
+- 高频问题二：长上下文和作品集复盘类多轮任务中仍可能输出 Markdown 符号。
+- 评估体系问题：部分 GoldenSet 样本假设“无上下文”，但 synthetic 运行时实际传入了完整上下文，导致金标口径和真实输入不完全一致。
+
+### 修复策略
+
+- 不把真实评估失败隐藏为 mock Pass，而是保留 Fail 结果作为下一轮迭代起点。
+- 将“上下文抢答”和“评估口径冲突”新增为 Badcase 类型。
+- 修复评估脚本参数解析，让 `--mode real` 和 `--mode=real` 都能正确识别。
+- 给真实 LLM 调用增加重试，避免偶发空响应中断全量评估。
+- 将多轮流程从“骨架记录”升级为真实逐轮 Actual Output 回放。
+
+### 影响文件
+
+- `scripts/run-agent-golden-set（运行Agent金标集评估）.ts`
+- `聊天/Agent聊天效果评估/EvaluationLog.synthetic.latest（合成上下文最新评估）.md`
+- `聊天/Agent聊天效果评估/EvaluationLog.flows.synthetic.latest（多轮流程最新评估）.md`
+- `聊天/Agent聊天效果评估/Badcase（坏案例）.md`
+- `聊天/Agent聊天效果评估/IterationLog（迭代记录）.md`
+
+### 复测命令
+
+```bash
+npx tsx 'scripts/run-agent-golden-set（运行Agent金标集评估）.ts' --mode synthetic --retries=2
+npx tsx 'scripts/run-agent-golden-set（运行Agent金标集评估）.ts' --mode real --smoke --retries=1
+```
+
+### 复测结果
+
+synthetic 真实 LLM 全量评估已完成，并生成公开证据：
+
+- 单轮：`EvaluationLog.synthetic.latest（合成上下文最新评估）.md`
+- 多轮：`EvaluationLog.flows.synthetic.latest（多轮流程最新评估）.md`
+- 时间戳归档：`runs/synthetic/2026-07-19T06-43-49-965Z.md`
+
+real 私有评估已尝试运行，但缺少手动导出的真实上下文文件：
+
+```text
+聊天/Agent聊天效果评估/private/clientContext.real.local（真实上下文本地导出）.json
+```
+
+因此 real 模式当前无法完成真实评估。脚本边界是正确的：它不会直接读取 Supabase，也不会绕过前端导出流程。
+
+### 下一轮计划
+
+- 由前端手动导出 real `clientContext` 后，运行 real 私有评估。
+- 拆分 GoldenSet 的 `withContext` 和 `withoutContext` 评估口径。
+- 修改 prompt 的上下文意图门控，避免泛化问题被背景日程抢答。
+- 对多轮 Markdown 符号增加更强的输出约束或展示前清理。
+
 ## Iteration 记录模板
 
 ### Iteration XXX：标题
