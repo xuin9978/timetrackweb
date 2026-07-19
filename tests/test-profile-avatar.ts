@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
-import { avatarForUserMetadata, isInlineAvatar } from '../utils/profileAvatar';
+import { DEFAULT_LOCAL_PROFILE_AVATAR_URL, avatarForUserMetadata, isInlineAvatar } from '../utils/profileAvatar';
 
 const inlineAvatar = 'data:image/png;base64,AAAA';
+assert.equal(DEFAULT_LOCAL_PROFILE_AVATAR_URL, '/profile-avatar.png');
 assert.equal(isInlineAvatar(inlineAvatar), true);
 assert.equal(
   avatarForUserMetadata(inlineAvatar),

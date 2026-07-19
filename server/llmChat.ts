@@ -1,3 +1,5 @@
+import { sanitizeChatPlainText } from '../utils/plainText';
+
 export interface ChatMessage {
   role: 'system' | 'user' | 'assistant';
   content: string;
@@ -266,7 +268,7 @@ export const createChatCompletion = async (body: ChatRequestBody, env: ChatEnv) 
 
     return {
       status: 200,
-      body: { message: content.trim(), model: prepared.model },
+      body: { message: sanitizeChatPlainText(content), model: prepared.model },
     };
   } catch {
     return {

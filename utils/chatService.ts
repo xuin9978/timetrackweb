@@ -1,4 +1,5 @@
 import type { AgentClientContext } from './agentContext';
+import { sanitizeChatPlainText } from './plainText';
 
 export interface ChatServiceMessage {
   role: 'user' | 'assistant';
@@ -11,7 +12,7 @@ export const streamChatMessage = async (
   messages: ChatServiceMessage[],
   chatMode: ChatMode,
   clientContext: AgentClientContext | undefined,
-  onDelta: (delta: string) => void
+  onDelta: (content: string) => void
 ) => {
   const response = await fetch('/api/chat', {
     method: 'POST',
@@ -32,6 +33,7 @@ export const streamChatMessage = async (
   const decoder = new TextDecoder();
   let buffer = '';
   let fullText = '';
+  let displayedText = '';
 
   const handleEventLine = (line: string) => {
     if (!line.startsWith('data:')) return;
@@ -43,7 +45,11 @@ export const streamChatMessage = async (
       const delta = payload?.choices?.[0]?.delta?.content;
       if (typeof delta === 'string' && delta.length > 0) {
         fullText += delta;
-        onDelta(delta);
+        const nextDisplayedText = sanitizeChatPlainText(fullText);
+        if (nextDisplayedText !== displayedText) {
+          displayedText = nextDisplayedText;
+          onDelta(displayedText);
+        }
       }
     } catch {
       // Ignore incomplete or non-JSON SSE lines; the buffer handles chunk boundaries.
@@ -64,5 +70,5 @@ export const streamChatMessage = async (
     .filter(Boolean)
     .forEach(handleEventLine);
 
-  return fullText;
+  return sanitizeChatPlainText(fullText);
 };

@@ -17,7 +17,7 @@ import { getVisibleDateRange, splitEventAcrossDays, isSameDay, formatTime, getMi
 import { fetchEvents, createEvents, updateEvent as updateEventDB, deleteEvent as deleteEventDB, replaceAllEvents, clearEventCategory, restoreEventCategory } from './utils/eventService';
 import { backupEventsToLocalStorage, restoreEventsFromLocalStorage, cleanOldBackups } from './utils/dataBackupService';
 import { fetchTags as fetchTagsDB, createTag as createTagDB, updateTag as updateTagDB, deleteTag as deleteTagDB, updateTagOrder } from './utils/tagService';
-import { avatarForUserMetadata, isInlineAvatar } from './utils/profileAvatar';
+import { DEFAULT_LOCAL_PROFILE_AVATAR_URL, avatarForUserMetadata, isInlineAvatar } from './utils/profileAvatar';
 import {
   DEMO_DIARY_ENTRIES,
   DEMO_USER,
@@ -120,16 +120,20 @@ const App: React.FC = () => {
         setLocalProfileAvatar(null);
       }
       if (activeUserIsDemo) return;
-      supabase?.auth.refreshSession().then(({ data }) => {
-        if (data.session?.user) setCurrentUser(data.session.user);
+      supabase?.auth.updateUser({ data: { avatar_url: null } }).then(({ data, error }) => {
+        if (error) {
+          console.warn('Failed to clear inline avatar from user metadata:', error.message);
+          return;
+        }
+        if (data.user) setCurrentUser(data.user);
       });
       return;
     }
 
     try {
-      setLocalProfileAvatar(localStorage.getItem(storageKey));
+      setLocalProfileAvatar(localStorage.getItem(storageKey) ?? DEFAULT_LOCAL_PROFILE_AVATAR_URL);
     } catch {
-      setLocalProfileAvatar(null);
+      setLocalProfileAvatar(DEFAULT_LOCAL_PROFILE_AVATAR_URL);
     }
   }, [currentUser, activeUserIsDemo]);
 

@@ -1,3 +1,5 @@
+export const DEFAULT_LOCAL_PROFILE_AVATAR_URL = '/profile-avatar.png';
+
 export const isInlineAvatar = (value: unknown): value is string => (
   typeof value === 'string' && /^data:image\//i.test(value)
 );

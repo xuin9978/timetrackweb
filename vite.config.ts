@@ -1,4 +1,5 @@
 import path from 'path';
+import { mkdir, writeFile } from 'fs/promises';
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import { createChatCompletionStream } from './server/llmChat';
@@ -78,6 +79,47 @@ export default defineConfig(({ mode }) => {
                   }
                 } finally {
                   res.end();
+                }
+              });
+            });
+          },
+        },
+        {
+          name: 'local-agent-context-export',
+          configureServer(server) {
+            server.middlewares.use('/api/agent-context/export', async (req, res) => {
+              if (req.method !== 'POST') {
+                res.statusCode = 405;
+                res.setHeader('Content-Type', 'application/json');
+                res.end(JSON.stringify({ error: '只支持 POST 请求。' }));
+                return;
+              }
+
+              let rawBody = '';
+              req.on('data', chunk => {
+                rawBody += chunk;
+              });
+              req.on('end', async () => {
+                try {
+                  const parsedBody = rawBody ? JSON.parse(rawBody) : null;
+                  if (!parsedBody || typeof parsedBody !== 'object') {
+                    throw new Error('请求格式不是有效 JSON。');
+                  }
+
+                  const privateDir = path.join(process.cwd(), '聊天', 'Agent聊天效果评估', 'private');
+                  const outputPath = path.join(privateDir, 'clientContext.real.local（真实上下文本地导出）.json');
+                  await mkdir(privateDir, { recursive: true });
+                  await writeFile(outputPath, JSON.stringify(parsedBody, null, 2), 'utf8');
+
+                  res.statusCode = 200;
+                  res.setHeader('Content-Type', 'application/json');
+                  res.end(JSON.stringify({ saved: true, path: outputPath }));
+                } catch (error) {
+                  res.statusCode = 400;
+                  res.setHeader('Content-Type', 'application/json');
+                  res.end(JSON.stringify({
+                    error: error instanceof Error ? error.message : '真实上下文保存失败。',
+                  }));
                 }
               });
             });

@@ -1,4 +1,5 @@
 import { createChatCompletion } from '../server/llmChat';
+import { sanitizeChatPlainText } from '../utils/plainText';
 
 const assert = (condition: unknown, message: string) => {
   if (!condition) throw new Error(message);
@@ -9,7 +10,7 @@ let capturedBody = '';
 (globalThis as any).fetch = async (_url: string, init?: RequestInit) => {
   capturedBody = String(init?.body ?? '');
   return new Response(JSON.stringify({
-    choices: [{ message: { content: '好的，我会用纯文本回答。' } }],
+    choices: [{ message: { content: '**好的**，我会用纯文本回答。' } }],
   }), {
     status: 200,
     headers: { 'Content-Type': 'application/json' },
@@ -24,6 +25,8 @@ const result = await createChatCompletion({
 });
 
 assert(result.status === 200, 'chat completion should succeed with mocked fetch');
+assert((result.body as any).message === '好的，我会用纯文本回答。', 'chat completion should strip Markdown markers');
+assert(sanitizeChatPlainText('# 标题\n- 事项\n**重点**') === '标题\n事项\n重点', 'plain text sanitizer should remove common Markdown syntax');
 
 const payload = JSON.parse(capturedBody);
 const systemText = payload.messages

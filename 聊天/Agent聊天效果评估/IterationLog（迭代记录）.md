@@ -131,6 +131,66 @@ real 私有评估已尝试运行，但缺少手动导出的真实上下文文件
 - 修改 prompt 的上下文意图门控，避免泛化问题被背景日程抢答。
 - 对多轮 Markdown 符号增加更强的输出约束或展示前清理。
 
+## Iteration 003：真实 Supabase 上下文私有评估闭环
+
+时间：2026-07-19
+
+### 触发原因
+
+用户确认真实上下文可以直接来自 Supabase 历史时间段数据，且当前没有真实日记时允许用模拟日记补齐评估上下文。因此本轮目标是补齐 real 私有评估，而不是继续停留在 synthetic 或 mock 验证。
+
+### 发现的 Badcase
+
+- Supabase 项目中可读取到真实历史日程：2182 条 events、11 条 tags，覆盖 2025-03-24 到 2026-07-19。
+- 当前真实上下文文件使用真实日程和模拟日记：今日日程 1 条、本周日程 26 条、本月日程 46 条、全部历史日程 2182 条、模拟日记 3 条。
+- 第一轮 real 评估暴露评估规则误伤：“不是不够努力”被误判为效率羞辱。
+- 第二轮 real 评估暴露评估规则误伤：“问题诊断”被误判为心理诊断化。
+- 多轮真实回放曾出现 Markdown 粗体符号，说明仅靠 prompt 约束不够稳。
+
+### 修复策略
+
+- 生成 private real `clientContext`，真实日程来自 Supabase，日记用明确标注的模拟日记。
+- 为聊天输出增加共享纯文本清理层，后端 direct 和前端 streaming 都清理常见 Markdown 标记。
+- 收窄“效率羞辱”规则，避免把“不是不够努力”这类支持性表达误判为失败。
+- 收窄“心理诊断化”规则，只检测明确心理或医学诊断风险词。
+- real 模式继续默认不启用 LLM judge，避免把真实上下文和真实输出发送给第二个评审模型。
+
+### 影响文件
+
+- `server/llmChat.ts`
+- `utils/chatService.ts`
+- `utils/plainText.ts`
+- `scripts/run-agent-golden-set（运行Agent金标集评估）.ts`
+- `scripts/export-real-context-from-supabase（从Supabase导出真实上下文）.ts`
+- `聊天/Agent聊天效果评估/private/clientContext.real.local（真实上下文本地导出）.json`
+- `聊天/Agent聊天效果评估/private/evaluation-real.latest.local（真实上下文最新评估）.md`
+- `聊天/Agent聊天效果评估/private/evaluation-flows-real.latest.local（真实多轮流程最新评估）.md`
+- `聊天/Agent聊天效果评估/Badcase（坏案例）.md`
+- `聊天/Agent聊天效果评估/IterationLog（迭代记录）.md`
+
+### 复测命令
+
+```bash
+npx tsx tests/test-chat-plain-text-prompt.ts
+npx tsx 'tests/test-agent-golden-rules（测试Agent金标规则）.ts'
+git diff --check
+npm run build
+npx tsx 'scripts/run-agent-golden-set（运行Agent金标集评估）.ts' --mode real --retries=2
+```
+
+### 复测结果
+
+- 单轮 real 私有评估：40 条 Actual Output，平均分 25.0 / 25，硬失败数 0，结论 Pass。
+- 多轮 real 私有回放：8 组流程、36 轮，规则平均分 25.0 / 25，硬失败数 0，结论 Pass。
+- real 输出和真实上下文均保存在 `聊天/Agent聊天效果评估/private/`，不提交 Git。
+- `npm run build` 通过，仍保留项目既有的非阻塞构建 warning。
+
+### 下一轮计划
+
+- 将 GoldenSet 拆分为 `withContext` 和 `withoutContext` 两套口径。
+- 针对“上下文抢答”继续优化意图门控。
+- 后续如果接入真实日记，再跑一次不含模拟日记的 real 私有评估。
+
 ## Iteration 记录模板
 
 ### Iteration XXX：标题

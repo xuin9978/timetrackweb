@@ -15,7 +15,7 @@ synthetic 结果可以提交到 Git。
 
 ## real 模式
 
-real 模式读取前端手动导出的真实 `clientContext` JSON。脚本不直接读取 Supabase，不拥有额外数据权限。
+real 模式读取真实 `clientContext` JSON。默认推荐前端手动导出；如果用户明确授权，也可以用本地 Supabase 导出脚本读取当前登录用户自己的历史数据。
 
 真实上下文默认路径：
 
@@ -27,6 +27,7 @@ real 模式读取前端手动导出的真实 `clientContext` JSON。脚本不直
 
 ```text
 聊天/Agent聊天效果评估/private/evaluation-real.latest.local（真实上下文最新评估）.md
+聊天/Agent聊天效果评估/private/evaluation-flows-real.latest.local（真实多轮流程最新评估）.md
 聊天/Agent聊天效果评估/private/runs/real/
 ```
 
@@ -62,7 +63,7 @@ real 模式如需调用 LLM judge，必须显式传入：
 | 检查项 | 要求 | 当前机制 |
 | --- | --- | --- |
 | private 路径保护 | real 上下文和 real 输出不提交 Git | 根 `.gitignore` 和 `private/.gitignore` 双重保护 |
-| Supabase 权限 | 评估脚本不直接读取 Supabase | real 模式只读取手动导出的 `clientContext.real.local` |
+| Supabase 权限 | 不绕过用户权限读取真实数据 | 默认前端导出；授权脚本必须使用当前用户 access token |
 | synthetic 公开性 | synthetic 上下文和结果可用于作品集 | 使用 `synthetic-context（合成上下文）.json` |
 | real judge 开关 | real 模式默认不调用 LLM judge | 必须显式传 `--allow-real-judge` |
 | API Key | 不写入日志、不进入文档 | 脚本只从环境变量读取 |
